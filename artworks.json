@@ -1,0 +1,28 @@
+[
+  {
+    "title": "Sky Corridor Study 01",
+    "artist": "LFC Collection",
+    "year": "2024",
+    "floor": 1,
+    "imgThumb": "https://placehold.co/600x800?text=Artwork+1+Thumb",
+    "imgFull": "https://placehold.co/1200x1600?text=Artwork+1+Full",
+    "w": 4,
+    "h": 5
+  },
+  {
+    "title": "Photographic Trace 02",
+    "artist": "LFC Collection",
+    "year": "2023",
+    "floor": 2,
+    "imgThumb": "https://placehold.co/600x800?text=Floor+2+Artwork+2",
+    "imgFull": "https://placehold.co/1200x1600?text=Floor+2+Artwork+2"
+  },
+  {
+    "title": "New Media Scene 01",
+    "artist": "LFC Collection",
+    "year": "2025",
+    "floor": 5,
+    "imgThumb": "https://placehold.co/600x800?text=New+Media+Thumb",
+    "imgFull": "https://placehold.co/1200x1600?text=New+Media+Full"
+  }
+]
