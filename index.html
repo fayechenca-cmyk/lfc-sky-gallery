@@ -1,694 +1,361 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LFC SYSTEM: Production Sky Corridor</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
-    <style>
-        body { 
-            margin: 0; overflow: hidden; 
-            background: linear-gradient(to bottom, #e0f2fe 0%, #f0f9ff 100%);
-            font-family: 'Montserrat', sans-serif;
-            touch-action: none; 
-            user-select: none;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+  <title>LFC SYSTEM: Sky Gallery</title>
 
-        /* UI OVERLAY */
-        #ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+  <!-- Three.js + Tween.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
 
-        /* HUD */
-        #hud { position: absolute; top: 2rem; left: 2rem; pointer-events: auto; }
-        h1 { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.8rem; margin: 0; color: #1e3a8a; letter-spacing: -1px; text-transform: uppercase; }
-        .subtitle { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; color: #1e40af; margin-top: 4px; display: flex; align-items: center; gap: 8px;}
-        .live-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 10px #22c55e; }
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
 
-        /* JOURNEY BUTTON */
-        #journey-btn {
-            margin-top: 1.5rem;
-            background: #fff; border: 1px solid #1e3a8a; padding: 1rem 1.5rem;
-            border-radius: 0; cursor: pointer; display: flex; align-items: center; gap: 12px;
-            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-            transition: all 0.3s; pointer-events: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        #journey-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
-        .counter { background: #1e3a8a; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  <style>
+    body{
+      margin:0; overflow:hidden;
+      background:linear-gradient(to bottom,#e0f2fe 0%,#f0f9ff 100%);
+      font-family:'Montserrat',sans-serif;
+      touch-action:none; user-select:none;
+    }
 
-        /* ADD ART BUTTON */
-        #add-art-btn {
-            position: absolute; top: 2rem; right: 6rem;
-            background: #111; color: #fff; padding: 0.8rem 1.5rem; border-radius: 0;
-            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-            cursor: pointer; pointer-events: auto; display: flex; align-items: center; gap: 8px;
-        }
-        #add-art-btn:hover { background: #333; }
+    #canvas-container{ position:fixed; inset:0; }
 
-        /* ELEVATOR */
-        #elevator {
-            position: absolute; top: 50%; right: 2rem; transform: translateY(-50%);
-            display: flex; flex-direction: column; gap: 6px; pointer-events: auto;
-            max-height: 70vh; overflow-y: auto; padding: 10px 0; scrollbar-width: none;
-        }
-        .floor-item {
-            display: flex; align-items: center; justify-content: flex-end; gap: 10px;
-            cursor: pointer; transition: all 0.2s ease;
-            opacity: 0.8; padding: 4px 0;
-        }
-        .floor-item:hover, .floor-item.active { opacity: 1; transform: translateX(-5px); }
-        
-        .floor-label {
-            background: rgba(255,255,255,0.9); padding: 8px 16px; border-radius: 4px;
-            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #1e3a8a;
-            white-space: nowrap; backdrop-filter: blur(5px);
-        }
-        .floor-num {
-            width: 32px; height: 32px; background: #fff; color: #1e3a8a; border: 1px solid #1e3a8a;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: 700; border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .floor-item.active .floor-num { background: #1e3a8a; color: #fff; }
+    /* UI overlay */
+    #ui-layer{ position:fixed; inset:0; pointer-events:none; z-index:10; }
 
-        /* EXIT BUTTON */
-        #back-btn {
-            position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: #1e3a8a; color: #fff; padding: 1rem 3rem; 
-            font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;
-            cursor: pointer; pointer-events: auto; opacity: 0; transition: all 0.5s;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-        }
-        #back-btn.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* HUD */
+    #hud{ position:absolute; top:2rem; left:2rem; pointer-events:auto; }
+    #hud h1{
+      font-weight:800; font-size:1.6rem; margin:0;
+      color:#1e3a8a; letter-spacing:-1px; text-transform:uppercase;
+    }
+    .subtitle{
+      font-size:10px; font-weight:600; text-transform:uppercase;
+      letter-spacing:3px; color:#1e40af; margin-top:6px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .live-dot{ width:6px; height:6px; background:#22c55e; border-radius:50%; box-shadow:0 0 10px #22c55e; }
 
-        /* AI PANEL */
-        #ai-panel {
-            position: absolute; top: 0; right: 0; bottom: 0; width: 450px; max-width: 100%;
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
-            transform: translateX(100%); transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-            pointer-events: auto; display: flex; flex-direction: column; z-index: 50;
-            box-shadow: -20px 0 50px rgba(0,0,0,0.05); border-left: 1px solid rgba(0,0,0,0.1);
-        }
-        #ai-panel.active { transform: translateX(0); }
-        
-        .ai-header { padding: 2rem; border-bottom: 1px solid #f0f0f0; background: #fafafa; position: relative; }
-        .ai-title { font-family: 'Playfair Display'; font-size: 1.8rem; margin: 0; color: #1e3a8a; }
-        .ai-meta { font-size: 11px; text-transform: uppercase; color: #64748b; margin-top: 5px; letter-spacing: 0.5px; }
-        .ai-img-preview { width: 100%; height: 180px; object-fit: contain; margin-bottom: 1rem; display: block; background: #f0f0f0; border-radius: 4px;}
-        .panel-close { position: absolute; top: 1rem; right: 1rem; font-size: 1.5rem; cursor: pointer; color: #1e3a8a; }
-        
-        .mode-switcher { display: flex; background: #f1f5f9; padding: 4px; margin-top: 15px; border-radius: 8px; }
-        .mode-btn { flex: 1; padding: 10px; border: none; cursor: pointer; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #94a3b8; background: transparent; transition: all 0.2s; font-family: 'Montserrat'; border-radius: 6px; }
-        .mode-btn.active { background: #fff; color: #1e3a8a; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    /* Journey button */
+    #journey-btn{
+      margin-top:1.2rem;
+      background:#fff; border:1px solid #1e3a8a;
+      padding:0.9rem 1.2rem;
+      border-radius:8px;
+      cursor:pointer;
+      display:flex; align-items:center; gap:12px;
+      font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+      transition:transform 0.2s, box-shadow 0.2s;
+      pointer-events:auto;
+      box-shadow:0 6px 24px rgba(0,0,0,0.10);
+    }
+    #journey-btn:hover{ transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,0,0,0.15); }
+    .counter{
+      background:#1e3a8a; color:#fff;
+      width:20px; height:20px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px;
+    }
 
-        #chat-stream { flex: 1; padding: 2rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding-bottom: 20px; }
-        .msg { padding: 16px 20px; border-radius: 4px; font-size: 14px; line-height: 1.6; max-width: 85%; animation: fadeUp 0.4s ease; }
-        .msg-ai { background: #f8fafc; color: #334155; align-self: flex-start; border-left: 3px solid #1e3a8a; border-bottom-left-radius: 2px;}
-        .msg-user { background: #111; color: #fff; align-self: flex-end; border-bottom-right-radius: 2px;}
-        
-        .chat-input-area { padding: 1.5rem; border-top: 1px solid #eee; background: #fff; display: flex; gap: 10px; align-items: center; }
-        #user-input { flex: 1; padding: 14px; border: 1px solid #cbd5e1; font-family: 'Montserrat', sans-serif; font-size: 14px; outline: none; transition: border 0.2s; border-radius: 4px; }
-        #user-input:focus { border-color: #1e3a8a; }
-        #send-btn { background: #1e3a8a; color: #fff; border: none; padding: 14px 24px; cursor: pointer; font-weight: bold; font-size: 12px; text-transform: uppercase; border-radius: 4px; }
+    /* Elevator */
+    #elevator{
+      position:absolute; top:50%; right:1.2rem; transform:translateY(-50%);
+      display:flex; flex-direction:column; gap:6px;
+      pointer-events:auto;
+      max-height:70vh; overflow-y:auto; padding:10px 0;
+      scrollbar-width:none;
+    }
+    .floor-item{
+      display:flex; align-items:center; justify-content:flex-end; gap:10px;
+      cursor:pointer; transition:transform 0.15s, opacity 0.15s;
+      opacity:0.75; padding:4px 0;
+    }
+    .floor-item:hover, .floor-item.active{ opacity:1; transform:translateX(-6px); }
+    .floor-label{
+      background:rgba(255,255,255,0.92);
+      padding:8px 14px; border-radius:10px;
+      font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+      box-shadow:0 6px 16px rgba(0,0,0,0.06);
+      color:#1e3a8a; white-space:nowrap; backdrop-filter:blur(8px);
+    }
+    .floor-num{
+      width:32px; height:32px;
+      background:#fff; color:#1e3a8a;
+      border:1px solid #1e3a8a;
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:800; border-radius:50%;
+      box-shadow:0 6px 16px rgba(0,0,0,0.10);
+    }
+    .floor-item.active .floor-num{ background:#1e3a8a; color:#fff; }
 
-        /* BLUEPRINT */
-        #blueprint, #registration {
-            position: absolute; inset: 0; background: rgba(255,255,255,0.99); 
-            z-index: 60; opacity: 0; pointer-events: none; transition: all 0.5s;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            overflow-y: auto; padding: 2rem;
-        }
-        #blueprint.active, #registration.active { opacity: 1; pointer-events: auto; }
-        
-        .bp-container { width: 90%; max-width: 800px; height: 80%; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; height: 100%; }
-        .bp-left { border-right: 1px solid #eee; padding-right: 2rem; display: flex; flex-direction: column; justify-content: center; }
-        .bp-right { display: flex; flex-direction: column; justify-content: flex-start; padding-top: 2rem; gap: 2rem; }
-        
-        .reg-card { background: #fff; border: 1px solid #eee; padding: 3rem; width: 100%; max-width: 400px; text-align: left; box-shadow: 0 20px 60px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; color: #666; }
-        .form-input, .form-select { width: 100%; padding: 12px; border: 1px solid #ddd; font-family: 'Montserrat'; background: #fff; }
-        
-        .plan-card { border: 1px solid #eee; padding: 2rem; transition: all 0.3s; cursor: pointer; border-radius: 8px; }
-        .plan-card:hover { border-color: #1e3a8a; transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .plan-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #22c55e; margin-bottom: 1rem; display: block; }
-        .plan-price { font-size: 1.5rem; font-family: 'Playfair Display'; margin-top: 1rem; display: block; }
-        .plan-btn { width: 100%; padding: 1rem; margin-top: 1rem; background: #1e3a8a; color: #fff; border: none; text-transform: uppercase; font-weight: 700; cursor: pointer; border-radius: 30px; }
-        .close-bp { position: absolute; top: 2rem; right: 2rem; font-size: 2rem; cursor: pointer; z-index: 70; }
+    /* Back button */
+    #back-btn{
+      position:absolute; bottom:2rem; left:50%;
+      transform:translateX(-50%) translateY(80px);
+      background:#1e3a8a; color:#fff;
+      padding:0.9rem 2.2rem;
+      font-weight:800; font-size:12px;
+      text-transform:uppercase; letter-spacing:2px;
+      cursor:pointer; pointer-events:auto;
+      opacity:0; transition:all 0.35s;
+      box-shadow:0 18px 40px rgba(0,0,0,0.18);
+      border-radius:999px;
+    }
+    #back-btn.visible{ opacity:1; transform:translateX(-50%) translateY(0); }
 
-        /* LOADER */
-        #loader { 
-            position: absolute; inset: 0; background: #fff; z-index: 100;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s;
-        }
-        .loader-bar { width: 200px; height: 2px; background: #e2e8f0; margin-top: 1rem; overflow: hidden; }
-        .loader-fill { width: 0%; height: 100%; background: #1e3a8a; transition: width 0.3s; }
-        
-        /* TRANSITION SHIELD (Hides texture pop-in) */
-        #transition-shield {
-            position: absolute; inset: 0; background: #fff; z-index: 90;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.5s;
-        }
-        #transition-shield.active { opacity: 1; pointer-events: auto; }
-        .travel-text { font-family: 'Montserrat'; font-weight: 700; letter-spacing: 4px; font-size: 12px; }
+    /* Right AI panel (safe offline version) */
+    #ai-panel{
+      position:absolute; top:0; right:0; bottom:0; width:440px; max-width:100%;
+      background:rgba(255,255,255,0.96); backdrop-filter:blur(18px);
+      transform:translateX(100%);
+      transition:transform 0.45s cubic-bezier(0.22,1,0.36,1);
+      pointer-events:auto;
+      display:flex; flex-direction:column;
+      z-index:50;
+      box-shadow:-20px 0 50px rgba(0,0,0,0.08);
+      border-left:1px solid rgba(0,0,0,0.08);
+    }
+    #ai-panel.active{ transform:translateX(0); }
 
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .ai-header{ padding:1.6rem; border-bottom:1px solid #eef2f7; background:#fbfdff; position:relative; }
+    .panel-close{ position:absolute; top:14px; right:14px; font-size:22px; cursor:pointer; color:#1e3a8a; }
+    .ai-img-preview{ width:100%; height:170px; object-fit:contain; background:#f3f6fb; border-radius:12px; }
+    .ai-title{ font-family:'Playfair Display'; font-size:1.6rem; margin:0.9rem 0 0.2rem; color:#1e3a8a; }
+    .ai-meta{ font-size:11px; text-transform:uppercase; color:#64748b; letter-spacing:0.6px; }
 
-        #toast {
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-            background: #1e3a8a; color: #fff; padding: 12px 24px;
-            font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
-            opacity: 0; transition: opacity 0.3s; z-index: 300; pointer-events: none;
-        }
-        #toast.active { opacity: 1; }
+    .mode-switcher{ display:flex; background:#f1f5f9; padding:4px; margin-top:12px; border-radius:12px; }
+    .mode-btn{
+      flex:1; padding:10px; border:none; cursor:pointer;
+      font-size:10px; font-weight:800; text-transform:uppercase;
+      color:#94a3b8; background:transparent; border-radius:10px;
+    }
+    .mode-btn.active{ background:#fff; color:#1e3a8a; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    .mode-btn.locked{ opacity:0.55; }
 
-    </style>
+    #chat-stream{
+      flex:1; padding:1.4rem; overflow-y:auto;
+      display:flex; flex-direction:column; gap:0.8rem;
+    }
+    .msg{
+      padding:14px 16px; border-radius:14px;
+      font-size:14px; line-height:1.55; max-width:90%;
+    }
+    .msg-ai{ background:#f8fafc; color:#334155; align-self:flex-start; border-left:3px solid #1e3a8a; }
+    .msg-user{ background:#111; color:#fff; align-self:flex-end; }
+
+    .chat-input-area{
+      padding:1rem; border-top:1px solid #eef2f7;
+      background:#fff; display:flex; gap:10px; align-items:center;
+    }
+    #user-input{
+      flex:1; padding:12px 12px; border:1px solid #cbd5e1;
+      font-family:'Montserrat',sans-serif; font-size:14px;
+      outline:none; border-radius:12px;
+    }
+    #user-input:focus{ border-color:#1e3a8a; }
+    #send-btn{
+      background:#1e3a8a; color:#fff; border:none;
+      padding:12px 16px; cursor:pointer;
+      font-weight:800; font-size:12px; text-transform:uppercase;
+      border-radius:12px;
+    }
+
+    /* Registration + Blueprint */
+    #registration, #blueprint{
+      position:fixed; inset:0;
+      background:rgba(255,255,255,0.98);
+      z-index:60;
+      opacity:0; pointer-events:none;
+      transition:opacity 0.25s;
+      display:flex; align-items:center; justify-content:center;
+      padding:2rem;
+    }
+    #registration.active, #blueprint.active{ opacity:1; pointer-events:auto; }
+    .close-bp{ position:absolute; top:1.2rem; right:1.2rem; font-size:2rem; cursor:pointer; color:#1e3a8a; }
+
+    .reg-card{
+      width:100%; max-width:420px;
+      background:#fff; border:1px solid #eef2f7;
+      padding:2rem; border-radius:18px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.12);
+    }
+    .form-group{ margin:1rem 0; }
+    .form-label{ display:block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#64748b; margin-bottom:8px; }
+    .form-select{ width:100%; padding:12px; border:1px solid #dbe4f0; border-radius:12px; font-family:'Montserrat'; }
+
+    .plan-btn{
+      width:100%;
+      padding:0.9rem 1rem;
+      background:#1e3a8a; color:#fff;
+      border:none; border-radius:999px;
+      text-transform:uppercase; font-weight:900;
+      cursor:pointer; letter-spacing:1px;
+      margin-top:0.5rem;
+    }
+
+    .bp-wrap{
+      width:min(920px, 96vw);
+      display:grid; grid-template-columns: 1fr 1fr;
+      gap:2rem;
+      background:#fff;
+      border:1px solid #eef2f7;
+      border-radius:22px;
+      box-shadow:0 22px 70px rgba(0,0,0,0.14);
+      overflow:hidden;
+    }
+    .bp-left{ padding:2rem; border-right:1px solid #eef2f7; }
+    .bp-right{ padding:2rem; display:flex; flex-direction:column; gap:1rem; }
+    .bp-title{ font-family:'Playfair Display'; font-size:2.2rem; margin:0 0 0.5rem; color:#1e3a8a; }
+    .bp-desc{ color:#475569; margin:0; line-height:1.6; }
+    .bp-step{ margin-top:1rem; padding:12px 12px; border-radius:14px; background:#f8fafc; border:1px solid #eef2f7; }
+    .bp-step b{ display:block; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#22c55e; margin-bottom:6px; }
+
+    .plan-card{
+      border:1px solid #eef2f7; border-radius:18px;
+      padding:1.4rem; transition:transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      cursor:pointer;
+    }
+    .plan-card:hover{ border-color:#1e3a8a; transform:translateY(-4px); box-shadow:0 14px 40px rgba(0,0,0,0.10); }
+    .plan-price{ font-family:'Playfair Display'; font-size:1.6rem; color:#0f172a; }
+
+    /* Loader */
+    #loader{
+      position:fixed; inset:0; background:#fff; z-index:100;
+      display:flex; align-items:center; justify-content:center; flex-direction:column;
+    }
+    .loader-bar{ width:220px; height:3px; background:#e2e8f0; overflow:hidden; border-radius:999px; margin-top:1rem; }
+    .loader-fill{ width:0%; height:100%; background:#1e3a8a; transition:width 0.3s; }
+
+    /* Transition shield */
+    #transition-shield{
+      position:fixed; inset:0; background:#fff; z-index:90;
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none;
+      transition:opacity 0.25s;
+    }
+    #transition-shield.active{ opacity:1; pointer-events:auto; }
+    .travel-text{ font-weight:900; letter-spacing:4px; font-size:12px; color:#0f172a; }
+
+    /* Toast */
+    #toast{
+      position:fixed; top:18px; left:50%; transform:translateX(-50%);
+      background:#1e3a8a; color:#fff;
+      padding:10px 16px; border-radius:999px;
+      font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:1px;
+      opacity:0; transition:opacity 0.2s; z-index:200; pointer-events:none;
+    }
+    #toast.active{ opacity:1; }
+  </style>
 </head>
+
 <body>
+  <div id="toast">Updated</div>
+  <div id="transition-shield"><div class="travel-text">ACCESSING FLOOR...</div></div>
 
-    <div id="toast">Updated</div>
-    <div id="transition-shield"><div class="travel-text">ACCESSING FLOOR...</div></div>
+  <div id="ui-layer">
+    <div id="hud">
+      <h1>LFC SYSTEM</h1>
+      <div class="subtitle"><div class="live-dot"></div> SKY GALLERY</div>
 
-    <div id="ui-layer">
-        <div id="hud">
-            <h1>LFC SYSTEM</h1>
-            <div class="subtitle"><div class="live-dot"></div> SKY CORRIDOR</div>
-            <div id="journey-btn" onclick="startJourneyFlow()">
-                <span>My Journey</span>
-                <div class="counter" id="journey-count">0</div>
-            </div>
-        </div>
-
-        <div id="add-art-btn" onclick="manualAddArt()">
-            <span>+ Add Test Art</span>
-        </div>
-
-        <div id="elevator">
-            <!-- JS Populated -->
-        </div>
-
-        <div id="back-btn" onclick="exitFocus()">
-            <span>← Return to Gallery</span>
-        </div>
-
-        <!-- AI Panel -->
-        <div id="ai-panel">
-            <div class="ai-header">
-                <span class="panel-close" onclick="exitFocus()">×</span>
-                <img id="ai-img" class="ai-img-preview" src="" />
-                <h2 class="ai-title" id="ai-title">Untitled</h2>
-                <div class="ai-meta" id="ai-meta"></div>
-                
-                <div class="mode-switcher">
-                    <button class="mode-btn active" id="btn-docent" onclick="switchMode('docent')">Docent (Free)</button>
-                    <button class="mode-btn locked" id="btn-curator" onclick="switchMode('curator')">Curator (Premium)</button>
-                </div>
-            </div>
-            <div id="chat-stream"></div>
-            <div class="chat-input-area">
-                <input type="text" id="user-input" placeholder="Ask about this artwork..." onkeypress="handleKey(event)">
-                <button id="send-btn" onclick="sendUserMessage()">Send</button>
-            </div>
-        </div>
-
-        <!-- Registration & Blueprint -->
-        <div id="registration">
-            <div class="close-bp" onclick="closeRegistration()">×</div>
-            <div class="reg-card">
-                <h2 style="font-family:'Playfair Display'; margin-bottom:0.5rem;">Visitor Registration</h2>
-                <div class="form-group"><label class="form-label">Age Group</label><select id="reg-age" class="form-select"><option>Teenager</option><option>Adult</option></select></div>
-                <div class="form-group"><label class="form-label">Goal</label><select id="reg-goal" class="form-select"><option>Learn Art</option><option>Collect</option></select></div>
-                <button class="plan-btn" onclick="submitRegistration()">Generate Curriculum</button>
-            </div>
-        </div>
-
-        <div id="blueprint">
-            <div class="close-bp" onclick="closeBlueprint()">×</div>
-            <div class="bp-container">
-                <div class="bp-left">
-                    <h2 style="font-family:'Playfair Display'; font-size:3rem;" id="bp-title">Generating...</h2>
-                    <p style="color:#666;" id="bp-desc">Analyzing...</p>
-                    <div id="bp-steps" style="margin-top:2rem;"></div>
-                </div>
-                <div class="bp-right">
-                    <div class="plan-card"><h3>LFC Live Studio</h3><span class="plan-price">$450</span><button class="plan-btn">Enroll</button></div>
-                    <div class="plan-card"><h3>Self-Guided</h3><span class="plan-price">$120</span><button class="plan-btn">Buy</button></div>
-                </div>
-            </div>
-        </div>
+      <div id="journey-btn">
+        <span>My Journey</span>
+        <div class="counter" id="journey-count">0</div>
+      </div>
     </div>
 
-    <div id="loader"><div class="loader-bar"><div class="loader-fill" id="load-fill"></div></div></div>
-    <div id="canvas-container"></div>
+    <div id="elevator"></div>
 
-    <script>
-        const apiKey = "AIzaSyAyu1PzObg0KF_BsyYqdV_FnKYFlyaFSw8"; // Your API Key
+    <div id="back-btn">← Return to Gallery</div>
 
-        // --- 1. DATA CONFIGURATION ---
-        const FLOORS = [ { id: 0, name: "Reception", type: "reception" } ];
-        const floorNames = ["Fine Art", "Photography", "Design", "Sculpture", "New Media", "Textile", "Performance", "Architecture", "Ceramics", "Film", "Concepts", "Masters"];
-        
-        // --- PASTE YOUR 500+ ARTWORKS JSON HERE IN THE FUTURE ---
-        // Format: { title: "Name", artist: "Name", floor: 1, img: "url", w: 4, h: 3 }
-        const IMPORTED_ART_DATA = []; 
+    <!-- AI panel (OFFLINE SAFE) -->
+    <div id="ai-panel">
+      <div class="ai-header">
+        <span class="panel-close" id="panel-close">×</span>
+        <img id="ai-img" class="ai-img-preview" src="" alt="Artwork preview" />
+        <h2 class="ai-title" id="ai-title">Untitled</h2>
+        <div class="ai-meta" id="ai-meta"></div>
 
-        for(let i=1; i<=12; i++) {
-            const name = floorNames[(i-1) % floorNames.length];
-            let type = "standard";
-            if (name === "Fine Art") type = "fineart";
-            if (name === "New Media") type = "newmedia";
-            FLOORS.push({ id: i, name: name, type: type });
-        }
+        <div class="mode-switcher">
+          <button class="mode-btn active" id="btn-docent">Docent</button>
+          <button class="mode-btn locked" id="btn-curator" title="Premium (not enabled)">Curator</button>
+        </div>
+      </div>
 
-        // --- 2. ENGINE ---
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        const skyColor = new THREE.Color(0xe0f2fe);
-        scene.background = skyColor;
-        scene.fog = new THREE.Fog(skyColor, 20, 150);
+      <div id="chat-stream"></div>
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        container.appendChild(renderer.domElement);
+      <div class="chat-input-area">
+        <input type="text" id="user-input" placeholder="Ask about this artwork..." />
+        <button id="send-btn">Send</button>
+      </div>
+    </div>
 
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.7);
-        scene.add(hemiLight);
-        const sun = new THREE.DirectionalLight(0xfffaed, 0.9);
-        sun.position.set(50, 100, 50);
-        sun.castShadow = true;
-        sun.shadow.mapSize.width = 4096; sun.shadow.mapSize.height = 4096;
-        scene.add(sun);
-        const accentLight = new THREE.DirectionalLight(0xddeeff, 0.4);
-        accentLight.position.set(-20, 30, -10);
-        scene.add(accentLight);
+    <!-- Registration -->
+    <div id="registration">
+      <div class="close-bp" id="close-registration">×</div>
+      <div class="reg-card">
+        <h2 style="font-family:'Playfair Display'; margin:0 0 6px;">Visitor Registration</h2>
+        <p style="margin:0 0 14px; color:#475569; line-height:1.6;">
+          Quick 10-second setup so the “Journey” can generate a learning path.
+        </p>
 
-        // --- 3. MATERIALS ---
-        const textureLoader = new THREE.TextureLoader();
-        const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.1 });
-        const matFloorDark = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
-        const matWallWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }); 
-        const matWallDark = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
-        const matGlass = new THREE.MeshPhysicalMaterial({ color: 0x8899a6, transmission: 0.9, opacity: 0.3, transparent: true, roughness: 0.0, side: THREE.DoubleSide });
-        const matCurtain = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 1.0 });
-        const matLED = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const invisibleMat = new THREE.MeshBasicMaterial({ visible: true, transparent: true, opacity: 0 });
+        <div class="form-group">
+          <label class="form-label">Age Group</label>
+          <select id="reg-age" class="form-select">
+            <option>Teenager</option>
+            <option>Adult</option>
+          </select>
+        </div>
 
-        const interactables = [];
-        const floorHeight = 35; 
-        
-        // --- 4. BUILDER FUNCTIONS ---
-        // We define these BEFORE calling them to avoid ReferenceErrors
-        
-        function buildLevel(level) {
-            const y = level * floorHeight;
-            const group = new THREE.Group();
-            const config = FLOORS[level];
-            const width = 40; const length = 100;
+        <div class="form-group">
+          <label class="form-label">Goal</label>
+          <select id="reg-goal" class="form-select">
+            <option>Learn Art</option>
+            <option>Collect</option>
+            <option>Teach / Curate</option>
+          </select>
+        </div>
 
-            let flMat = matFloor; let wMat = matWallWhite;
-            if(config.type === "newmedia") { flMat = matFloorDark; wMat = matWallDark; }
+        <button class="plan-btn" id="submit-registration">Generate Curriculum</button>
+      </div>
+    </div>
 
-            // Floor
-            const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.5, length), flMat);
-            floorMesh.position.set(0, y, 0); floorMesh.receiveShadow = true;
-            floorMesh.userData = { type: 'floor', y: y+0.5, level: level };
-            interactables.push(floorMesh); group.add(floorMesh);
+    <!-- Blueprint -->
+    <div id="blueprint">
+      <div class="close-bp" id="close-blueprint">×</div>
+      <div class="bp-wrap">
+        <div class="bp-left">
+          <h2 class="bp-title" id="bp-title">Generating...</h2>
+          <p class="bp-desc" id="bp-desc">Analyzing your journey…</p>
+          <div id="bp-steps"></div>
+        </div>
+        <div class="bp-right">
+          <div class="plan-card">
+            <div style="font-weight:900; letter-spacing:1px; text-transform:uppercase; font-size:12px; color:#1e3a8a;">LFC Live Studio</div>
+            <div class="plan-price">$450</div>
+            <div style="color:#475569; margin-top:8px; line-height:1.55;">Guided critique + creation sessions based on your journey tags.</div>
+          </div>
+          <div class="plan-card">
+            <div style="font-weight:900; letter-spacing:1px; text-transform:uppercase; font-size:12px; color:#1e3a8a;">Self-Guided</div>
+            <div class="plan-price">$120</div>
+            <div style="color:#475569; margin-top:8px; line-height:1.55;">Use the generated blueprint as a structured practice plan.</div>
+          </div>
+          <div style="font-size:12px; color:#64748b; line-height:1.55;">
+            (These are placeholders — you can link them later to your real checkout/pages.)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            // Ceiling
-            const ceil = new THREE.Mesh(new THREE.BoxGeometry(width, 0.5, length), wMat);
-            ceil.position.set(0, y+15, 0); ceil.castShadow = true; group.add(ceil);
+  <div id="loader">
+    <div style="font-weight:900; letter-spacing:3px; font-size:12px; text-transform:uppercase; color:#0f172a;">Loading Gallery…</div>
+    <div class="loader-bar"><div class="loader-fill" id="load-fill"></div></div>
+  </div>
 
-            if(config.type === "newmedia") {
-                const curtain = new THREE.Mesh(new THREE.BoxGeometry(1, 15, length), matCurtain);
-                curtain.position.set(-width/2 + 0.5, y+7.5, 0); group.add(curtain);
-                const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 15, length), wMat);
-                rightWall.position.set(width/2 - 0.5, y+7.5, 0); group.add(rightWall);
-            } else if (config.type === "fineart") {
-                const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 15, 45), wMat); w1.position.set(-width/2 + 0.5, y+7.5, -27.5); group.add(w1);
-                const win = new THREE.Mesh(new THREE.BoxGeometry(0.5, 15, 10), matGlass); win.position.set(-width/2 + 0.5, y+7.5, 0); group.add(win);
-                const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 15, 45), wMat); w2.position.set(-width/2 + 0.5, y+7.5, 27.5); group.add(w2);
-                const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 15, length), wMat);
-                rightWall.position.set(width/2 - 0.5, y+7.5, 0); group.add(rightWall);
-            } else {
-                const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 15, length), matGlass);
-                leftWall.position.set(-width/2 + 0.5, y+7.5, 0); group.add(leftWall);
-                const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 15, length), wMat);
-                rightWall.position.set(width/2 - 0.5, y+7.5, 0); group.add(rightWall);
-            }
+  <div id="canvas-container"></div>
 
-            // Railings
-            const backRail = new THREE.Mesh(new THREE.BoxGeometry(width, 2, 0.1), matGlass);
-            backRail.position.set(0, y+1, -length/2); group.add(backRail);
-            const frontRail = new THREE.Mesh(new THREE.BoxGeometry(width, 2, 0.1), matGlass);
-            frontRail.position.set(0, y+1, length/2); group.add(frontRail);
-
-            // Populate Art
-            if(level === 0) {
-                 createArt({floor:0, w:8, h:5, x:width/2 - 1, y:y+6, z:0, rot:-Math.PI/2, title:"LFC SYSTEM", img:"https://placehold.co/800x600/111/fff?text=LFC+SYSTEM"}, true, group);
-            } else {
-                // If imported data exists for this floor, use it
-                const floorArt = IMPORTED_ART_DATA.filter(a => a.floor === level);
-                if(floorArt.length > 0) {
-                    floorArt.forEach(a => createArt(a, false, group));
-                } else {
-                    // Fallback procedural for empty floors
-                    populateProcedural(level, group);
-                }
-            }
-            scene.add(group);
-        }
-
-        function populateProcedural(level, group) {
-            const wallX = 19.4; const startZ = -40; const spacing = 15;
-            for(let i=0; i<6; i++) {
-                const z = startZ + (i * spacing);
-                const imgId = (level * 10 + i) % 100; 
-                createArt({
-                    floor: level, title: `Work ${level}-${i+1}`, artist: "Artist " + i, year: "2024",
-                    img: `https://images.unsplash.com/photo-${1500000000000 + imgId}?w=800&q=80`,
-                    w: 4, h: 5, x: wallX, z: z, rot: -Math.PI/2,
-                    y: (level * floorHeight) + 6
-                }, false, group);
-            }
-        }
-
-        function createArt(data, isInfo, parentGroup) {
-            const group = new THREE.Group();
-            group.position.set(data.x, data.y, data.z);
-            group.rotation.y = data.rot;
-
-            const frame = new THREE.Mesh(new THREE.BoxGeometry(data.w+0.1, data.h+0.1, 0.1), new THREE.MeshStandardMaterial({color: 0x111}));
-            group.add(frame);
-            
-            const placeholderMat = new THREE.MeshBasicMaterial({ color: 0xcccccc });
-            const canvas = new THREE.Mesh(new THREE.PlaneGeometry(data.w, data.h), placeholderMat);
-            canvas.position.z = 0.06; canvas.userData.isCanvas = true; 
-            group.add(canvas);
-            
-            if(data.img) {
-                textureLoader.load(data.img, (tex) => {
-                    tex.encoding = THREE.sRGBEncoding;
-                    canvas.material = new THREE.MeshBasicMaterial({ map: tex });
-                });
-            }
-
-            if(!isInfo) {
-                const hitbox = new THREE.Mesh(new THREE.BoxGeometry(data.w, data.h, 0.5), invisibleMat);
-                hitbox.userData = { 
-                    type: 'art', data: data,
-                    viewPos: { x: data.x + Math.sin(data.rot)*8, y: data.y, z: data.z + Math.cos(data.rot)*8 },
-                    lookAt: { x: data.x, y: data.y, z: data.z }
-                };
-                interactables.push(hitbox); group.add(hitbox);
-            }
-            parentGroup.add(group);
-        }
-
-        // --- 6. INITIALIZE SCENE ---
-        // Base environment
-        const infiniteFloor = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), matFloor);
-        infiniteFloor.rotation.x = -Math.PI / 2;
-        infiniteFloor.receiveShadow = true;
-        scene.add(infiniteFloor);
-        const bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), invisibleMat);
-        bgPlane.rotation.x = -Math.PI / 2;
-        bgPlane.userData = { type: 'background' };
-        interactables.push(bgPlane); scene.add(bgPlane);
-        const walkPlane = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), invisibleMat);
-        walkPlane.rotation.x = -Math.PI / 2;
-        walkPlane.userData = { type: 'floor' };
-        interactables.push(walkPlane); scene.add(walkPlane);
-
-        // Try to fetch external JSON (Enterprise Feature)
-        fetch('artworks.json').then(r => {
-            if(r.ok) return r.json();
-            throw new Error('No external file');
-        }).then(data => {
-            // If external file exists, use it
-            IMPORTED_ART_DATA.push(...data);
-            initLevels();
-        }).catch(e => {
-            // Otherwise just init with defaults
-            initLevels();
-        });
-
-        function initLevels() {
-            // Build visible levels immediately
-            buildLevel(0);
-            buildLevel(1);
-            
-            // Build UI
-            const elev = document.getElementById('elevator');
-            FLOORS.slice().reverse().forEach(f => {
-                const b = document.createElement('div');
-                b.className = 'floor-item';
-                b.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`;
-                b.onclick = () => { goToLevel(f.id); };
-                b.id = `flr-${f.id}`;
-                elev.appendChild(b);
-            });
-            updateElevator(0);
-            
-            // Remove Loader
-            document.getElementById('load-fill').style.width = '100%';
-            setTimeout(() => document.getElementById('loader').style.opacity=0, 500);
-            setTimeout(() => document.getElementById('loader').style.display='none', 1000);
-        }
-
-        // --- 7. NAVIGATION ---
-        camera.position.set(0, 5, 30); 
-        let isDragging=false, startX=0, startY=0, lon=0, lat=0;
-        
-        const onDown = (x,y, target) => { if(target !== renderer.domElement) return; if(isFocusing) { handleClick(x,y); return; } isDragging=true; startX=x; startY=y; };
-        const onMove = (x,y) => { if(isDragging) { lon -= (x - startX) * 0.15; lat += (y - startY) * 0.15; lat = Math.max(-85, Math.min(85, lat)); startX=x; startY=y; }};
-        const onUp = (x,y, target) => { isDragging=false; if(target === renderer.domElement && Math.abs(x-startX)<5 && Math.abs(y-startY)<5) handleClick(x,y); };
-
-        document.addEventListener('mousedown', e=>onDown(e.clientX, e.clientY, e.target));
-        document.addEventListener('mousemove', e=>onMove(e.clientX, e.clientY));
-        document.addEventListener('mouseup', e=>onUp(e.clientX, e.clientY, e.target));
-        document.addEventListener('touchstart', e=>onDown(e.touches[0].clientX, e.touches[0].clientY, e.target));
-        document.addEventListener('touchmove', e=>onMove(e.touches[0].clientX, e.touches[0].clientY));
-        document.addEventListener('touchend', e=>onUp(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.target));
-
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        let isFocusing = false;
-        let savedPos = new THREE.Vector3();
-        let lookTarget = null;
-
-        function handleClick(x, y) {
-            mouse.x = (x/window.innerWidth)*2-1; mouse.y = -(y/window.innerHeight)*2+1;
-            if (isFocusing) {
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(interactables);
-                if(intersects.length > 0 && intersects[0].object.userData.type === 'art') return;
-                exitFocus(); return;
-            }
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(interactables);
-            if(intersects.length>0) {
-                const target = intersects[0].object;
-                if(target.userData.type==='floor') {
-                    const currentY = Math.floor(camera.position.y / floorHeight) * floorHeight;
-                    moveCamera(intersects[0].point.x, currentY + 5, intersects[0].point.z);
-                } else if(target.userData.type==='art') focusArt(target.userData);
-            }
-        }
-
-        function moveCamera(x, y, z) { new TWEEN.Tween(camera.position).to({x,y,z}, 1500).easing(TWEEN.Easing.Cubic.Out).start(); }
-        function focusArt(data) {
-            isFocusing = true; savedPos.copy(camera.position);
-            new TWEEN.Tween(camera.position).to(data.viewPos, 1200).easing(TWEEN.Easing.Cubic.InOut).start();
-            lookTarget = new THREE.Vector3(data.lookAt.x, data.lookAt.y, data.lookAt.z);
-            setTimeout(() => { document.getElementById('back-btn').classList.add('visible'); startAI(data.data); }, 1000);
-        }
-        function exitFocus() {
-            isFocusing = false; lookTarget = null;
-            document.getElementById('back-btn').classList.remove('visible');
-            document.getElementById('ai-panel').classList.remove('active');
-            document.getElementById('blueprint').classList.remove('active');
-            document.getElementById('registration').classList.remove('active');
-            new TWEEN.Tween(camera.position).to(savedPos, 1000).easing(TWEEN.Easing.Cubic.Out).start();
-        }
-
-        // --- 8. LOGIC: JOURNEY, REGISTRATION, AI ---
-        let collectedInterests = [];
-        let currentArtData = null;
-        let chatHistory = []; 
-        let currentPersona = 'docent';
-        let userProfile = { age: null, goal: null };
-
-        async function callGemini(prompt) {
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
-                });
-                const data = await response.json();
-                return JSON.parse(data.candidates[0].content.parts[0].text);
-            } catch (e) { return null; }
-        }
-
-        window.switchMode = function(mode) {
-            currentPersona = mode;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-' + mode).classList.add('active');
-        }
-
-        function startAI(data) {
-            currentArtData = data;
-            chatHistory = []; 
-            document.getElementById('ai-img').src = data.img;
-            document.getElementById('ai-title').innerText = data.title;
-            document.getElementById('ai-meta').innerText = `${data.artist || 'Unknown'}, ${data.year || '202X'}`;
-            document.getElementById('chat-stream').innerHTML='';
-            document.getElementById('ai-panel').classList.add('active');
-            switchMode('docent');
-            addMsg('ai', "Welcome. I am your guide. What strikes you first about this piece?");
-        }
-
-        function handleKey(e) { if(e.key === 'Enter') sendUserMessage(); }
-        function sendUserMessage() {
-            const input = document.getElementById('user-input');
-            const txt = input.value.trim();
-            if(txt) { sendText(txt); input.value=''; }
-        }
-
-        async function sendText(txt) {
-            addMsg('user', txt);
-            chatHistory.push({role:'user', parts:[{text:txt}]});
-            const loadId = addMsg('ai', '...');
-            
-            const historyTxt = chatHistory.map(m => `${m.role}: ${m.parts[0].text}`).join('\n');
-            const prompt = `Role: ${currentPersona}. Art: "${currentArtData.title}". History: ${historyTxt}. User: ${userProfile.age}. 1. Answer user. 2. Decide if saveable. Output JSON: { "reply": "...", "save": boolean, "tag": "Technique/History/Emotion" }`;
-
-            const res = await callGemini(prompt);
-            document.getElementById('msg-'+loadId).remove(); 
-
-            if(res) {
-                addMsg('ai', res.reply);
-                chatHistory.push({role:'model', parts:[{text:res.reply}]});
-                if(res.save) {
-                    setTimeout(() => {
-                        const btnId = Date.now();
-                        const div = document.createElement('div');
-                        div.style.textAlign='center';
-                        div.innerHTML = `<button id="btn-${btnId}" style="margin-top:10px; padding:10px; cursor:pointer; border:1px solid #ddd; background:#fff; border-radius:20px;">+ Save Insight: ${res.tag}</button>`;
-                        document.getElementById('chat-stream').appendChild(div);
-                        document.getElementById(`btn-${btnId}`).onclick = function() {
-                            this.disabled = true; this.innerText = "Saved";
-                            collectedInterests.push({art: currentArtData.title, tag: res.tag});
-                            document.getElementById('journey-count').innerText = collectedInterests.length;
-                        };
-                    }, 500);
-                }
-            }
-        }
-
-        window.startJourneyFlow = function() {
-            exitFocus();
-            if (!userProfile.age) document.getElementById('registration').classList.add('active');
-            else showFinalCurriculum();
-        }
-
-        window.closeRegistration = function() { document.getElementById('registration').classList.remove('active'); }
-        
-        window.submitRegistration = function() {
-            userProfile.age = document.getElementById('reg-age').value;
-            userProfile.goal = document.getElementById('reg-goal').value;
-            document.getElementById('registration').classList.remove('active');
-            showFinalCurriculum();
-        }
-
-        async function showFinalCurriculum() {
-            document.getElementById('blueprint').classList.add('active');
-            document.getElementById('bp-title').innerText = "Generating...";
-            document.getElementById('bp-steps').innerHTML = "";
-
-            const prompt = `User: ${userProfile.age}, Goal: ${userProfile.goal}. Interests: ${JSON.stringify(collectedInterests)}. Create 3-Level Curriculum. Output JSON: { "title": "...", "desc": "...", "steps": ["Step 1...", "Step 2...", "Step 3..."] }`;
-            const data = await callGemini(prompt);
-            if(data) {
-                document.getElementById('bp-title').innerText = data.title;
-                document.getElementById('bp-desc').innerText = data.desc;
-                let html = "";
-                data.steps.forEach((s, i) => html += `<div style="margin-bottom:1.5rem"><div style="font-weight:bold; font-size:11px; text-transform:uppercase; color:#22c55e;">LEVEL ${i+1}</div><div style="font-size:13px; color:#666;">${s}</div></div>`);
-                document.getElementById('bp-steps').innerHTML = html;
-            }
-        }
-
-        window.closeBlueprint = function() { document.getElementById('blueprint').classList.remove('active'); }
-        
-        function addMsg(role, txt) {
-            const d = document.createElement('div'); d.className=`msg msg-${role}`; d.innerText=txt;
-            const s = document.getElementById('chat-stream');
-            s.appendChild(d); s.scrollTop = s.scrollHeight;
-            return id = Date.now();
-        }
-
-        // --- MANUAL ADD ---
-        window.manualAddArt = function() {
-            const url = prompt("Paste Image URL:", "https://images.unsplash.com/photo-1549490349-8643362247b5?w=800");
-            if(url) {
-                const currentY = Math.floor(camera.position.y / floorHeight) * floorHeight;
-                const target = interactables.find(obj => obj.userData.type === 'art' && Math.abs(obj.parent.position.y - currentY) < 10);
-                if(target) {
-                    target.userData.data.img = url; target.userData.data.title = "User Upload";
-                    const canvas = target.parent.children.find(c => c.userData.isCanvas);
-                    if(canvas) {
-                        const tex = textureLoader.load(url); tex.encoding = THREE.sRGBEncoding;
-                        canvas.material.map = tex; canvas.material.needsUpdate = true;
-                    }
-                    showToast("Updated!");
-                }
-            }
-        }
-        function showToast(msg) { const t=document.getElementById('toast'); t.innerText=msg; t.classList.add('active'); setTimeout(()=>t.classList.remove('active'),2000); }
-
-        function updateElevator(l) {
-            document.querySelectorAll('.floor-item').forEach(b => b.classList.remove('active'));
-            document.getElementById(`flr-${l}`)?.classList.add('active');
-        }
-
-        window.goToLevel = function(lvl) {
-            exitFocus();
-            // Lazy load check happens inside buildLevel call if we structure differently, 
-            // but here we just ensure the level architecture exists.
-            buildLevel(lvl); 
-            updateElevator(lvl);
-            moveCamera(0, (lvl*floorHeight)+5, 30);
-        };
-        
-        window.toggleWeather = function() {
-            isRaining = !isRaining;
-            const btn = document.getElementById('weather-btn');
-            if(isRaining) { btn.innerHTML = "🌧️"; new TWEEN.Tween(scene.background).to({r:0.53, g:0.6, b:0.65}, 2000).start(); new TWEEN.Tween(sun).to({intensity: 0.5}, 2000).start(); } 
-            else { btn.innerHTML = "☀️"; new TWEEN.Tween(scene.background).to({r:0.85, g:0.91, b:0.99}, 2000).start(); new TWEEN.Tween(sun).to({intensity: 1.5}, 2000).start(); }
-        }
-        let isRaining = false;
-
-        // --- LOOP ---
-        function animate() {
-            requestAnimationFrame(animate);
-            TWEEN.update();
-            if(lookTarget) camera.lookAt(lookTarget);
-            else {
-                lat = Math.max(-85, Math.min(85, lat));
-                const phi = THREE.MathUtils.degToRad(90 - lat);
-                const theta = THREE.MathUtils.degToRad(lon);
-                camera.lookAt(camera.position.clone().add(new THREE.Vector3(500 * Math.sin(phi) * Math.cos(theta), camera.position.y + 500 * Math.cos(phi), 500 * Math.sin(phi) * Math.sin(theta))));
-            }
-            renderer.render(scene, camera);
-        }
-        animate();
-        
-        window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
-
-    </script>
+  <script src="./app.js"></script>
 </body>
 </html>
