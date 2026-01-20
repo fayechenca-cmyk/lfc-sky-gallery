@@ -1,429 +1,338 @@
 [
   {
-    "id": "painting_001",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0001",
+    "format": "fineart",
     "title": "Untitled",
     "artist": "Toshiyuki Konishi",
     "year": "2013",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc32d7c87c9edc5cb64_Toshiyuki%20Konishi%2C%20untitled.jpg",
-      "alt": "Toshiyuki Konishi - Untitled"
-    },
-    "medium": ["Watercolor", "Oil pastel", "Paperboard"],
-    "size": { "unit": "cm", "value": { "width": 82, "height": 62, "depth": null }, "raw": "82 × 62cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc32d7c87c9edc5cb64_Toshiyuki%20Konishi%2C%20untitled.jpg",
+    "size": "82 × 62cm",
+    "medium": "Watercolor and oil pastel on paperboard",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "painting_002",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0002",
+    "format": "fineart",
     "title": "Thriller",
     "artist": "Holly ホーリー",
     "year": "2023",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd118b1ad3911fe19e6_Hooly%2C%20Untitled.jpg",
-      "alt": "Holly ホーリー - Thriller"
-    },
-    "medium": ["Acrylic", "Canvas"],
-    "size": { "unit": "cm", "value": { "width": 100, "height": 55, "depth": null }, "raw": "100 x 55cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd118b1ad3911fe19e6_Hooly%2C%20Untitled.jpg",
+    "size": "100 x 55cm",
+    "medium": "Acrylic on Canvas",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "painting_003",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0003",
+    "format": "fineart",
     "title": "Commission artwork",
     "artist": "Zoe",
     "year": "2023",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd1403ef4a65e75854a_Zoe.jpg",
-      "alt": "Zoe - Commission artwork"
-    },
-    "medium": ["Acrylic", "Canvas"],
-    "size": { "unit": "cm", "value": { "width": 96, "height": 73, "depth": null }, "raw": "96 × 73cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd1403ef4a65e75854a_Zoe.jpg",
+    "size": "96 × 73cm",
+    "medium": "Acrylic on canvas",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "painting_004",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0004",
+    "format": "fineart",
     "title": "On the Study of St. Jak",
     "artist": "Manuel Mathieu",
     "year": "2019",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc21c35a5e755c3f5e6_Manuel%20Mathieu%2C%20.jpg",
-      "alt": "Manuel Mathieu - On the Study of St. Jak"
-    },
-    "medium": ["Mixed media", "Canvas"],
-    "size": { "unit": "cm", "value": { "width": 91, "height": 76, "depth": null }, "raw": "91×76cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc21c35a5e755c3f5e6_Manuel%20Mathieu%2C%20.jpg",
+    "size": "91×76cm",
+    "medium": "Mixed media on canvas",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "painting_005",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0005",
+    "format": "sculpture",
     "title": "Clocks 3:00pm",
     "artist": "Emma Courtney Clarice Cook",
     "year": "2023",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd1448f342e8b434b0e_Emma%20Courtney%20Clarice%20cook.jpg",
-      "alt": "Emma Courtney Clarice Cook - Clocks 3:00pm"
-    },
-    "medium": ["Oil paint", "Acrylic", "Upholstery fabric", "Walnut wood"],
-    "size": { "unit": "cm", "value": { "width": 72.4, "height": 97.8, "depth": 3.8 }, "raw": "72.4 x 97.8 x 3.8cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd1448f342e8b434b0e_Emma%20Courtney%20Clarice%20cook.jpg",
+    "size": "72.4 x 97.8 x 3.8cm",
+    "medium": "Oil paint, acrylic, upholstery fabric, walnut wood",
+    "materials": "oil paint; acrylic; upholstery fabric; walnut wood",
+    "notes": ""
   },
   {
-    "id": "sculpture_001",
-    "floor": "sculpture",
-    "section": "Contemporary Painting Collection",
-    "discipline": "sculpture",
+    "id": "lfc_paint_0006",
+    "format": "sculpture",
     "title": "Aluminium Monochrome II (Yellow) 1/4",
     "artist": "Angela de la Cruz",
     "year": "2020",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd1a4ecd9797b3d1881_Angela%20de%20la%20Cruz%2C%20Aluminium%20Monochrome%20II%20%28Yellow%29.jpg",
-      "alt": "Angela de la Cruz - Aluminium Monochrome II (Yellow) 1/4"
-    },
-    "medium": ["Aluminium"],
-    "size": { "unit": "cm", "value": { "width": 177, "height": 58, "depth": 16 }, "raw": "177 x 58 x 16cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd1a4ecd9797b3d1881_Angela%20de%20la%20Cruz%2C%20Aluminium%20Monochrome%20II%20%28Yellow%29.jpg",
+    "size": "177 x 58 x 16cm",
+    "medium": "Aluminium",
+    "materials": "aluminium",
+    "notes": ""
   },
   {
-    "id": "painting_006",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0007",
+    "format": "fineart",
     "title": "Charla de Seis",
     "artist": "Mercedes Lianos",
     "year": "2021",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd176bd9da194982c6e_Mercedes%2C%20Llanos%2C%20Charla%20de%20Seis.jpg",
-      "alt": "Mercedes Lianos - Charla de Seis"
-    },
-    "medium": ["011 on Canvas"],
-    "size": { "unit": "cm", "value": { "width": 183, "height": 213, "depth": null }, "raw": "183 x 213cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd176bd9da194982c6e_Mercedes%2C%20Llanos%2C%20Charla%20de%20Seis.jpg",
+    "size": "183 x 213cm",
+    "medium": "011 on Canvas",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "print_001",
-    "floor": "print",
-    "section": "Contemporary Painting Collection",
-    "discipline": "print",
+    "id": "lfc_paint_0008",
+    "format": "print",
     "title": "Untitled 4/20",
     "artist": "Unknown",
     "year": "",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc3dd7dd8df432bec0a_WechatIMG27.jpg",
-      "alt": "Unknown - Untitled 4/20"
-    },
-    "medium": ["Woodblock print"],
-    "size": {
-      "unit": "cm",
-      "raw": "Image: 20×15cm; Frame: 31×21cm",
-      "image": { "width": 20, "height": 15 },
-      "frame": { "width": 31, "height": 21 }
-    },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc3dd7dd8df432bec0a_WechatIMG27.jpg",
+    "size": "Image: 20×15cm; Frame: 31×21cm",
+    "medium": "Woodblock print",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "print_002",
-    "floor": "print",
-    "section": "Contemporary Painting Collection",
-    "discipline": "print",
+    "id": "lfc_paint_0009",
+    "format": "print",
     "title": "Venus",
     "artist": "Takeru Amano",
     "year": "2016",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc313db5127a75d6493_Takeru%20Amano%2C%20venus.jpg",
-      "alt": "Takeru Amano - Venus"
-    },
-    "medium": ["Serigraphy"],
-    "size": { "unit": "cm", "value": { "width": 53, "height": 66, "depth": null }, "raw": "53 x 66 cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc313db5127a75d6493_Takeru%20Amano%2C%20venus.jpg",
+    "size": "53 x 66 cm",
+    "medium": "Serigraphy",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "drawing_001",
-    "floor": "sketch",
-    "section": "Contemporary Painting Collection",
-    "discipline": "drawing",
+    "id": "lfc_paint_0010",
+    "format": "fineart",
     "title": "Untitled (tok-15)",
     "artist": "Toshiyuki Konishi",
     "year": "2016",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc3f3b36e7f531194fa_Toshiyuki%20Konishi%2Cuntitled%202.jpg",
-      "alt": "Toshiyuki Konishi - Untitled (tok-15)"
-    },
-    "medium": ["Oil", "Paper"],
-    "size": { "unit": "cm", "value": { "width": 31.5, "height": 22, "depth": null }, "raw": "31.5 × 22cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc3f3b36e7f531194fa_Toshiyuki%20Konishi%2Cuntitled%202.jpg",
+    "size": "31.5 × 22cm",
+    "medium": "Oil on paper",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "print_003",
-    "floor": "print",
-    "section": "Contemporary Painting Collection",
-    "discipline": "print",
+    "id": "lfc_paint_0011",
+    "format": "print",
     "title": "Brigitte Bardot",
     "artist": "Keens van Dongen",
     "year": "1964",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2bbe0388b8a6cbab0_Keends%20van%20Dongen%2C%20Brigitte%20Bardot.jpg",
-      "alt": "Keens van Dongen - Brigitte Bardot"
-    },
-    "medium": ["Lithograph"],
-    "size": { "unit": "cm", "value": { "width": 58, "height": 44, "depth": null }, "raw": "58 x 44 cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2bbe0388b8a6cbab0_Keends%20van%20Dongen%2C%20Brigitte%20Bardot.jpg",
+    "size": "58 x 44 cm",
+    "medium": "Lithograph",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "painting_007",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0012",
+    "format": "fineart",
     "title": "St Jak 2",
     "artist": "Manuel Mathieu",
     "year": "2019",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc292953bb8b00b9e43_Manuel%20Mathieu%2C%20St%20Jak%202.jpg",
-      "alt": "Manuel Mathieu - St Jak 2"
-    },
-    "medium": ["Mixed media", "Canvas"],
-    "size": { "unit": "cm", "value": { "width": 178, "height": 160, "depth": null }, "raw": "178 × 160cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc292953bb8b00b9e43_Manuel%20Mathieu%2C%20St%20Jak%202.jpg",
+    "size": "178 × 160cm",
+    "medium": "Mixed media on canvas",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "painting_008",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0013",
+    "format": "fineart",
     "title": "Tregua",
     "artist": "Alejandro Campins Fleita",
     "year": "2014",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2c6cb5aeb2e8b78c9_WechatIMG30.jpg",
-      "alt": "Alejandro Campins Fleita - Tregua"
-    },
-    "medium": ["Oil", "Linen canvas"],
-    "size": { "unit": "cm", "value": { "width": 160, "height": 230, "depth": null }, "raw": "160 × 230cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2c6cb5aeb2e8b78c9_WechatIMG30.jpg",
+    "size": "160 × 230cm",
+    "medium": "Oil on linen canvas",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "print_004",
-    "floor": "print",
-    "section": "Contemporary Painting Collection",
-    "discipline": "print",
+    "id": "lfc_paint_0014",
+    "format": "print",
     "title": "Hand",
     "artist": "Mary Farrell",
     "year": "2006",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc32d7c87c9edc5cb4c_WechatIMG13.jpg",
-      "alt": "Mary Farrell - Hand"
-    },
-    "medium": ["Woodblock Print"],
-    "size": { "unit": "cm", "value": { "width": 16, "height": 15, "depth": null }, "raw": "16 x 15 cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc32d7c87c9edc5cb4c_WechatIMG13.jpg",
+    "size": "16 x 15 cm",
+    "medium": "Woodblock Print",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "drawing_002",
-    "floor": "sketch",
-    "section": "Contemporary Painting Collection",
-    "discipline": "drawing",
+    "id": "lfc_paint_0015",
+    "format": "drawing",
     "title": "Unified City",
     "artist": "Daisuke Tajima",
     "year": "2017",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc264bdc2deec3285fe_Daisuke%20Tajima%2C%20.jpg",
-      "alt": "Daisuke Tajima - Unified City"
-    },
-    "medium": ["Fountain pen", "Canson paper"],
-    "size": { "unit": "cm", "value": { "width": 80.1, "height": 53.3, "depth": null }, "raw": "80.1 × 53.3cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc264bdc2deec3285fe_Daisuke%20Tajima%2C%20.jpg",
+    "size": "80.1 × 53.3cm",
+    "medium": "Fountain pen, Canson paper",
+    "materials": "fountain pen; paper",
+    "notes": ""
   },
   {
-    "id": "drawing_003",
-    "floor": "sketch",
-    "section": "Contemporary Painting Collection",
-    "discipline": "drawing",
+    "id": "lfc_paint_0016",
+    "format": "drawing",
     "title": "21–21 <Design Sight>",
     "artist": "Anzai Tadashi",
     "year": "2007",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc34ce422866384e86a_Tadao%20Ando%2C%20Design%20Sight.jpg",
-      "alt": "Anzai Tadashi - 21–21 <Design Sight>"
-    },
-    "medium": ["Color pencils", "Paper"],
-    "size": { "unit": "cm", "value": { "width": 16.2, "height": 11.6, "depth": null }, "raw": "16.2 × 11.6cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc34ce422866384e86a_Tadao%20Ando%2C%20Design%20Sight.jpg",
+    "size": "16.2 × 11.6cm",
+    "medium": "Color pencils on Paper",
+    "materials": "colored pencil; paper",
+    "notes": ""
   },
   {
-    "id": "painting_009",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0017",
+    "format": "fineart",
     "title": "Untitled",
     "artist": "Chevy Chace",
     "year": "2022",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68851c766476ace0ea97d5a6_Screenshot%202025-07-26%20at%2011.19.51%E2%80%AFAM.png",
-      "alt": "Chevy Chace - Untitled"
-    },
-    "medium": ["Oil", "Canvas"],
-    "size": { "unit": "cm", "value": { "width": 215, "height": 245, "depth": null }, "raw": "215 x 245cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68851c766476ace0ea97d5a6_Screenshot%202025-07-26%20at%2011.19.51%E2%80%AFAM.png",
+    "size": "215 x 245cm",
+    "medium": "Oil on Canvas",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "print_005",
-    "floor": "print",
-    "section": "Contemporary Painting Collection",
-    "discipline": "print",
+    "id": "lfc_paint_0018",
+    "format": "print",
     "title": "Oculus III",
     "artist": "Renato Nicolodi",
     "year": "2022",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd15daf006de6fe4c77_Renato%20Nicolodi%2C%20Oculus%20III.jpg",
-      "alt": "Renato Nicolodi - Oculus III"
-    },
-    "medium": ["Lithograph", "From original woodblock"],
-    "size": { "unit": "cm", "value": { "width": 105, "height": 105, "depth": null }, "raw": "105 × 105cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd15daf006de6fe4c77_Renato%20Nicolodi%2C%20Oculus%20III.jpg",
+    "size": "105 × 105cm",
+    "medium": "Lithograph from original woodblock",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "print_006",
-    "floor": "print",
-    "section": "Contemporary Painting Collection",
-    "discipline": "print",
+    "id": "lfc_paint_0019",
+    "format": "print",
     "title": "The Knight",
     "artist": "Marc Brunier Mestas",
     "year": "2016",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc22219a5da53515fcb_WechatIMG28.jpg",
-      "alt": "Marc Brunier Mestas - The Knight"
-    },
-    "medium": ["Lithograph", "From original woodblock"],
-    "size": { "unit": "cm", "value": { "width": 26, "height": 26, "depth": null }, "raw": "26 × 26cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc22219a5da53515fcb_WechatIMG28.jpg",
+    "size": "26 × 26cm",
+    "medium": "Lithograph from original woodblock",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "photo_001",
-    "floor": "photograph",
-    "section": "Contemporary Painting Collection",
-    "discipline": "photograph",
+    "id": "lfc_paint_0020",
+    "format": "photograph",
     "title": "Shibuya Theatre, Tokyo",
     "artist": "Hiroshi Sugimoto",
     "year": "2015",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2b0111adde65dce19_Hiroshi%20Sugimoto%2C%20Paramount%20Theatre%2C%20Newark.jpg",
-      "alt": "Hiroshi Sugimoto - Shibuya Theatre, Tokyo"
-    },
-    "medium": ["Gelatin silver print"],
-    "size": { "unit": "cm", "value": { "width": 51, "height": 69, "depth": null }, "raw": "51 × 69cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2b0111adde65dce19_Hiroshi%20Sugimoto%2C%20Paramount%20Theatre%2C%20Newark.jpg",
+    "size": "51 × 69cm",
+    "medium": "Gelatin silver print",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "print_007",
-    "floor": "print",
-    "section": "Contemporary Painting Collection",
-    "discipline": "print",
+    "id": "lfc_paint_0021",
+    "format": "print",
     "title": "Spirit of the Tile River Galaxy",
     "artist": "A.E.N",
     "year": "2007",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/6882a473adab3021105802ac_Screenshot%202025-07-24%20at%202.23.47%E2%80%AFPM.png",
-      "alt": "A.E.N - Spirit of the Tile River Galaxy"
-    },
-    "medium": ["Linen rubber block print", "Hand-colored"],
-    "size": { "unit": "cm", "value": { "width": 23, "height": 15.5, "depth": null }, "raw": "23 × 15.5cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/6882a473adab3021105802ac_Screenshot%202025-07-24%20at%202.23.47%E2%80%AFPM.png",
+    "size": "23 × 15.5cm",
+    "medium": "Linen rubber block print, hand-colored",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "drawing_004",
-    "floor": "sketch",
-    "section": "Contemporary Painting Collection",
-    "discipline": "drawing",
+    "id": "lfc_paint_0022",
+    "format": "drawing",
     "title": "I must be seeing things",
     "artist": "Loris Cecchini",
     "year": "2010",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/6882a05d44b91563c4fd2565_Screenshot%202025-07-24%20at%202.06.29%E2%80%AFPM.png",
-      "alt": "Loris Cecchini - I must be seeing things"
-    },
-    "medium": ["Watercolour", "Ink", "Pencil", "Encapsulated"],
-    "size": { "unit": "cm", "value": { "width": 63.2, "height": 83, "depth": null }, "raw": "63.2×83cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/6882a05d44b91563c4fd2565_Screenshot%202025-07-24%20at%202.06.29%E2%80%AFPM.png",
+    "size": "63.2 × 83cm",
+    "medium": "Watercolour, ink and pencil, encapsulated",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "painting_010",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0023",
+    "format": "fineart",
     "title": "The Great Bodhisattva of Eight Spirals",
     "artist": "Keiko Moriuchi",
     "year": "2010",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/6882a5d31c263bbf3ed403c7_Screenshot%202025-07-24%20at%202.29.48%E2%80%AFPM.png",
-      "alt": "Keiko Moriuchi - The Great Bodhisattva of Eight Spirals"
-    },
-    "medium": ["Mixed media", "Canvas"],
-    "size": {
-      "unit": "cm",
-      "raw": "Image: 26 × 24cm; Frame: 44 × 42cm",
-      "image": { "width": 26, "height": 24 },
-      "frame": { "width": 44, "height": 42 }
-    },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/6882a5d31c263bbf3ed403c7_Screenshot%202025-07-24%20at%202.29.48%E2%80%AFPM.png",
+    "size": "Image: 26 × 24cm; Frame: 44 × 42cm",
+    "medium": "Mixed media on canvas",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "print_008",
-    "floor": "print",
-    "section": "Contemporary Painting Collection",
-    "discipline": "print",
+    "id": "lfc_paint_0024",
+    "format": "print",
     "title": "Spirit of the Tile River Galaxy",
     "artist": "Kenji Hoshi",
     "year": "2007",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc35daf006de6fe4888_Layer%2016193.jpg",
-      "alt": "Kenji Hoshi - Spirit of the Tile River Galaxy"
-    },
-    "medium": ["Linen rubber block print", "Hand-colored"],
-    "size": { "unit": "cm", "value": { "width": 23, "height": 15.5, "depth": null }, "raw": "23 × 15.5cm" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc35daf006de6fe4888_Layer%2016193.jpg",
+    "size": "23 × 15.5cm",
+    "medium": "Linen rubber block print, hand-colored",
+    "materials": "",
+    "notes": ""
   },
   {
-    "id": "painting_011",
-    "floor": "painting",
-    "section": "Contemporary Painting Collection",
-    "discipline": "painting",
+    "id": "lfc_paint_0025",
+    "format": "fineart",
     "title": "",
     "artist": "Xu Zhen",
     "year": "",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688aeeaf737602da88fa6728_WechatIMG15.jpg",
-      "alt": "Xu Zhen - (title unknown)"
-    },
-    "medium": ["Acrylic", "Canvas"],
-    "size": { "unit": "cm", "value": { "width": null, "height": null, "depth": null }, "raw": "" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688aeeaf737602da88fa6728_WechatIMG15.jpg",
+    "size": "",
+    "medium": "Acrylic on Canvas",
+    "materials": "",
+    "notes": "Some fields are missing on the page; fill later if available."
   },
   {
-    "id": "print_009",
-    "floor": "print",
-    "section": "Contemporary Painting Collection",
-    "discipline": "print",
+    "id": "lfc_paint_0026",
+    "format": "print",
     "title": "Book from the Sky, Sheet No. 10",
     "artist": "Xu Bing",
     "year": "1987",
-    "image": {
-      "src": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688af293ab6215289d28eb5b_WechatIMG22.jpg",
-      "alt": "Xu Bing - Book from the Sky, Sheet No. 10"
-    },
-    "medium": ["Woodblock Movable Type Printing (AP)", "Ink", "Paper"],
-    "size": { "unit": "cm", "value": { "width": null, "height": null, "depth": null }, "raw": "" },
-    "background": { "short": "", "long": "" }
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688af293ab6215289d28eb5b_WechatIMG22.jpg",
+    "size": "",
+    "medium": "Woodblock Movable Type Printing (AP), Ink on Paper",
+    "materials": "",
+    "notes": "Size not shown on the page."
+  },
+  {
+    "id": "lfc_paint_0027",
+    "format": "fineart",
+    "title": "",
+    "artist": "",
+    "year": "",
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688aeeaf834a09a6fbd7072a_WechatIMG20.jpg",
+    "size": "",
+    "medium": "",
+    "materials": "",
+    "notes": "This entry had no visible metadata near the image on the current page extract."
+  },
+  {
+    "id": "lfc_paint_0028",
+    "format": "fineart",
+    "title": "",
+    "artist": "",
+    "year": "",
+    "image": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688aeeb0ab6215289d28268e_WechatIMG18.jpg",
+    "size": "",
+    "medium": "",
+    "materials": "",
+    "notes": "This entry had no visible metadata near the image on the current page extract."
   }
 ]
-
