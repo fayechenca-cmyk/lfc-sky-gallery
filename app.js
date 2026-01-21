@@ -5,15 +5,18 @@ const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 
 let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 
+// SMART SCORING SYSTEM (Tracks user interests)
+let intentScores = { history: 0, technique: 0, market: 0, theory: 0 };
+
 const ATRIUM_CONFIG = {
   videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
-  // ✅ FIX: High-Res Thumbnail for clarity
   videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/maxresdefault.jpg",
   title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing.",
   desc: "LFC Sky Artspace is a collection-led art education system.",
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
+// 12 FLOORS RESTORED
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
@@ -30,7 +33,8 @@ const FLOORS = [
   { id: 12, name: "Contemporary Lens", type: "standard" },
 ];
 
-let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterests = []; 
+let ART_DATA = []; let CATALOG = []; 
+let chatHistory = []; // ✅ NOW STORES BOTH SIDES
 let currentOpenArt = null; 
 const interactables = []; 
 let isInputLocked = false; 
@@ -57,7 +61,6 @@ function toggleOption(category, btn) {
 function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
-  // Unlock UI
   setTimeout(() => {
     document.getElementById('entrance-layer').style.display = 'none';
     document.getElementById('reg-panel').style.display = 'none';
@@ -95,7 +98,7 @@ const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = "anonymous"; 
 
 // ==========================================
-// 4. GALLERY BUILDER (Corrected Coordinates)
+// 4. GALLERY BUILDER
 // ==========================================
 const floorHeight = 40; 
 
@@ -123,132 +126,60 @@ function createFallbackTexture(text) {
 
 function buildGallery() {
   FLOORS.forEach(f => {
-    const y = f.id * floorHeight; 
-    const group = new THREE.Group();
-    
-    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; 
-    let wMat = (f.type === "darkroom") ? matWallDark : matWall;
-
+    const y = f.id * floorHeight; const group = new THREE.Group();
+    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; let wMat = (f.type === "darkroom") ? matWallDark : matWall;
     const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), fMat); floor.position.set(0, y, 0); group.add(floor);
     const ceil = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), wMat); ceil.position.set(0, y+16, 0); group.add(ceil);
     const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w1.position.set(19.5, y+8, 0); group.add(w1);
     const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w2.position.set(-19.5, y+8, 0); group.add(w2);
 
-    // --- ATRIUM (Video & Text) ---
     if (f.id === 0) {
-      // ✅ FIX: Moved X to -18.5 so it floats clearly off the wall
-      createArtFrame(group, -18.5, y+6, -10, Math.PI/2, 10, 6, { 
-        title: "Introduction Video", artist: "Watch on YouTube", 
-        img: ATRIUM_CONFIG.videoThumb, link: ATRIUM_CONFIG.videoLink, isExternal: true 
-      });
+      createArtFrame(group, -18.5, y+6, -10, Math.PI/2, 10, 6, { title: "Introduction Video", artist: "Watch on YouTube", img: ATRIUM_CONFIG.videoThumb, link: ATRIUM_CONFIG.videoLink, isExternal: true });
       createArtFrame(group, 18.5, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
       createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
     }
-
     if (f.type === "installation") createPlinths(group, y);
 
-    // --- ARTWORK DISTRIBUTION ---
-    // Ensure ID is matched as Number
     const arts = ART_DATA.filter(a => Number(a.floor) === f.id);
-    
     if(arts.length > 0) {
-      const left = []; const right = [];
-      arts.forEach((d, i) => { (i % 2 === 0) ? right.push(d) : left.push(d); });
-
+      const left = []; const right = []; arts.forEach((d, i) => { (i % 2 === 0) ? right.push(d) : left.push(d); });
       let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; }
       const zMin = -50, zMax = 50;
-
-      // ✅ FIX: Using 18.5/-18.5 to prevent "buried in wall" look
-      right.forEach((data, idx) => {
-        const zPos = (right.length <= 1) ? 0 : zMin + (idx * ((zMax - zMin) / (right.length - 1 || 1)));
-        createArtFrame(group, 18.5, y+6.5, zPos, -Math.PI/2, w, h, data);
-      });
-
-      left.forEach((data, idx) => {
-        const zPos = (left.length <= 1) ? 0 : zMin + (idx * ((zMax - zMin) / (left.length - 1 || 1)));
-        createArtFrame(group, -18.5, y+6.5, zPos, Math.PI/2, w, h, data);
-      });
-
+      right.forEach((data, idx) => { const zPos = (right.length <= 1) ? 0 : zMin + (idx * ((zMax - zMin) / (right.length - 1 || 1))); createArtFrame(group, 18.5, y+6.5, zPos, -Math.PI/2, w, h, data); });
+      left.forEach((data, idx) => { const zPos = (left.length <= 1) ? 0 : zMin + (idx * ((zMax - zMin) / (left.length - 1 || 1))); createArtFrame(group, -18.5, y+6.5, zPos, Math.PI/2, w, h, data); });
     } else if (f.id !== 0) {
-      for(let i=0; i<6; i++) {
-        const isRight = i % 2 === 0;
-        createArtFrame(group, isRight?18.5:-18.5, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" });
-      }
+      for(let i=0; i<6; i++) { const isRight = i % 2 === 0; createArtFrame(group, isRight?18.5:-18.5, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" }); }
     }
-
     scene.add(group);
-    
-    // ELEVATOR UI GENERATION
-    const btn = document.createElement("div"); 
-    btn.className = "floor-item"; 
-    btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; 
-    // This onclick was being blocked by pointer events. Fixed below in listeners.
-    btn.onclick = () => goToFloor(f.id); 
-    document.getElementById("elevator").prepend(btn);
+    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
   });
 }
-
-function createPlinths(group, y) {
-  [0, -15, 15].forEach(z => {
-    const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); plinth.position.set(0, y + 0.6, z); group.add(plinth);
-    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); hitbox.position.set(0, y+3, z); 
-    hitbox.userData = { type: "art", data: { title: "Installation View", artist: "3D Works", img: "" }, viewPos: { x: 8, y: y+5, z: z+8 } }; 
-    interactables.push(hitbox); group.add(hitbox);
-  });
-}
+function createPlinths(group, y) { [0, -15, 15].forEach(z => { const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); plinth.position.set(0, y + 0.6, z); group.add(plinth); const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); hitbox.position.set(0, y+3, z); hitbox.userData = { type: "art", data: { title: "Installation View", artist: "3D Works", img: "" }, viewPos: { x: 8, y: y+5, z: z+8 } }; interactables.push(hitbox); group.add(hitbox); }); }
 
 function createArtFrame(group, x, y, z, rot, w, h, data) {
   const frameGroup = new THREE.Group(); frameGroup.position.set(x, y, z); frameGroup.rotation.y = rot;
   const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.2, h+0.2, 0.2), matFrame); frameGroup.add(frame);
-  const canvas = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xeeeeee })); 
-  canvas.position.z = 0.15; frameGroup.add(canvas);
-
-  if (data.texture) {
-    canvas.material = new THREE.MeshBasicMaterial({ map: data.texture });
-  } else if (data.img) {
-    textureLoader.load(data.img, (tex) => {
-      canvas.material = new THREE.MeshBasicMaterial({ map: tex });
-      canvas.material.needsUpdate = true;
-    }, undefined, () => { 
-      canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) });
-    });
-  } else {
-    canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) });
-  }
-
+  const canvas = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xeeeeee })); canvas.position.z = 0.15; frameGroup.add(canvas);
+  if (data.texture) { canvas.material = new THREE.MeshBasicMaterial({ map: data.texture }); } 
+  else if (data.img) { textureLoader.load(data.img, (tex) => { canvas.material = new THREE.MeshBasicMaterial({ map: tex }); canvas.material.needsUpdate = true; }, undefined, () => { canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) }); }); } 
+  else { canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) }); }
   const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
   hitbox.userData = { type: "art", data: data, viewPos: { x: x + Math.sin(rot)*10, y: y, z: z + Math.cos(rot)*10 } };
   interactables.push(hitbox); frameGroup.add(hitbox); group.add(frameGroup);
 }
 
 // ==========================================
-// 5. PHYSICS NAVIGATION & EVENT LISTENERS
+// 5. PHYSICS NAVIGATION
 // ==========================================
 const velocity = new THREE.Vector3(); const speed = 1.8; const friction = 0.8; const lookSpeed = 0.002;
 let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
 document.addEventListener('keydown', (e) => { if(e.code==='ArrowUp'||e.code==='KeyW') moveForward=true; if(e.code==='ArrowLeft'||e.code==='KeyA') moveLeft=true; if(e.code==='ArrowDown'||e.code==='KeyS') moveBackward=true; if(e.code==='ArrowRight'||e.code==='KeyD') moveRight=true; });
 document.addEventListener('keyup', (e) => { if(e.code==='ArrowUp'||e.code==='KeyW') moveForward=false; if(e.code==='ArrowLeft'||e.code==='KeyA') moveLeft=false; if(e.code==='ArrowDown'||e.code==='KeyS') moveBackward=false; if(e.code==='ArrowRight'||e.code==='KeyD') moveRight=false; });
-
-function updatePhysics() { 
-  if (isInputLocked) return; 
-  velocity.x *= friction; velocity.z *= friction; 
-  const forward = getForwardVector(); const right = getRightVector(); 
-  if(moveForward) velocity.addScaledVector(forward, speed); if(moveBackward) velocity.addScaledVector(forward, -speed); 
-  if(moveLeft) velocity.addScaledVector(right, -speed); if(moveRight) velocity.addScaledVector(right, speed); 
-  camera.position.x += velocity.x * 0.015; camera.position.z += velocity.z * 0.015; 
-  camera.position.x = Math.max(-18, Math.min(18, camera.position.x)); camera.position.z = Math.max(-100, Math.min(100, camera.position.z)); 
-}
+function updatePhysics() { if (isInputLocked) return; velocity.x *= friction; velocity.z *= friction; const forward = getForwardVector(); const right = getRightVector(); if(moveForward) velocity.addScaledVector(forward, speed); if(moveBackward) velocity.addScaledVector(forward, -speed); if(moveLeft) velocity.addScaledVector(right, -speed); if(moveRight) velocity.addScaledVector(right, speed); camera.position.x += velocity.x * 0.015; camera.position.z += velocity.z * 0.015; camera.position.x = Math.max(-18, Math.min(18, camera.position.x)); camera.position.z = Math.max(-100, Math.min(100, camera.position.z)); }
 function getForwardVector() { const d=new THREE.Vector3(); camera.getWorldDirection(d); d.y=0; d.normalize(); return d; }
 function getRightVector() { const f=getForwardVector(); return new THREE.Vector3().crossVectors(f, new THREE.Vector3(0,1,0)).normalize(); }
-
 let isDragging=false, prevMouse={x:0,y:0};
-
-// ✅ FIX: Ignore clicks on Elevator (.floor-item) so they don't trigger "Drag"
-document.addEventListener('pointerdown', (e)=>{ 
-  if(!e.target.closest('button') && !e.target.closest('#ai-panel') && !e.target.closest('#entrance-layer') && !e.target.closest('.floor-item')) { 
-    isDragging=true; prevMouse={x:e.clientX,y:e.clientY}; 
-  }
-});
+document.addEventListener('pointerdown', (e)=>{ if(!e.target.closest('button') && !e.target.closest('#ai-panel') && !e.target.closest('#entrance-layer') && !e.target.closest('.floor-item')) { isDragging=true; prevMouse={x:e.clientX,y:e.clientY}; }});
 document.addEventListener('pointerup', ()=>{isDragging=false;});
 document.addEventListener('pointermove', (e)=>{ if(!isDragging || isInputLocked) return; const dx=e.clientX-prevMouse.x, dy=e.clientY-prevMouse.y; const euler=new THREE.Euler(0,0,0,'YXZ'); euler.setFromQuaternion(camera.quaternion); euler.y-=dx*lookSpeed; euler.x-=dy*lookSpeed; euler.x=Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, euler.x)); camera.quaternion.setFromEuler(euler); prevMouse={x:e.clientX,y:e.clientY}; });
 window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;if(d==='l')moveLeft=true;if(d==='r')moveRight=true;}; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
@@ -258,40 +189,18 @@ window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;
 // ==========================================
 function goToFloor(id) { 
   closeBlueprint(); exitFocus(); 
-  isInputLocked = true; // Lock physics
-  // Smoothly move camera up/down
-  new TWEEN.Tween(camera.position)
-    .to({ y: (id * floorHeight) + 5 }, 2000)
-    .easing(TWEEN.Easing.Quadratic.InOut)
-    .onComplete(() => { isInputLocked = false; }) // Unlock when arrived
-    .start(); 
+  isInputLocked = true; 
+  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2000).easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => { isInputLocked = false; }).start(); 
 }
 
 function focusArt(userData) {
   if (userData.data.isExternal && userData.data.link) { window.open(userData.data.link, "_blank"); return; }
-  
-  currentOpenArt = userData.data; 
-  isInputLocked = true; 
-  document.body.classList.add("ai-open"); 
-  
-  camera.userData.returnPos = camera.position.clone(); 
-  camera.userData.returnQuat = camera.quaternion.clone(); 
-  const t = userData.viewPos; 
-  
-  new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); 
-  const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); 
-  new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
+  currentOpenArt = userData.data; isInputLocked = true; document.body.classList.add("ai-open"); camera.userData.returnPos = camera.position.clone(); camera.userData.returnQuat = camera.quaternion.clone(); const t = userData.viewPos; new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
 }
 
 function exitFocus() { 
-  document.body.classList.remove("ai-open"); 
-  document.getElementById("ai-panel").classList.remove("active"); 
-  document.getElementById("back-btn").classList.remove("visible"); 
-  currentOpenArt = null; 
-  if(camera.userData.returnPos) { 
-    new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).onComplete(() => { isInputLocked = false; }).start(); 
-    new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); 
-  } else { isInputLocked = false; }
+  document.body.classList.remove("ai-open"); document.getElementById("ai-panel").classList.remove("active"); document.getElementById("back-btn").classList.remove("visible"); currentOpenArt = null; 
+  if(camera.userData.returnPos) { new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).onComplete(() => { isInputLocked = false; }).start(); new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); } else { isInputLocked = false; }
 }
 
 function openAI(data) {
@@ -305,46 +214,63 @@ function openAI(data) {
 async function sendChat() {
   const i=document.getElementById("user-input"), txt=i.value.trim(); if(!txt)return;
   addChatMsg("user",txt); i.value="";
+  
+  // ✅ FIX: STORE BOTH SIDES OF HISTORY
+  chatHistory.push({ role: "user", parts: [{ text: txt }] });
+
   try {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
     const res = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
-      message:txt, history:chatHistory, art: artPayload, 
-      userProfile: userProfile 
+      message:txt, history:chatHistory, art: artPayload, userProfile: userProfile 
     })});
+    
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
+    // Clean response
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
         cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
         if(cleanReply.startsWith('{')) { try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){} }
     }
-
-    addChatMsg("ai", cleanReply); chatHistory.push({role:"model", parts:[{text:cleanReply}]});
+    addChatMsg("ai", cleanReply); 
+    chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
-    if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; }
-  } catch(e) { console.error(e); addChatMsg("ai", "⚠️ Connection Error. Please check your internet connection."); }
+    // ✅ SMART SCORE UPDATES
+    if(d.intent_score) {
+       intentScores.history += (d.intent_score.history || 0);
+       intentScores.technique += (d.intent_score.technique || 0);
+       intentScores.market += (d.intent_score.market || 0);
+    }
+    
+  } catch(e) { console.error(e); addChatMsg("ai", "⚠️ Connection Error."); }
 }
 function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
 
+// ✅ SMART CURRICULUM LOGIC
 function startBlueprint() {
   document.getElementById("blueprint").classList.add("active");
   const container = document.getElementById("bp-products");
-  container.innerHTML = "<h3>Generating Plan...</h3>";
+  container.innerHTML = "<h3>Analyzing Profile...</h3>";
+  
   setTimeout(() => {
     let recs = [];
     const roles = userProfile.role.join(" ").toLowerCase();
-    const goals = userProfile.goal.join(" ").toLowerCase();
-    if (CATALOG.products) {
-      if (roles.includes("student") || goals.includes("learn") || goals.includes("teach")) {
-        recs.push(CATALOG.products.find(p => p.id.includes("001")) || {title:"Intro Course"});
-        recs.push(CATALOG.products.find(p => p.id.includes("003")) || {title:"Color Theory"});
-      }
-      if (roles.includes("artist") || goals.includes("market") || goals.includes("technique")) {
-        recs.push(CATALOG.products.find(p => p.id.includes("brand")) || {title:"Brand Creator"});
-      }
-      if (recs.length === 0) recs.push(CATALOG.products[0]);
+    
+    // 1. Technique Driven
+    if (intentScores.technique > 5 || roles.includes("student") || roles.includes("artist")) {
+      recs.push(CATALOG.products.find(p => p.id.includes("001")) || {title:"Intro Sketch", price:0});
+      recs.push(CATALOG.products.find(p => p.id.includes("003")) || {title:"Color Theory", price:0});
     }
+    
+    // 2. Market/Career Driven
+    if (intentScores.market > 5 || roles.includes("collector") || roles.includes("art market")) {
+      recs.push(CATALOG.products.find(p => p.id.includes("brand")) || {title:"Brand Creator", price:120});
+    }
+    
+    // 3. Fallback
+    if(recs.length === 0) recs.push(CATALOG.products[0]);
+
     let html = "";
     recs.forEach(p => {
       if(p) {
@@ -352,9 +278,12 @@ function startBlueprint() {
       }
     });
     container.innerHTML = html;
-    document.getElementById("bp-desc").innerHTML = `As a <strong>${userProfile.role.join(", ")}</strong> interested in <strong>${userProfile.goal.join(", ")}</strong>, and having explored <em>${collectedInterests.length > 0 ? collectedInterests.join(", ") : "various concepts"}</em>, we recommend this path:`;
-    document.getElementById("bp-steps").innerHTML = `<div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--blue);"><strong>Step 1: Observation</strong><br>Analyze visual structures in the gallery.</div><div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid #22c55e;"><strong>Step 2: Context</strong><br>Connect historical references to modern theory.</div>`;
-  }, 800);
+    
+    const topInterest = Object.keys(intentScores).reduce((a, b) => intentScores[a] > intentScores[b] ? a : b);
+    document.getElementById("bp-desc").innerHTML = `Because you focused on <strong>${topInterest}</strong> and identified as <strong>${userProfile.role[0]}</strong>, we recommend:`;
+    
+    document.getElementById("bp-steps").innerHTML = `<div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--blue);"><strong>Step 1: Observation</strong><br>You showed interest in visual analysis.</div><div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid #22c55e;"><strong>Step 2: Context</strong><br>We detected questions about ${topInterest}.</div>`;
+  }, 1000);
 }
 
 // ==========================================
