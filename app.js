@@ -1,20 +1,21 @@
 // ==========================================
-// 1. CONFIGURATION
+// 1. CONFIGURATION & STATE
 // ==========================================
-
-// ✅ YOUR ACTUAL CONNECTED AI
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; 
 
-// --- ATRIUM CONTENT (Floor 0) ---
+// ✅ NEW: User Profile Data (Collected during registration)
+let userProfile = {
+  role: null,
+  goal: null,
+  ageGroup: "Adult" // Default
+};
+
 const ATRIUM_CONFIG = {
   videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
   videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg",
-  title: "LFC Sky Artspace",
-  subtitle: "Learning From Collections",
-  tagline: "From Viewing to Knowing. From Knowing to Making.",
+  title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing. From Knowing to Making.",
   desc: "LFC Sky Artspace is a collection-led art education system that mirrors the experience of learning inside a real art space—online. Students visit selected artworks, explore personal taste, then build deeper understanding through guided layers: historical background, artist intention, materials/process, visual structure, and contemporary theory.",
-  method: "Collection-to-Creation Framework (CCF)",
-  steps: "Visit → Analyze → Discuss → Connect → Create"
+  method: "Collection-to-Creation Framework (CCF)", steps: "Visit → Analyze → Discuss → Connect → Create"
 };
 
 const FLOORS = [
@@ -33,37 +34,54 @@ const FLOORS = [
   { id: 12, name: "Contemporary Lens", type: "standard" },
 ];
 
-let ART_DATA = []; 
-let CATALOG = [];  
-let chatHistory = [];
-let collectedInterests = [];
-let currentOpenArt = null; 
-const interactables = []; 
+let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterests = []; let currentOpenArt = null; const interactables = []; 
 
 // ==========================================
-// 2. THREE.JS SCENE SETUP
+// 2. REGISTRATION & ENTRANCE LOGIC
+// ==========================================
+function showRegistration() {
+  document.getElementById('entrance-content').style.opacity = '0';
+  setTimeout(() => {
+     document.getElementById('reg-panel').classList.add('active');
+  }, 300);
+}
+
+function selectOption(category, btn) {
+  // Deselect others in the same group
+  btn.parentElement.querySelectorAll('.reg-btn').forEach(b => b.classList.remove('selected'));
+  // Select this one
+  btn.classList.add('selected');
+  userProfile[category] = btn.innerText;
+  
+  // Check if ready to enter
+  const enterBtn = document.getElementById('final-enter-btn');
+  if(userProfile.role && userProfile.goal) {
+    enterBtn.classList.add('ready');
+  }
+}
+
+function completeRegistration() {
+  if(!userProfile.role || !userProfile.goal) return;
+  document.body.classList.add('doors-open');
+  // Optional: Play background music here if you add it later
+}
+
+// ==========================================
+// 3. THREE.JS SCENE SETUP
 // ==========================================
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
 const skyColor = new THREE.Color(0xe0f2fe);
 scene.background = skyColor;
 scene.fog = new THREE.Fog(skyColor, 15, 140);
-
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
 camera.position.set(0, 5, 30); 
-
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 container.appendChild(renderer.domElement);
-
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.6);
-scene.add(hemiLight);
-const dirLight = new THREE.DirectionalLight(0xfffaed, 1);
-dirLight.position.set(50, 100, 50);
-dirLight.castShadow = true;
-scene.add(dirLight);
-
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.6); scene.add(hemiLight);
+const dirLight = new THREE.DirectionalLight(0xfffaed, 1); dirLight.position.set(50, 100, 50); dirLight.castShadow = true; scene.add(dirLight);
 const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
 const matFloorDark = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.6 });
 const matWall = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
@@ -71,85 +89,45 @@ const matWallDark = new THREE.MeshStandardMaterial({ color: 0x111111, roughness:
 const matFrame = new THREE.MeshStandardMaterial({ color: 0x111111 });
 const matPlinth = new THREE.MeshStandardMaterial({ color: 0xeeeeee });
 
-// GLOBAL TEXTURE LOADER (With Cross-Origin Fix)
-const textureLoader = new THREE.TextureLoader();
-textureLoader.crossOrigin = "anonymous"; 
-
 // ==========================================
-// 3. GALLERY BUILDER
+// 4. GALLERY BUILDER
 // ==========================================
 const floorHeight = 40; 
-
 function createTextTexture(cfg) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024; canvas.height = 1024;
-  const ctx = canvas.getContext('2d');
+  const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 1024, 1024);
   ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 50px Arial'; ctx.fillText(cfg.title, 60, 100);
   ctx.font = 'italic 36px Times New Roman'; ctx.fillStyle = '#333'; ctx.fillText(cfg.subtitle, 60, 150);
   ctx.fillStyle = '#22c55e'; ctx.font = 'bold 30px Arial'; ctx.fillText(cfg.tagline, 60, 230);
   ctx.fillStyle = '#444'; ctx.font = '28px Arial';
   const words = cfg.desc.split(' '); let line = ''; let y = 300;
-  for(let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' ';
-    if (ctx.measureText(testLine).width > 900 && n > 0) { ctx.fillText(line, 60, y); line = words[n] + ' '; y += 40; } else { line = testLine; }
-  }
-  ctx.fillText(line, 60, y);
-  y += 80; ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 32px Arial'; ctx.fillText(cfg.method, 60, y);
-  y += 50; ctx.fillStyle = '#666'; ctx.font = '28px Arial'; ctx.fillText(cfg.steps, 60, y);
+  for(let n = 0; n < words.length; n++) { const testLine = line + words[n] + ' '; if (ctx.measureText(testLine).width > 900 && n > 0) { ctx.fillText(line, 60, y); line = words[n] + ' '; y += 40; } else { line = testLine; } }
+  ctx.fillText(line, 60, y); y += 80; ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 32px Arial'; ctx.fillText(cfg.method, 60, y); y += 50; ctx.fillStyle = '#666'; ctx.font = '28px Arial'; ctx.fillText(cfg.steps, 60, y);
   return new THREE.CanvasTexture(canvas);
 }
 
 function buildGallery() {
   FLOORS.forEach(f => {
-    const y = f.id * floorHeight;
-    const group = new THREE.Group();
-    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor;
-    let wMat = (f.type === "darkroom") ? matWallDark : matWall;
-
+    const y = f.id * floorHeight; const group = new THREE.Group();
+    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; let wMat = (f.type === "darkroom") ? matWallDark : matWall;
     const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), fMat); floor.position.set(0, y, 0); group.add(floor);
     const ceil = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), wMat); ceil.position.set(0, y+16, 0); group.add(ceil);
     const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w1.position.set(19.5, y+8, 0); group.add(w1);
     const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w2.position.set(-19.5, y+8, 0); group.add(w2);
-
     if (f.id === 0) {
       createArtFrame(group, -19.4, y+6, -10, Math.PI/2, 10, 6, { title: "Introduction Video", artist: "Watch on YouTube", img: ATRIUM_CONFIG.videoThumb, link: ATRIUM_CONFIG.videoLink, isExternal: true });
       createArtFrame(group, 19.4, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
       createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
     }
-
     if (f.type === "installation") createPlinths(group, y);
-
     const arts = ART_DATA.filter(a => a.floor == f.id);
-    if(arts.length > 0) {
-      arts.forEach((data, i) => {
-        const isRight = i % 2 === 0;
-        const x = isRight ? 19.4 : -19.4;
-        const z = -45 + (i * 12); 
-        let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; }
-        createArtFrame(group, x, y+6.5, z, isRight ? -Math.PI/2 : Math.PI/2, w, h, data);
-      });
-    } else if (f.id !== 0) {
-      for(let i=0; i<6; i++) {
-        createArtFrame(group, (i%2===0)?19.4:-19.4, y+6.5, -40+(i*15), (i%2===0)?-Math.PI/2:Math.PI/2, 4, 5, { title: `Floor ${f.id}`, artist: f.name, img: "" });
-      }
-    }
+    if(arts.length > 0) { arts.forEach((data, i) => { const isRight = i % 2 === 0; const x = isRight ? 19.4 : -19.4; const z = -45 + (i * 12); let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; } createArtFrame(group, x, y+6.5, z, isRight ? -Math.PI/2 : Math.PI/2, w, h, data); }); } 
+    else if (f.id !== 0) { for(let i=0; i<6; i++) { createArtFrame(group, (i%2===0)?19.4:-19.4, y+6.5, -40+(i*15), (i%2===0)?-Math.PI/2:Math.PI/2, 4, 5, { title: `Floor ${f.id}`, artist: f.name, img: "" }); } }
     scene.add(group);
-    
-    const btn = document.createElement("div"); btn.className = "floor-item";
-    btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`;
-    btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
+    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
   });
 }
-
-function createPlinths(group, y) {
-  [0, -15, 15].forEach(z => {
-    const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); plinth.position.set(0, y + 0.6, z); group.add(plinth);
-    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); hitbox.position.set(0, y+3, z);
-    hitbox.userData = { type: "art", data: { title: "Installation View", artist: "3D Works", img: "" }, viewPos: { x: 8, y: y+5, z: z+8 } };
-    interactables.push(hitbox); group.add(hitbox);
-  });
-}
+function createPlinths(group, y) { [0, -15, 15].forEach(z => { const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); plinth.position.set(0, y + 0.6, z); group.add(plinth); const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); hitbox.position.set(0, y+3, z); hitbox.userData = { type: "art", data: { title: "Installation View", artist: "3D Works", img: "" }, viewPos: { x: 8, y: y+5, z: z+8 } }; interactables.push(hitbox); group.add(hitbox); }); }
 
 function createArtFrame(group, x, y, z, rot, w, h, data) {
   const frameGroup = new THREE.Group(); frameGroup.position.set(x, y, z); frameGroup.rotation.y = rot;
@@ -159,118 +137,96 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
   if (data.texture) {
     canvas.material = new THREE.MeshBasicMaterial({ map: data.texture });
   } else if (data.img) {
-    textureLoader.load(data.img, (tex) => {
+    // ✅ FIX 2: ROBUST CORS IMAGE LOADING
+    // We use a specific loader for each image to ensure CORS is handled correctly every time.
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin('anonymous'); 
+    loader.load(data.img, (tex) => {
       canvas.material = new THREE.MeshBasicMaterial({ map: tex });
       canvas.material.needsUpdate = true;
-    });
+    }, undefined, (err) => { console.warn("Could not load image:", data.img); });
   }
 
   const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
   hitbox.userData = { type: "art", data: data, viewPos: { x: x + Math.sin(rot)*10, y: y, z: z + Math.cos(rot)*10 } };
-  interactables.push(hitbox); frameGroup.add(hitbox);
-  group.add(frameGroup);
+  interactables.push(hitbox); frameGroup.add(hitbox); group.add(frameGroup);
 }
 
 // ==========================================
-// 4. PHYSICS NAVIGATION
+// 5. PHYSICS NAVIGATION
 // ==========================================
 const velocity = new THREE.Vector3(); const speed = 1.8; const friction = 0.85; const lookSpeed = 0.002;
 let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
-
-document.addEventListener('keydown', (e) => {
-  if(e.code==='ArrowUp'||e.code==='KeyW') moveForward=true; if(e.code==='ArrowLeft'||e.code==='KeyA') moveLeft=true;
-  if(e.code==='ArrowDown'||e.code==='KeyS') moveBackward=true; if(e.code==='ArrowRight'||e.code==='KeyD') moveRight=true;
-});
-document.addEventListener('keyup', (e) => {
-  if(e.code==='ArrowUp'||e.code==='KeyW') moveForward=false; if(e.code==='ArrowLeft'||e.code==='KeyA') moveLeft=false;
-  if(e.code==='ArrowDown'||e.code==='KeyS') moveBackward=false; if(e.code==='ArrowRight'||e.code==='KeyD') moveRight=false;
-});
-
-function updatePhysics() {
-  if (document.body.classList.contains("ai-open")) return;
-  velocity.x *= friction; velocity.z *= friction;
-  const forward = getForwardVector(); const right = getRightVector();
-  if(moveForward) velocity.addScaledVector(forward, speed); if(moveBackward) velocity.addScaledVector(forward, -speed);
-  if(moveLeft) velocity.addScaledVector(right, -speed); if(moveRight) velocity.addScaledVector(right, speed);
-  camera.position.x += velocity.x * 0.015; camera.position.z += velocity.z * 0.015;
-  camera.position.x = Math.max(-18, Math.min(18, camera.position.x)); camera.position.z = Math.max(-100, Math.min(100, camera.position.z));
-}
+document.addEventListener('keydown', (e) => { if(e.code==='ArrowUp'||e.code==='KeyW') moveForward=true; if(e.code==='ArrowLeft'||e.code==='KeyA') moveLeft=true; if(e.code==='ArrowDown'||e.code==='KeyS') moveBackward=true; if(e.code==='ArrowRight'||e.code==='KeyD') moveRight=true; });
+document.addEventListener('keyup', (e) => { if(e.code==='ArrowUp'||e.code==='KeyW') moveForward=false; if(e.code==='ArrowLeft'||e.code==='KeyA') moveLeft=false; if(e.code==='ArrowDown'||e.code==='KeyS') moveBackward=false; if(e.code==='ArrowRight'||e.code==='KeyD') moveRight=false; });
+function updatePhysics() { if (document.body.classList.contains("ai-open")) return; velocity.x *= friction; velocity.z *= friction; const forward = getForwardVector(); const right = getRightVector(); if(moveForward) velocity.addScaledVector(forward, speed); if(moveBackward) velocity.addScaledVector(forward, -speed); if(moveLeft) velocity.addScaledVector(right, -speed); if(moveRight) velocity.addScaledVector(right, speed); camera.position.x += velocity.x * 0.015; camera.position.z += velocity.z * 0.015; camera.position.x = Math.max(-18, Math.min(18, camera.position.x)); camera.position.z = Math.max(-100, Math.min(100, camera.position.z)); }
 function getForwardVector() { const d=new THREE.Vector3(); camera.getWorldDirection(d); d.y=0; d.normalize(); return d; }
 function getRightVector() { const f=getForwardVector(); return new THREE.Vector3().crossVectors(f, new THREE.Vector3(0,1,0)).normalize(); }
-
 let isDragging=false, prevMouse={x:0,y:0};
-document.addEventListener('pointerdown', (e)=>{ if(!e.target.closest('button') && !e.target.closest('#ai-panel')) { isDragging=true; prevMouse={x:e.clientX,y:e.clientY}; }});
+document.addEventListener('pointerdown', (e)=>{ if(!e.target.closest('button') && !e.target.closest('#ai-panel') && !e.target.closest('#entrance-layer')) { isDragging=true; prevMouse={x:e.clientX,y:e.clientY}; }});
 document.addEventListener('pointerup', ()=>{isDragging=false;});
-document.addEventListener('pointermove', (e)=>{
-  if(!isDragging || document.body.classList.contains("ai-open")) return;
-  const dx=e.clientX-prevMouse.x, dy=e.clientY-prevMouse.y;
-  const euler=new THREE.Euler(0,0,0,'YXZ'); euler.setFromQuaternion(camera.quaternion);
-  euler.y-=dx*lookSpeed; euler.x-=dy*lookSpeed; euler.x=Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, euler.x));
-  camera.quaternion.setFromEuler(euler); prevMouse={x:e.clientX,y:e.clientY};
-});
-window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;if(d==='l')moveLeft=true;if(d==='r')moveRight=true;};
-window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
+document.addEventListener('pointermove', (e)=>{ if(!isDragging || document.body.classList.contains("ai-open")) return; const dx=e.clientX-prevMouse.x, dy=e.clientY-prevMouse.y; const euler=new THREE.Euler(0,0,0,'YXZ'); euler.setFromQuaternion(camera.quaternion); euler.y-=dx*lookSpeed; euler.x-=dy*lookSpeed; euler.x=Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, euler.x)); camera.quaternion.setFromEuler(euler); prevMouse={x:e.clientX,y:e.clientY}; });
+window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;if(d==='l')moveLeft=true;if(d==='r')moveRight=true;}; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
 // ==========================================
-// 5. INTERACTION & AI
+// 6. INTERACTION & AI
 // ==========================================
-function goToFloor(id) {
-  closeBlueprint(); exitFocus();
-  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2500).easing(TWEEN.Easing.Quadratic.InOut).start();
-}
+function goToFloor(id) { closeBlueprint(); exitFocus(); new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2500).easing(TWEEN.Easing.Quadratic.InOut).start(); }
 function focusArt(userData) {
   if (userData.data.isExternal && userData.data.link) { window.open(userData.data.link, "_blank"); return; }
-  
-  currentOpenArt = userData.data; // Store full data
+  currentOpenArt = userData.data; document.body.classList.add("ai-open"); camera.userData.returnPos = camera.position.clone(); camera.userData.returnQuat = camera.quaternion.clone(); const t = userData.viewPos; new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
+}
+function exitFocus() { document.body.classList.remove("ai-open"); document.getElementById("ai-panel").classList.remove("active"); document.getElementById("back-btn").classList.remove("visible"); currentOpenArt = null; if(camera.userData.returnPos) { new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); } }
 
-  document.body.classList.add("ai-open");
-  camera.userData.returnPos = camera.position.clone();
-  camera.userData.returnQuat = camera.quaternion.clone();
-  const t = userData.viewPos;
-  new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start();
-  const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z);
-  new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
-}
-function exitFocus() {
-  document.body.classList.remove("ai-open"); document.getElementById("ai-panel").classList.remove("active"); document.getElementById("back-btn").classList.remove("visible");
-  currentOpenArt = null;
-  if(camera.userData.returnPos) { new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); }
-}
 function openAI(data) {
   document.getElementById("ai-panel").classList.add("active");
-  if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info";
-  else document.getElementById("ai-img").src = data.img;
-  document.getElementById("ai-title").innerText = data.title;
-  document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
+  if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = data.img;
+  document.getElementById("ai-title").innerText = data.title; document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
   chatHistory = []; document.getElementById("chat-stream").innerHTML = "";
   addChatMsg("ai", "I am observing this piece with you. What do you see?");
 }
+
 async function sendChat() {
   const i=document.getElementById("user-input"), txt=i.value.trim(); if(!txt)return;
   addChatMsg("user",txt); i.value="";
   try {
-    const artPayload = currentOpenArt ? {
-      title: currentOpenArt.title,
-      artist: currentOpenArt.artist,
-      year: currentOpenArt.year,
-      medium: currentOpenArt.medium,
-      size: currentOpenArt.size,
-      floor: "Gallery"
-    } : { title: "Unknown" };
-
-    const res = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({message:txt, history:chatHistory, art: artPayload, userProfile:{age:"Adult"}}) });
+    const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
+    // ✅ FIX 3: SEND USER PROFILE DATA TO AI
+    const res = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
+      message:txt, history:chatHistory, art: artPayload, 
+      userProfile: userProfile // Send the data collected at registration
+    })});
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
-    addChatMsg("ai",d.reply); chatHistory.push({role:"model", parts:[{text:d.reply}]});
-    if(d.save) { collectedInterests.push(d.tag||"Art"); document.getElementById("journey-count").innerText=collectedInterests.length; }
+    
+    // ✅ FIX 4: CLEAN THE RAW JSON RESPONSE FROM AI
+    let cleanReply = d.reply;
+    if (cleanReply && cleanReply.startsWith('```json')) {
+        cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
+        // Sometimes the AI wraps the actual text in another quote set after markdown
+        if(cleanReply.startsWith('"') && cleanReply.endsWith('"')) {
+             cleanReply = cleanReply.substring(1, cleanReply.length - 1);
+        }
+    }
+
+    addChatMsg("ai", cleanReply); chatHistory.push({role:"model", parts:[{text:cleanReply}]});
+    
+    // ✅ FIX 5: COLLECT TAGS FOR JOURNEY
+    if(d.save && d.tag) { 
+        collectedInterests.push(d.tag); 
+        document.getElementById("journey-count").innerText=collectedInterests.length; 
+        // Update Blueprint description immediately
+        document.getElementById("bp-desc").innerHTML = `Based on your interest in <strong>${collectedInterests.join(", ")}</strong>, here is your personalized path.`;
+    }
   } catch(e) { 
-    addChatMsg("ai", e.message.includes("404")?"⚠️ Error 404: Check AI URL in app.js": "⚠️ Connection Error. Check Cloudflare.");
+    console.error(e);
+    addChatMsg("ai", "⚠️ Connection Error. Please check your internet connection.");
   }
 }
 function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
 
 // ==========================================
-// 6. INIT
+// 7. INIT
 // ==========================================
 function animate(){ requestAnimationFrame(animate); TWEEN.update(); updatePhysics(); renderer.render(scene, camera); }
 animate();
@@ -280,5 +236,9 @@ document.addEventListener('pointerup',(e)=>{if(isDragging)return; cm.x=(e.client
 fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.floors).forEach(f=>f.items.forEach(i=>ART_DATA.push(i))); else ART_DATA=d; buildGallery(); }).catch(()=>buildGallery());
 fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
 
+// Bind UI functions to window so HTML can see them
+window.showRegistration = showRegistration;
+window.selectOption = selectOption;
+window.completeRegistration = completeRegistration;
 document.getElementById("send-btn").onclick=sendChat; document.getElementById("user-input").onkeypress=(e)=>{if(e.key==="Enter")sendChat();};
 window.startBlueprint=()=>{document.getElementById("blueprint").classList.add("active");}; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=goToFloor;
