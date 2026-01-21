@@ -6,6 +6,7 @@ const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 
 const ATRIUM_CONFIG = {
+  // ✅ FIX: Exact video and thumbnail you requested
   videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
   videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg",
   title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing.",
@@ -13,7 +14,7 @@ const ATRIUM_CONFIG = {
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
-// FULL 12 FLOORS with Types
+// ✅ RESTORED: All 12 Floors
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
@@ -57,11 +58,10 @@ function toggleOption(category, btn) {
 function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
-  // FORCE HIDE UI so it doesn't block physics
   setTimeout(() => {
     document.getElementById('entrance-layer').style.display = 'none';
     document.getElementById('reg-panel').style.display = 'none';
-  }, 1000);
+  }, 2000);
 }
 
 // ==========================================
@@ -81,15 +81,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 container.appendChild(renderer.domElement);
 
-// ✅ FIX: LOWER INTENSITY LIGHTS (Soft, not Blinding)
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe0f2fe, 0.4); 
-scene.add(hemiLight);
-const dirLight = new THREE.DirectionalLight(0xfffaed, 0.5); 
-dirLight.position.set(50, 100, 50); 
-dirLight.castShadow = true; 
-scene.add(dirLight);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe0f2fe, 0.5); scene.add(hemiLight);
+const dirLight = new THREE.DirectionalLight(0xfffaed, 0.6); dirLight.position.set(50, 100, 50); dirLight.castShadow = true; scene.add(dirLight);
 
-// MATERIALS
 const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
 const matFloorDark = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.6 });
 const matWall = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
@@ -101,7 +95,7 @@ const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = "anonymous"; 
 
 // ==========================================
-// 4. GALLERY BUILDER (Corrected Positions)
+// 4. GALLERY BUILDER (Smart Layout)
 // ==========================================
 const floorHeight = 40; 
 
@@ -140,46 +134,48 @@ function buildGallery() {
     const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w1.position.set(19.5, y+8, 0); group.add(w1);
     const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w2.position.set(-19.5, y+8, 0); group.add(w2);
 
-    // --- FLOOR 0: THE ATRIUM ---
+    // ATRIUM
     if (f.id === 0) {
-      // 1. VIDEO SCREEN (Use Thumbnail)
       createArtFrame(group, -19.0, y+6, -10, Math.PI/2, 10, 6, { 
         title: "Introduction Video", artist: "Watch on YouTube", 
-        img: ATRIUM_CONFIG.videoThumb, // Shows image
-        link: ATRIUM_CONFIG.videoLink, // Opens link
-        isExternal: true 
+        img: ATRIUM_CONFIG.videoThumb, link: ATRIUM_CONFIG.videoLink, isExternal: true 
       });
-      // 2. TEXT PANEL
       createArtFrame(group, 19.0, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
-      // 3. LOGO
       createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
     }
 
     if (f.type === "installation") createPlinths(group, y);
 
-    const arts = ART_DATA.filter(a => a.floor == f.id);
+    // ✅ SMART DISTRIBUTION
+    const arts = ART_DATA.filter(a => Number(a.floor) === f.id);
     
     if(arts.length > 0) {
-      arts.forEach((data, i) => {
-        const isRight = i % 2 === 0; 
-        
-        // ✅ FIX: Move X to 18.5 (Inside) instead of 19.4 (Buried in wall)
-        const x = isRight ? 18.5 : -18.5; 
-        const z = -45 + (i * 12); 
-        
-        let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; }
-        
-        createArtFrame(group, x, y+6.5, z, isRight ? -Math.PI/2 : Math.PI/2, w, h, data);
+      const left = []; const right = [];
+      arts.forEach((d, i) => { (i % 2 === 0) ? right.push(d) : left.push(d); });
+
+      let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; }
+      const zMin = -50, zMax = 50;
+
+      // Place Right
+      right.forEach((data, idx) => {
+        const zPos = (right.length <= 1) ? 0 : zMin + (idx * ((zMax - zMin) / (right.length - 1 || 1)));
+        createArtFrame(group, 18.9, y+6.5, zPos, -Math.PI/2, w, h, data);
       });
+
+      // Place Left
+      left.forEach((data, idx) => {
+        const zPos = (left.length <= 1) ? 0 : zMin + (idx * ((zMax - zMin) / (left.length - 1 || 1)));
+        createArtFrame(group, -18.9, y+6.5, zPos, Math.PI/2, w, h, data);
+      });
+
     } else if (f.id !== 0) {
       for(let i=0; i<6; i++) {
         const isRight = i % 2 === 0;
-        createArtFrame(group, isRight?18.5:-18.5, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" });
+        createArtFrame(group, isRight?18.9:-18.9, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" });
       }
     }
 
     scene.add(group);
-    
     const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
   });
 }
@@ -226,9 +222,7 @@ document.addEventListener('keydown', (e) => { if(e.code==='ArrowUp'||e.code==='K
 document.addEventListener('keyup', (e) => { if(e.code==='ArrowUp'||e.code==='KeyW') moveForward=false; if(e.code==='ArrowLeft'||e.code==='KeyA') moveLeft=false; if(e.code==='ArrowDown'||e.code==='KeyS') moveBackward=false; if(e.code==='ArrowRight'||e.code==='KeyD') moveRight=false; });
 
 function updatePhysics() { 
-  // ✅ FIX: Don't move if locked
   if (isInputLocked) return; 
-  
   velocity.x *= friction; velocity.z *= friction; 
   const forward = getForwardVector(); const right = getRightVector(); 
   if(moveForward) velocity.addScaledVector(forward, speed); if(moveBackward) velocity.addScaledVector(forward, -speed); 
@@ -249,25 +243,18 @@ window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;
 // ==========================================
 function goToFloor(id) { 
   closeBlueprint(); exitFocus(); 
-  isInputLocked = true; // Lock physics while moving
-  new TWEEN.Tween(camera.position)
-    .to({ y: (id * floorHeight) + 5 }, 2000)
-    .easing(TWEEN.Easing.Quadratic.InOut)
-    .onComplete(() => { isInputLocked = false; })
-    .start(); 
+  isInputLocked = true; 
+  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2000).easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => { isInputLocked = false; }).start(); 
 }
 
 function focusArt(userData) {
   if (userData.data.isExternal && userData.data.link) { window.open(userData.data.link, "_blank"); return; }
-  
   currentOpenArt = userData.data; 
-  isInputLocked = true; // ✅ FIX: Lock physics when looking at art
+  isInputLocked = true; 
   document.body.classList.add("ai-open"); 
-  
   camera.userData.returnPos = camera.position.clone(); 
   camera.userData.returnQuat = camera.quaternion.clone(); 
   const t = userData.viewPos; 
-  
   new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); 
   const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); 
   new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
@@ -278,13 +265,10 @@ function exitFocus() {
   document.getElementById("ai-panel").classList.remove("active"); 
   document.getElementById("back-btn").classList.remove("visible"); 
   currentOpenArt = null; 
-  
   if(camera.userData.returnPos) { 
-    new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).onComplete(() => { isInputLocked = false; }).start(); // Unlock
+    new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).onComplete(() => { isInputLocked = false; }).start(); 
     new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); 
-  } else {
-    isInputLocked = false;
-  }
+  } else { isInputLocked = false; }
 }
 
 function openAI(data) {
@@ -301,32 +285,50 @@ async function sendChat() {
   try {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
     const res = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
-      message:txt, history:chatHistory, art: artPayload, 
-      userProfile: userProfile 
+      message:txt, history:chatHistory, art: artPayload, userProfile: userProfile 
     })});
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
-    
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
         cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
         if(cleanReply.startsWith('{')) { try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){} }
     }
-
     addChatMsg("ai", cleanReply); chatHistory.push({role:"model", parts:[{text:cleanReply}]});
-    
-    if(d.save && d.tag) { 
-        collectedInterests.push(d.tag); 
-        document.getElementById("journey-count").innerText=collectedInterests.length; 
-        // Show "Save" in chat
-        addChatMsg("ai", `✅ Insight Saved: ${d.tag}`);
-    }
-  } catch(e) { 
-    console.error(e);
-    addChatMsg("ai", "⚠️ Connection Error. Please check your internet connection.");
-  }
+    if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; }
+  } catch(e) { console.error(e); addChatMsg("ai", "⚠️ Connection Error. Please check your internet connection."); }
 }
 function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
+
+function startBlueprint() {
+  document.getElementById("blueprint").classList.add("active");
+  const container = document.getElementById("bp-products");
+  container.innerHTML = "<h3>Generating Plan...</h3>";
+  setTimeout(() => {
+    let recs = [];
+    const roles = userProfile.role.join(" ").toLowerCase();
+    const goals = userProfile.goal.join(" ").toLowerCase();
+    if (CATALOG.products) {
+      if (roles.includes("student") || goals.includes("learn") || goals.includes("teach")) {
+        recs.push(CATALOG.products.find(p => p.id.includes("001")) || {title:"Intro Course"});
+        recs.push(CATALOG.products.find(p => p.id.includes("003")) || {title:"Color Theory"});
+      }
+      if (roles.includes("artist") || goals.includes("market") || goals.includes("technique")) {
+        recs.push(CATALOG.products.find(p => p.id.includes("brand")) || {title:"Brand Creator"});
+      }
+      if (recs.length === 0) recs.push(CATALOG.products[0]);
+    }
+    let html = "";
+    recs.forEach(p => {
+      if(p) {
+        html += `<div class="plan-card"><span class="plan-tag">Recommended</span><h3>${p.title}</h3><p>${p.price > 0 ? "$"+p.price : "Free"}</p><button class="plan-btn" onclick="window.open('${p.buyUrl||p.detailsUrl}', '_blank')">${p.buyUrl ? "Enroll Now" : "Join Waitlist"}</button></div>`;
+      }
+    });
+    container.innerHTML = html;
+    document.getElementById("bp-desc").innerHTML = `As a <strong>${userProfile.role.join(", ")}</strong> interested in <strong>${userProfile.goal.join(", ")}</strong>, and having explored <em>${collectedInterests.length > 0 ? collectedInterests.join(", ") : "various concepts"}</em>, we recommend this path:`;
+    document.getElementById("bp-steps").innerHTML = `<div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--blue);"><strong>Step 1: Observation</strong><br>Analyze visual structures in the gallery.</div><div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid #22c55e;"><strong>Step 2: Context</strong><br>Connect historical references to modern theory.</div>`;
+  }, 800);
+}
 
 // ==========================================
 // 7. INIT
@@ -339,8 +341,6 @@ document.addEventListener('pointerup',(e)=>{if(isDragging)return; cm.x=(e.client
 fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.floors).forEach(f=>f.items.forEach(i=>ART_DATA.push(i))); else ART_DATA=d; buildGallery(); }).catch(()=>buildGallery());
 fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
 
-window.showRegistration = showRegistration;
-window.toggleOption = toggleOption;
-window.completeRegistration = completeRegistration;
+window.showRegistration = showRegistration; window.toggleOption = toggleOption; window.completeRegistration = completeRegistration;
 document.getElementById("send-btn").onclick=sendChat; document.getElementById("user-input").onkeypress=(e)=>{if(e.key==="Enter")sendChat();};
-window.startBlueprint=startBlueprint; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=goToFloor;
+window.startBlueprint=startBlueprint; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=goToFloor; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
