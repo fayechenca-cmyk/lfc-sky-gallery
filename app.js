@@ -1,22 +1,22 @@
 // ==========================================
 // 1. CONFIGURATION
 // ==========================================
-const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; 
+const AI_ENDPOINT = "[https://lfc-ai-gateway.fayechenca.workers.dev/chat](https://lfc-ai-gateway.fayechenca.workers.dev/chat)"; 
 
 let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 
-// SMART SCORING SYSTEM (Tracks user interests)
-let intentScores = { history: 0, technique: 0, market: 0, theory: 0 };
+// ✅ THE BRAIN: Tracks what the user learns during chat
+let intentScores = { technique: 0, history: 0, market: 0, theory: 0 };
 
 const ATRIUM_CONFIG = {
-  videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
-  videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/maxresdefault.jpg",
+  videoLink: "[https://www.youtube.com/watch?v=ooi2V2Fp2-k](https://www.youtube.com/watch?v=ooi2V2Fp2-k)",
+  videoThumb: "[https://img.youtube.com/vi/ooi2V2Fp2-k/maxresdefault.jpg](https://img.youtube.com/vi/ooi2V2Fp2-k/maxresdefault.jpg)",
   title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing.",
   desc: "LFC Sky Artspace is a collection-led art education system.",
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
-// 12 FLOORS RESTORED
+// FULL 12 FLOORS (Design Locked)
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
@@ -33,8 +33,7 @@ const FLOORS = [
   { id: 12, name: "Contemporary Lens", type: "standard" },
 ];
 
-let ART_DATA = []; let CATALOG = []; 
-let chatHistory = []; // ✅ NOW STORES BOTH SIDES
+let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterests = []; 
 let currentOpenArt = null; 
 const interactables = []; 
 let isInputLocked = false; 
@@ -68,7 +67,7 @@ function completeRegistration() {
 }
 
 // ==========================================
-// 3. THREE.JS SCENE SETUP
+// 3. THREE.JS SCENE SETUP (Design Locked)
 // ==========================================
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
@@ -98,7 +97,7 @@ const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = "anonymous"; 
 
 // ==========================================
-// 4. GALLERY BUILDER
+// 4. GALLERY BUILDER (Design Locked)
 // ==========================================
 const floorHeight = 40; 
 
@@ -126,8 +125,12 @@ function createFallbackTexture(text) {
 
 function buildGallery() {
   FLOORS.forEach(f => {
-    const y = f.id * floorHeight; const group = new THREE.Group();
-    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; let wMat = (f.type === "darkroom") ? matWallDark : matWall;
+    const y = f.id * floorHeight; 
+    const group = new THREE.Group();
+    
+    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; 
+    let wMat = (f.type === "darkroom") ? matWallDark : matWall;
+
     const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), fMat); floor.position.set(0, y, 0); group.add(floor);
     const ceil = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), wMat); ceil.position.set(0, y+16, 0); group.add(ceil);
     const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w1.position.set(19.5, y+8, 0); group.add(w1);
@@ -136,8 +139,9 @@ function buildGallery() {
     if (f.id === 0) {
       createArtFrame(group, -18.5, y+6, -10, Math.PI/2, 10, 6, { title: "Introduction Video", artist: "Watch on YouTube", img: ATRIUM_CONFIG.videoThumb, link: ATRIUM_CONFIG.videoLink, isExternal: true });
       createArtFrame(group, 18.5, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
-      createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
+      createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "[https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE](https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE)" });
     }
+
     if (f.type === "installation") createPlinths(group, y);
 
     const arts = ART_DATA.filter(a => Number(a.floor) === f.id);
@@ -151,10 +155,17 @@ function buildGallery() {
       for(let i=0; i<6; i++) { const isRight = i % 2 === 0; createArtFrame(group, isRight?18.5:-18.5, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" }); }
     }
     scene.add(group);
+    
     const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
   });
 }
-function createPlinths(group, y) { [0, -15, 15].forEach(z => { const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); plinth.position.set(0, y + 0.6, z); group.add(plinth); const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); hitbox.position.set(0, y+3, z); hitbox.userData = { type: "art", data: { title: "Installation View", artist: "3D Works", img: "" }, viewPos: { x: 8, y: y+5, z: z+8 } }; interactables.push(hitbox); group.add(hitbox); }); }
+
+function createPlinths(group, y) {
+  [0, -15, 15].forEach(z => {
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); plinth.position.set(0, y + 0.6, z); group.add(plinth);
+    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); hitbox.position.set(0, y+3, z); hitbox.userData = { type: "art", data: { title: "Installation View", artist: "3D Works", img: "" }, viewPos: { x: 8, y: y+5, z: z+8 } }; interactables.push(hitbox); group.add(hitbox);
+  });
+}
 
 function createArtFrame(group, x, y, z, rot, w, h, data) {
   const frameGroup = new THREE.Group(); frameGroup.position.set(x, y, z); frameGroup.rotation.y = rot;
@@ -185,7 +196,7 @@ document.addEventListener('pointermove', (e)=>{ if(!isDragging || isInputLocked)
 window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;if(d==='l')moveLeft=true;if(d==='r')moveRight=true;}; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
 // ==========================================
-// 6. INTERACTION & AI
+// 6. INTERACTION & AI (INTELLIGENCE FIX)
 // ==========================================
 function goToFloor(id) { 
   closeBlueprint(); exitFocus(); 
@@ -205,7 +216,7 @@ function exitFocus() {
 
 function openAI(data) {
   document.getElementById("ai-panel").classList.add("active");
-  if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = data.img;
+  if (data.texture) document.getElementById("ai-img").src = "[https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info](https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info)"; else document.getElementById("ai-img").src = data.img;
   document.getElementById("ai-title").innerText = data.title; document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
   chatHistory = []; document.getElementById("chat-stream").innerHTML = "";
   addChatMsg("ai", "I am observing this piece with you. What do you see?");
@@ -215,7 +226,7 @@ async function sendChat() {
   const i=document.getElementById("user-input"), txt=i.value.trim(); if(!txt)return;
   addChatMsg("user",txt); i.value="";
   
-  // ✅ FIX: STORE BOTH SIDES OF HISTORY
+  // ✅ FIX: MEMORY (Push User Msg)
   chatHistory.push({ role: "user", parts: [{ text: txt }] });
 
   try {
@@ -227,7 +238,7 @@ async function sendChat() {
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
-    // Clean response
+    // ✅ FIX: SCRUBBER (Clean JSON)
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
         cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -236,11 +247,12 @@ async function sendChat() {
     addChatMsg("ai", cleanReply); 
     chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
-    // ✅ SMART SCORE UPDATES
-    if(d.intent_score) {
-       intentScores.history += (d.intent_score.history || 0);
-       intentScores.technique += (d.intent_score.technique || 0);
-       intentScores.market += (d.intent_score.market || 0);
+    // ✅ FIX: DATA COLLECTION
+    if(d.scores) {
+       intentScores.history += (d.scores.history || 0);
+       intentScores.technique += (d.scores.technique || 0);
+       intentScores.market += (d.scores.market || 0);
+       intentScores.theory += (d.scores.theory || 0);
     }
     
   } catch(e) { console.error(e); addChatMsg("ai", "⚠️ Connection Error."); }
@@ -251,25 +263,30 @@ function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`m
 function startBlueprint() {
   document.getElementById("blueprint").classList.add("active");
   const container = document.getElementById("bp-products");
-  container.innerHTML = "<h3>Analyzing Profile...</h3>";
+  container.innerHTML = "<h3>Analyzing Conversation...</h3>";
   
   setTimeout(() => {
     let recs = [];
-    const roles = userProfile.role.join(" ").toLowerCase();
     
-    // 1. Technique Driven
-    if (intentScores.technique > 5 || roles.includes("student") || roles.includes("artist")) {
-      recs.push(CATALOG.products.find(p => p.id.includes("001")) || {title:"Intro Sketch", price:0});
-      recs.push(CATALOG.products.find(p => p.id.includes("003")) || {title:"Color Theory", price:0});
+    // 1. Analyze Scores
+    let maxScore = 0;
+    let interest = "General";
+    for(const [key, val] of Object.entries(intentScores)) {
+        if(val > maxScore) { maxScore = val; interest = key; }
     }
-    
-    // 2. Market/Career Driven
-    if (intentScores.market > 5 || roles.includes("collector") || roles.includes("art market")) {
-      recs.push(CATALOG.products.find(p => p.id.includes("brand")) || {title:"Brand Creator", price:120});
+
+    if (CATALOG.products) {
+      if (interest === "technique" || userProfile.goal.includes("Learn Techniques")) {
+        recs.push(CATALOG.products.find(p => p.id.includes("001")));
+        recs.push(CATALOG.products.find(p => p.id.includes("003")));
+      }
+      else if (interest === "market" || userProfile.role.includes("Collector")) {
+        recs.push(CATALOG.products.find(p => p.id.includes("brand")));
+      }
+      else {
+        recs.push(CATALOG.products[0]);
+      }
     }
-    
-    // 3. Fallback
-    if(recs.length === 0) recs.push(CATALOG.products[0]);
 
     let html = "";
     recs.forEach(p => {
@@ -278,11 +295,8 @@ function startBlueprint() {
       }
     });
     container.innerHTML = html;
-    
-    const topInterest = Object.keys(intentScores).reduce((a, b) => intentScores[a] > intentScores[b] ? a : b);
-    document.getElementById("bp-desc").innerHTML = `Because you focused on <strong>${topInterest}</strong> and identified as <strong>${userProfile.role[0]}</strong>, we recommend:`;
-    
-    document.getElementById("bp-steps").innerHTML = `<div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--blue);"><strong>Step 1: Observation</strong><br>You showed interest in visual analysis.</div><div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid #22c55e;"><strong>Step 2: Context</strong><br>We detected questions about ${topInterest}.</div>`;
+    document.getElementById("bp-desc").innerHTML = `Based on your questions about <strong>${interest}</strong>, we built this path.`;
+    document.getElementById("bp-steps").innerHTML = `<div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--blue);"><strong>Focus: ${interest.toUpperCase()}</strong><br>We detected high engagement with ${interest} topics.</div>`;
   }, 1000);
 }
 
