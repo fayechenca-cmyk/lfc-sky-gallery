@@ -3,19 +3,14 @@
 // ==========================================
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; 
 
-// ✅ Multi-Select Support: Arrays []
-let userProfile = {
-  role: [], 
-  goal: [],
-  ageGroup: "Adult"
-};
+let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 
 const ATRIUM_CONFIG = {
   videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
   videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg",
-  title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing. From Knowing to Making.",
-  desc: "LFC Sky Artspace is a collection-led art education system that mirrors the experience of learning inside a real art space.",
-  method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
+  title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing.",
+  desc: "LFC Sky Artspace mirrors the experience of learning inside a real art space.",
+  method: "Collection-to-Creation", steps: "Visit → Analyze → Create"
 };
 
 const FLOORS = [
@@ -37,59 +32,49 @@ const FLOORS = [
 let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterests = []; let currentOpenArt = null; const interactables = []; 
 
 // ==========================================
-// 2. REGISTRATION & ENTRANCE LOGIC
+// 2. REGISTRATION & ENTRANCE
 // ==========================================
 function showRegistration() {
   document.getElementById('entrance-content').style.opacity = '0';
   setTimeout(() => { document.getElementById('reg-panel').classList.add('active'); }, 300);
 }
 
-// ✅ Multi-Select Toggle Function
 function toggleOption(category, btn) {
   btn.classList.toggle('selected');
   const txt = btn.innerText;
-  
   const idx = userProfile[category].indexOf(txt);
-  if(idx > -1) {
-    userProfile[category].splice(idx, 1); // Remove
-  } else {
-    userProfile[category].push(txt); // Add
-  }
+  if(idx > -1) userProfile[category].splice(idx, 1); else userProfile[category].push(txt);
   
   const enterBtn = document.getElementById('final-enter-btn');
-  if(userProfile.role.length > 0 && userProfile.goal.length > 0) {
-    enterBtn.classList.add('ready');
-  } else {
-    enterBtn.classList.remove('ready');
-  }
+  if(userProfile.role.length > 0 && userProfile.goal.length > 0) enterBtn.classList.add('ready');
+  else enterBtn.classList.remove('ready');
 }
 
 function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
-  
-  // ✅ UNFREEZE FIX: Force hide the panels so they don't block clicks
+  // UNFREEZE UI
   setTimeout(() => {
     document.getElementById('entrance-layer').style.display = 'none';
     document.getElementById('reg-panel').style.display = 'none';
-  }, 1000);
+  }, 2000);
 }
 
 // ==========================================
-// 3. THREE.JS SCENE SETUP
+// 3. THREE.JS SCENE
 // ==========================================
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
-const skyColor = new THREE.Color(0xe0f2fe);
+const skyColor = new THREE.Color(0xf0f9ff); // Lighter sky
 scene.background = skyColor;
 scene.fog = new THREE.Fog(skyColor, 15, 140);
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
 camera.position.set(0, 5, 30); 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 container.appendChild(renderer.domElement);
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.6); scene.add(hemiLight);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe0f2fe, 0.7); scene.add(hemiLight);
 const dirLight = new THREE.DirectionalLight(0xfffaed, 1); dirLight.position.set(50, 100, 50); dirLight.castShadow = true; scene.add(dirLight);
 const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
 const matFloorDark = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.6 });
@@ -105,6 +90,7 @@ textureLoader.crossOrigin = "anonymous";
 // 4. GALLERY BUILDER
 // ==========================================
 const floorHeight = 40; 
+
 function createTextTexture(cfg) {
   const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 1024, 1024);
@@ -115,6 +101,16 @@ function createTextTexture(cfg) {
   const words = cfg.desc.split(' '); let line = ''; let y = 300;
   for(let n = 0; n < words.length; n++) { const testLine = line + words[n] + ' '; if (ctx.measureText(testLine).width > 900 && n > 0) { ctx.fillText(line, 60, y); line = words[n] + ' '; y += 40; } else { line = testLine; } }
   ctx.fillText(line, 60, y); y += 80; ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 32px Arial'; ctx.fillText(cfg.method, 60, y); y += 50; ctx.fillStyle = '#666'; ctx.font = '28px Arial'; ctx.fillText(cfg.steps, 60, y);
+  return new THREE.CanvasTexture(canvas);
+}
+
+// Fallback for Missing Art
+function createFallbackTexture(text) {
+  const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 640; const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, 512, 640);
+  ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 30px Arial'; ctx.textAlign = 'center';
+  ctx.fillText("LFC COLLECTION", 256, 300); 
+  ctx.font = 'italic 18px Arial'; ctx.fillStyle = '#64748b'; ctx.fillText(text.substring(0,30), 256, 350);
   return new THREE.CanvasTexture(canvas);
 }
 
@@ -152,7 +148,11 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
     textureLoader.load(data.img, (tex) => {
       canvas.material = new THREE.MeshBasicMaterial({ map: tex });
       canvas.material.needsUpdate = true;
-    }, undefined, (err) => { console.warn("Could not load:", data.img); });
+    }, undefined, () => { 
+      canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) });
+    });
+  } else {
+    canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) });
   }
 
   const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
@@ -191,7 +191,8 @@ function openAI(data) {
   if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = data.img;
   document.getElementById("ai-title").innerText = data.title; document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
   chatHistory = []; document.getElementById("chat-stream").innerHTML = "";
-  addChatMsg("ai", "I am observing this piece with you. What do you see?");
+  // ✅ WARMER WELCOME MESSAGE
+  addChatMsg("ai", "I am analyzing this piece. What specific details catch your eye?");
 }
 
 async function sendChat() {
@@ -212,13 +213,66 @@ async function sendChat() {
 
     addChatMsg("ai", cleanReply); chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
-    if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; document.getElementById("bp-desc").innerHTML = `Based on your interest in <strong>${collectedInterests.join(", ")}</strong>, here is your personalized path.`; }
+    if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; }
   } catch(e) { 
     console.error(e);
     addChatMsg("ai", "⚠️ Connection Error. Please check your internet connection.");
   }
 }
 function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
+
+// ✅ SMART CURRICULUM GENERATOR
+function startBlueprint() {
+  document.getElementById("blueprint").classList.add("active");
+  const container = document.getElementById("bp-products");
+  container.innerHTML = "<h3>Generating Plan...</h3>";
+  
+  setTimeout(() => {
+    let recs = [];
+    const roles = userProfile.role.join(" ").toLowerCase();
+    const goals = userProfile.goal.join(" ").toLowerCase();
+    
+    // Logic: Recommend based on Profile + Interests
+    if (CATALOG.products) {
+      if (roles.includes("student") || goals.includes("learn")) {
+        recs.push(CATALOG.products.find(p => p.id.includes("001")) || {title:"Intro Course"});
+        recs.push(CATALOG.products.find(p => p.id.includes("003")) || {title:"Color Theory"});
+      }
+      if (roles.includes("artist") || goals.includes("create")) {
+        recs.push(CATALOG.products.find(p => p.id.includes("brand")) || {title:"Brand Creator"});
+      }
+      if (recs.length === 0) recs.push(CATALOG.products[0]);
+    }
+
+    let html = "";
+    recs.forEach(p => {
+      if(p) {
+        html += `
+        <div class="plan-card">
+          <span class="plan-tag">Recommended</span>
+          <h3>${p.title}</h3>
+          <p>${p.price > 0 ? "$"+p.price : "Free"}</p>
+          <button class="plan-btn" onclick="window.open('${p.buyUrl||p.detailsUrl}', '_blank')">
+            ${p.buyUrl ? "Enroll Now" : "Join Waitlist"}
+          </button>
+        </div>`;
+      }
+    });
+    container.innerHTML = html;
+    
+    document.getElementById("bp-desc").innerHTML = `
+      As a <strong>${userProfile.role.join(", ")}</strong> interested in <strong>${userProfile.goal.join(", ")}</strong>, 
+      and having explored <em>${collectedInterests.length > 0 ? collectedInterests.join(", ") : "various concepts"}</em>, 
+      we recommend this path:
+    `;
+    
+    document.getElementById("bp-steps").innerHTML = `
+      <div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--blue);"><strong>Step 1: Observation</strong><br>Analyze visual structures in the gallery.</div>
+      <div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid #22c55e;"><strong>Step 2: Context</strong><br>Connect historical references to modern theory.</div>
+    `;
+
+  }, 800);
+}
 
 // ==========================================
 // 7. INIT
@@ -231,9 +285,8 @@ document.addEventListener('pointerup',(e)=>{if(isDragging)return; cm.x=(e.client
 fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.floors).forEach(f=>f.items.forEach(i=>ART_DATA.push(i))); else ART_DATA=d; buildGallery(); }).catch(()=>buildGallery());
 fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
 
-// Bind UI
 window.showRegistration = showRegistration;
 window.toggleOption = toggleOption;
 window.completeRegistration = completeRegistration;
 document.getElementById("send-btn").onclick=sendChat; document.getElementById("user-input").onkeypress=(e)=>{if(e.key==="Enter")sendChat();};
-window.startBlueprint=()=>{document.getElementById("blueprint").classList.add("active");}; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=goToFloor;
+window.startBlueprint=startBlueprint; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=goToFloor;
