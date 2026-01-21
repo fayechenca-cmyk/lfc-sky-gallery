@@ -728,8 +728,28 @@
       try{
         const r = await fetch("artworks.json", { cache: "no-store" });
         if(!r.ok) return;
-        const data = await r.json();
-        if(Array.isArray(data)) ARTWORKS.push(...data);
+       const data = await r.json();
+
+// 1) If artworks.json is a simple array: [ {...}, {...} ]
+if (Array.isArray(data)) {
+  ARTWORKS.push(...data);
+}
+
+// 2) If artworks.json is structured like { floors: { "1": { name, items:[...] }, ... } }
+else if (data && data.floors && typeof data.floors === "object") {
+  for (const [floorId, floorObj] of Object.entries(data.floors)) {
+    const items = floorObj?.items;
+    if (Array.isArray(items)) {
+      items.forEach(it => {
+        // ensure floor number exists
+        if (it.floor == null) it.floor = Number(floorId);
+        // optional: keep floor name for display later
+        if (floorObj?.name && !it.floorName) it.floorName = floorObj.name;
+        ARTWORKS.push(it);
+      });
+    }
+  }
+}
       }catch(e){ /* ignore */ }
     }
 
