@@ -7,25 +7,24 @@ let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 
 const ATRIUM_CONFIG = {
   videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
-  // ✅ FIX: Using high-res thumbnail for Atrium Wall
   videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg",
   title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing.",
   desc: "LFC Sky Artspace is a collection-led art education system.",
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
-// ✅ FULL 12 FLOORS with Types RESTORED
+// FULL 12 FLOORS with Types
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
   { id: 2, name: "Print", type: "standard" },
   { id: 3, name: "Photography", type: "standard" },
   { id: 4, name: "Sculpture", type: "standard" },
-  { id: 5, name: "Installation", type: "installation" }, // 3D Plinths
+  { id: 5, name: "Installation", type: "installation" },
   { id: 6, name: "Ceramics", type: "standard" },
   { id: 7, name: "Design", type: "standard" },
   { id: 8, name: "Animation", type: "standard" },
-  { id: 9, name: "Film / Video", type: "darkroom" }, // Black Walls
+  { id: 9, name: "Film / Video", type: "darkroom" }, 
   { id: 10, name: "Performance", type: "standard" },
   { id: 11, name: "Sketch", type: "standard" },
   { id: 12, name: "Contemporary Lens", type: "standard" },
@@ -34,7 +33,6 @@ const FLOORS = [
 let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterests = []; 
 let currentOpenArt = null; 
 const interactables = []; 
-// ✅ NEW FLAG: Prevents movement when AI is open
 let isInputLocked = false; 
 
 // ==========================================
@@ -59,7 +57,7 @@ function toggleOption(category, btn) {
 function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
-  // ✅ FIX: FORCE HIDE LAYERS so they can't block clicks
+  // FORCE HIDE UI so it doesn't block physics
   setTimeout(() => {
     document.getElementById('entrance-layer').style.display = 'none';
     document.getElementById('reg-panel').style.display = 'none';
@@ -83,10 +81,15 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 container.appendChild(renderer.domElement);
 
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe0f2fe, 0.7); scene.add(hemiLight);
-const dirLight = new THREE.DirectionalLight(0xfffaed, 1); dirLight.position.set(50, 100, 50); dirLight.castShadow = true; scene.add(dirLight);
+// ✅ FIX: LOWER INTENSITY LIGHTS (Soft, not Blinding)
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe0f2fe, 0.4); 
+scene.add(hemiLight);
+const dirLight = new THREE.DirectionalLight(0xfffaed, 0.5); 
+dirLight.position.set(50, 100, 50); 
+dirLight.castShadow = true; 
+scene.add(dirLight);
 
-// --- MATERIALS (Restored Variety) ---
+// MATERIALS
 const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
 const matFloorDark = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.6 });
 const matWall = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
@@ -98,7 +101,7 @@ const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = "anonymous"; 
 
 // ==========================================
-// 4. RICH GALLERY BUILDER
+// 4. GALLERY BUILDER (Corrected Positions)
 // ==========================================
 const floorHeight = 40; 
 
@@ -115,7 +118,6 @@ function createTextTexture(cfg) {
   return new THREE.CanvasTexture(canvas);
 }
 
-// ✅ FALLBACK TEXTURE (Safety Net)
 function createFallbackTexture(text) {
   const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 640; const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, 512, 640);
@@ -130,7 +132,6 @@ function buildGallery() {
     const y = f.id * floorHeight; 
     const group = new THREE.Group();
     
-    // ✅ RESTORED: Dynamic Materials
     let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; 
     let wMat = (f.type === "darkroom") ? matWallDark : matWall;
 
@@ -139,30 +140,41 @@ function buildGallery() {
     const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w1.position.set(19.5, y+8, 0); group.add(w1);
     const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w2.position.set(-19.5, y+8, 0); group.add(w2);
 
-    // ATRIUM
+    // --- FLOOR 0: THE ATRIUM ---
     if (f.id === 0) {
-      createArtFrame(group, -19.4, y+6, -10, Math.PI/2, 10, 6, { title: "Introduction Video", artist: "Watch on YouTube", img: ATRIUM_CONFIG.videoThumb, link: ATRIUM_CONFIG.videoLink, isExternal: true });
-      createArtFrame(group, 19.4, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
+      // 1. VIDEO SCREEN (Use Thumbnail)
+      createArtFrame(group, -19.0, y+6, -10, Math.PI/2, 10, 6, { 
+        title: "Introduction Video", artist: "Watch on YouTube", 
+        img: ATRIUM_CONFIG.videoThumb, // Shows image
+        link: ATRIUM_CONFIG.videoLink, // Opens link
+        isExternal: true 
+      });
+      // 2. TEXT PANEL
+      createArtFrame(group, 19.0, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
+      // 3. LOGO
       createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
     }
 
-    // SPECIAL ROOMS
     if (f.type === "installation") createPlinths(group, y);
 
-    // ARTWORK PLACEMENT (With Safety Net)
     const arts = ART_DATA.filter(a => a.floor == f.id);
     
     if(arts.length > 0) {
       arts.forEach((data, i) => {
-        const isRight = i % 2 === 0; const x = isRight ? 19.4 : -19.4; const z = -45 + (i * 12); 
+        const isRight = i % 2 === 0; 
+        
+        // ✅ FIX: Move X to 18.5 (Inside) instead of 19.4 (Buried in wall)
+        const x = isRight ? 18.5 : -18.5; 
+        const z = -45 + (i * 12); 
+        
         let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; }
+        
         createArtFrame(group, x, y+6.5, z, isRight ? -Math.PI/2 : Math.PI/2, w, h, data);
       });
     } else if (f.id !== 0) {
-      // ✅ RESTORED: If no data, fill with placeholders
       for(let i=0; i<6; i++) {
         const isRight = i % 2 === 0;
-        createArtFrame(group, isRight?19.4:-19.4, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" });
+        createArtFrame(group, isRight?18.5:-18.5, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" });
       }
     }
 
@@ -190,12 +202,10 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
   if (data.texture) {
     canvas.material = new THREE.MeshBasicMaterial({ map: data.texture });
   } else if (data.img) {
-    // ✅ FALLBACK SYSTEM
     textureLoader.load(data.img, (tex) => {
       canvas.material = new THREE.MeshBasicMaterial({ map: tex });
       canvas.material.needsUpdate = true;
     }, undefined, () => { 
-      // If load fails (CORS), use fallback
       canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) });
     });
   } else {
@@ -208,7 +218,7 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
 }
 
 // ==========================================
-// 5. PHYSICS NAVIGATION (With Lock)
+// 5. PHYSICS NAVIGATION
 // ==========================================
 const velocity = new THREE.Vector3(); const speed = 1.8; const friction = 0.8; const lookSpeed = 0.002;
 let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
@@ -216,7 +226,7 @@ document.addEventListener('keydown', (e) => { if(e.code==='ArrowUp'||e.code==='K
 document.addEventListener('keyup', (e) => { if(e.code==='ArrowUp'||e.code==='KeyW') moveForward=false; if(e.code==='ArrowLeft'||e.code==='KeyA') moveLeft=false; if(e.code==='ArrowDown'||e.code==='KeyS') moveBackward=false; if(e.code==='ArrowRight'||e.code==='KeyD') moveRight=false; });
 
 function updatePhysics() { 
-  // ✅ FIX: Don't move if locked (looking at art or elevator)
+  // ✅ FIX: Don't move if locked
   if (isInputLocked) return; 
   
   velocity.x *= friction; velocity.z *= friction; 
@@ -239,11 +249,11 @@ window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;
 // ==========================================
 function goToFloor(id) { 
   closeBlueprint(); exitFocus(); 
-  isInputLocked = true; // Lock physics while elevator moves
+  isInputLocked = true; // Lock physics while moving
   new TWEEN.Tween(camera.position)
     .to({ y: (id * floorHeight) + 5 }, 2000)
     .easing(TWEEN.Easing.Quadratic.InOut)
-    .onComplete(() => { isInputLocked = false; }) // Unlock when done
+    .onComplete(() => { isInputLocked = false; })
     .start(); 
 }
 
@@ -251,7 +261,7 @@ function focusArt(userData) {
   if (userData.data.isExternal && userData.data.link) { window.open(userData.data.link, "_blank"); return; }
   
   currentOpenArt = userData.data; 
-  isInputLocked = true; // Lock physics so you don't drift away
+  isInputLocked = true; // ✅ FIX: Lock physics when looking at art
   document.body.classList.add("ai-open"); 
   
   camera.userData.returnPos = camera.position.clone(); 
@@ -270,7 +280,7 @@ function exitFocus() {
   currentOpenArt = null; 
   
   if(camera.userData.returnPos) { 
-    new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).onComplete(() => { isInputLocked = false; }).start(); // Unlock after returning
+    new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).onComplete(() => { isInputLocked = false; }).start(); // Unlock
     new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); 
   } else {
     isInputLocked = false;
@@ -297,7 +307,6 @@ async function sendChat() {
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
-    // ✅ FIX: SCRUB JSON
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
         cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -306,65 +315,18 @@ async function sendChat() {
 
     addChatMsg("ai", cleanReply); chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
-    if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; }
+    if(d.save && d.tag) { 
+        collectedInterests.push(d.tag); 
+        document.getElementById("journey-count").innerText=collectedInterests.length; 
+        // Show "Save" in chat
+        addChatMsg("ai", `✅ Insight Saved: ${d.tag}`);
+    }
   } catch(e) { 
     console.error(e);
     addChatMsg("ai", "⚠️ Connection Error. Please check your internet connection.");
   }
 }
 function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
-
-// ✅ SMART CURRICULUM GENERATOR
-function startBlueprint() {
-  document.getElementById("blueprint").classList.add("active");
-  const container = document.getElementById("bp-products");
-  container.innerHTML = "<h3>Generating Plan...</h3>";
-  
-  setTimeout(() => {
-    let recs = [];
-    const roles = userProfile.role.join(" ").toLowerCase();
-    const goals = userProfile.goal.join(" ").toLowerCase();
-    
-    if (CATALOG.products) {
-      if (roles.includes("student") || goals.includes("learn") || goals.includes("teach")) {
-        recs.push(CATALOG.products.find(p => p.id.includes("001")) || {title:"Intro Course"});
-        recs.push(CATALOG.products.find(p => p.id.includes("003")) || {title:"Color Theory"});
-      }
-      if (roles.includes("artist") || goals.includes("market") || goals.includes("technique")) {
-        recs.push(CATALOG.products.find(p => p.id.includes("brand")) || {title:"Brand Creator"});
-      }
-      if (recs.length === 0) recs.push(CATALOG.products[0]);
-    }
-
-    let html = "";
-    recs.forEach(p => {
-      if(p) {
-        html += `
-        <div class="plan-card">
-          <span class="plan-tag">Recommended</span>
-          <h3>${p.title}</h3>
-          <p>${p.price > 0 ? "$"+p.price : "Free"}</p>
-          <button class="plan-btn" onclick="window.open('${p.buyUrl||p.detailsUrl}', '_blank')">
-            ${p.buyUrl ? "Enroll Now" : "Join Waitlist"}
-          </button>
-        </div>`;
-      }
-    });
-    container.innerHTML = html;
-    
-    document.getElementById("bp-desc").innerHTML = `
-      As a <strong>${userProfile.role.join(", ")}</strong> interested in <strong>${userProfile.goal.join(", ")}</strong>, 
-      and having explored <em>${collectedInterests.length > 0 ? collectedInterests.join(", ") : "various concepts"}</em>, 
-      we recommend this path:
-    `;
-    
-    document.getElementById("bp-steps").innerHTML = `
-      <div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--blue);"><strong>Step 1: Observation</strong><br>Analyze visual structures in the gallery.</div>
-      <div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid #22c55e;"><strong>Step 2: Context</strong><br>Connect historical references to modern theory.</div>
-    `;
-
-  }, 800);
-}
 
 // ==========================================
 // 7. INIT
