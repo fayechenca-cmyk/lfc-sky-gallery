@@ -1,16 +1,16 @@
 // ==========================================
 // 1. CONFIGURATION
 // ==========================================
-const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; 
+const AI_ENDPOINT = "[https://lfc-ai-gateway.fayechenca.workers.dev/chat](https://lfc-ai-gateway.fayechenca.workers.dev/chat)"; 
 
 let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 
 const ATRIUM_CONFIG = {
-  videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
-  videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg",
-  title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing.",
-  desc: "LFC Sky Artspace mirrors the experience of learning inside a real art space.",
-  method: "Collection-to-Creation", steps: "Visit → Analyze → Create"
+  videoLink: "[https://www.youtube.com/watch?v=ooi2V2Fp2-k](https://www.youtube.com/watch?v=ooi2V2Fp2-k)",
+  videoThumb: "[https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg](https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg)",
+  title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing. From Knowing to Making.",
+  desc: "LFC Sky Artspace is a collection-led art education system.",
+  method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
 const FLOORS = [
@@ -32,7 +32,7 @@ const FLOORS = [
 let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterests = []; let currentOpenArt = null; const interactables = []; 
 
 // ==========================================
-// 2. REGISTRATION & ENTRANCE
+// 2. REGISTRATION & ENTRANCE LOGIC
 // ==========================================
 function showRegistration() {
   document.getElementById('entrance-content').style.opacity = '0';
@@ -42,18 +42,26 @@ function showRegistration() {
 function toggleOption(category, btn) {
   btn.classList.toggle('selected');
   const txt = btn.innerText;
+  
   const idx = userProfile[category].indexOf(txt);
-  if(idx > -1) userProfile[category].splice(idx, 1); else userProfile[category].push(txt);
+  if(idx > -1) {
+    userProfile[category].splice(idx, 1); 
+  } else {
+    userProfile[category].push(txt); 
+  }
   
   const enterBtn = document.getElementById('final-enter-btn');
-  if(userProfile.role.length > 0 && userProfile.goal.length > 0) enterBtn.classList.add('ready');
-  else enterBtn.classList.remove('ready');
+  if(userProfile.role.length > 0 && userProfile.goal.length > 0) {
+    enterBtn.classList.add('ready');
+  } else {
+    enterBtn.classList.remove('ready');
+  }
 }
 
 function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
-  // UNFREEZE UI
+  // UNFREEZE FIX
   setTimeout(() => {
     document.getElementById('entrance-layer').style.display = 'none';
     document.getElementById('reg-panel').style.display = 'none';
@@ -61,20 +69,20 @@ function completeRegistration() {
 }
 
 // ==========================================
-// 3. THREE.JS SCENE
+// 3. THREE.JS SCENE SETUP
 // ==========================================
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
-const skyColor = new THREE.Color(0xf0f9ff); // Lighter sky
+const skyColor = new THREE.Color(0xe0f2fe);
 scene.background = skyColor;
 scene.fog = new THREE.Fog(skyColor, 15, 140);
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
 camera.position.set(0, 5, 30); 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 container.appendChild(renderer.domElement);
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe0f2fe, 0.7); scene.add(hemiLight);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.6); scene.add(hemiLight);
 const dirLight = new THREE.DirectionalLight(0xfffaed, 1); dirLight.position.set(50, 100, 50); dirLight.castShadow = true; scene.add(dirLight);
 const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
 const matFloorDark = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.6 });
@@ -90,7 +98,6 @@ textureLoader.crossOrigin = "anonymous";
 // 4. GALLERY BUILDER
 // ==========================================
 const floorHeight = 40; 
-
 function createTextTexture(cfg) {
   const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 1024, 1024);
@@ -104,13 +111,13 @@ function createTextTexture(cfg) {
   return new THREE.CanvasTexture(canvas);
 }
 
-// Fallback for Missing Art
+// ✅ FIX 2: FORCE FALLBACK IF IMAGE FAILS
 function createFallbackTexture(text) {
   const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 640; const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, 512, 640);
-  ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 30px Arial'; ctx.textAlign = 'center';
-  ctx.fillText("LFC COLLECTION", 256, 300); 
-  ctx.font = 'italic 18px Arial'; ctx.fillStyle = '#64748b'; ctx.fillText(text.substring(0,30), 256, 350);
+  ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center';
+  ctx.fillText("IMAGE", 256, 300); ctx.fillText("UNAVAILABLE", 256, 350);
+  ctx.font = 'italic 20px Arial'; ctx.fillStyle = '#64748b'; ctx.fillText(text.substring(0,30), 256, 400);
   return new THREE.CanvasTexture(canvas);
 }
 
@@ -125,7 +132,7 @@ function buildGallery() {
     if (f.id === 0) {
       createArtFrame(group, -19.4, y+6, -10, Math.PI/2, 10, 6, { title: "Introduction Video", artist: "Watch on YouTube", img: ATRIUM_CONFIG.videoThumb, link: ATRIUM_CONFIG.videoLink, isExternal: true });
       createArtFrame(group, 19.4, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
-      createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
+      createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "[https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE](https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE)" });
     }
     if (f.type === "installation") createPlinths(group, y);
     const arts = ART_DATA.filter(a => a.floor == f.id);
@@ -140,18 +147,24 @@ function createPlinths(group, y) { [0, -15, 15].forEach(z => { const plinth = ne
 function createArtFrame(group, x, y, z, rot, w, h, data) {
   const frameGroup = new THREE.Group(); frameGroup.position.set(x, y, z); frameGroup.rotation.y = rot;
   const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.2, h+0.2, 0.2), matFrame); frameGroup.add(frame);
-  const canvas = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xeeeeee })); canvas.position.z = 0.11; frameGroup.add(canvas);
+  const canvas = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xeeeeee })); 
+  // Pushed Z forward slightly more to prevent z-fighting
+  canvas.position.z = 0.15; 
+  frameGroup.add(canvas);
 
   if (data.texture) {
     canvas.material = new THREE.MeshBasicMaterial({ map: data.texture });
   } else if (data.img) {
+    // Attempt to load image
     textureLoader.load(data.img, (tex) => {
       canvas.material = new THREE.MeshBasicMaterial({ map: tex });
       canvas.material.needsUpdate = true;
-    }, undefined, () => { 
+    }, undefined, () => {
+      // If load fails, apply Fallback
       canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) });
     });
   } else {
+    // If no img data at all
     canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) });
   }
 
@@ -188,11 +201,10 @@ function exitFocus() { document.body.classList.remove("ai-open"); document.getEl
 
 function openAI(data) {
   document.getElementById("ai-panel").classList.add("active");
-  if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = data.img;
+  if (data.texture) document.getElementById("ai-img").src = "[https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info](https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info)"; else document.getElementById("ai-img").src = data.img;
   document.getElementById("ai-title").innerText = data.title; document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
   chatHistory = []; document.getElementById("chat-stream").innerHTML = "";
-  // ✅ WARMER WELCOME MESSAGE
-  addChatMsg("ai", "I am analyzing this piece. What specific details catch your eye?");
+  addChatMsg("ai", "I am observing this piece with you. What do you see?");
 }
 
 async function sendChat() {
@@ -207,13 +219,20 @@ async function sendChat() {
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
+    // ✅ FIX 1: AGGRESSIVE JSON CLEANER (The "Scrubber")
     let cleanReply = d.reply;
-    if (cleanReply && cleanReply.startsWith('```json')) { cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim(); }
-    if (cleanReply && cleanReply.startsWith('{')) { try { const p = JSON.parse(cleanReply); cleanReply = p.reply; } catch(e){} }
+    if (typeof cleanReply === 'string') {
+        // Remove markdown blocks
+        cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
+        // If it still looks like an object, parse it and extract 'reply'
+        if(cleanReply.startsWith('{')) {
+            try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){}
+        }
+    }
 
     addChatMsg("ai", cleanReply); chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
-    if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; }
+    if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; document.getElementById("bp-desc").innerHTML = `Based on your interest in <strong>${collectedInterests.join(", ")}</strong>, here is your personalized path.`; }
   } catch(e) { 
     console.error(e);
     addChatMsg("ai", "⚠️ Connection Error. Please check your internet connection.");
@@ -232,7 +251,6 @@ function startBlueprint() {
     const roles = userProfile.role.join(" ").toLowerCase();
     const goals = userProfile.goal.join(" ").toLowerCase();
     
-    // Logic: Recommend based on Profile + Interests
     if (CATALOG.products) {
       if (roles.includes("student") || goals.includes("learn")) {
         recs.push(CATALOG.products.find(p => p.id.includes("001")) || {title:"Intro Course"});
@@ -260,6 +278,7 @@ function startBlueprint() {
     });
     container.innerHTML = html;
     
+    // Dynamic Description
     document.getElementById("bp-desc").innerHTML = `
       As a <strong>${userProfile.role.join(", ")}</strong> interested in <strong>${userProfile.goal.join(", ")}</strong>, 
       and having explored <em>${collectedInterests.length > 0 ? collectedInterests.join(", ") : "various concepts"}</em>, 
