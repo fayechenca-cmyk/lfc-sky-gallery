@@ -25,10 +25,7 @@
       --gray:#64748b;
     }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-    }
+    html, body { width: 100%; height: 100%; }
 
     body {
       margin: 0;
@@ -218,6 +215,7 @@
       opacity: 0;
       transition: all 0.45s;
       box-shadow: 0 20px 40px rgba(0,0,0,0.16);
+      z-index: 80;
     }
     #back-btn.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -334,6 +332,7 @@
       animation: fadeUp 0.35s ease;
       box-shadow: 0 12px 28px rgba(0,0,0,0.05);
       font-family: 'Montserrat', sans-serif;
+      white-space: pre-wrap;
     }
     .msg-ai {
       background: rgba(248,250,252,0.95);
@@ -357,6 +356,7 @@
       gap: 10px;
       align-items: center;
       backdrop-filter: blur(14px);
+      padding-bottom: calc(1.1rem + env(safe-area-inset-bottom));
     }
     #user-input {
       flex: 1;
@@ -568,6 +568,60 @@
 
     #canvas-container { position:absolute; inset:0; }
 
+    /* NAV PAD (non-blocking, auto hides when AI open on mobile) */
+    #nav-pad{position:fixed;left:20px;bottom:20px;z-index:85;pointer-events:auto;font-family:Montserrat;}
+    #nav-pad .pad{
+      display:grid;
+      grid-template-columns:44px 44px 44px;
+      grid-template-rows:44px 44px 44px;
+      gap:8px;
+      background:rgba(255,255,255,0.70);
+      backdrop-filter:blur(10px);
+      border:1px solid rgba(30,58,138,0.25);
+      padding:10px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.08);
+      border-radius:16px;
+    }
+    #nav-pad button{
+      border:1px solid rgba(30,58,138,0.25);
+      background:#fff;
+      color:#1e3a8a;
+      font-weight:900;
+      cursor:pointer;
+      border-radius:12px;
+    }
+    #nav-pad button:active{transform:translateY(1px)}
+    .ai-open #nav-pad{display:none;}
+
+    /* MOBILE FIXES (AI becomes bottom sheet; nothing blocks chat) */
+    @media (max-width: 768px){
+      #hud{top:1rem;left:1rem;}
+      h1{font-size:1.25rem;}
+      #top-actions{top:1rem;right:1rem;flex-direction:column;}
+      #elevator{right:1rem;max-height:58vh;}
+      .floor-label{padding:7px 12px;font-size:9px;}
+      .floor-num{width:30px;height:30px;font-size:10px;}
+
+      /* AI becomes bottom sheet */
+      #ai-panel{
+        width: 100%;
+        height: 68vh;
+        max-width: 100%;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transform: translateY(100%);
+        border-left: none;
+        border-top: 1px solid rgba(0,0,0,0.08);
+        box-shadow: 0 -22px 60px rgba(0,0,0,0.12);
+      }
+      #ai-panel.active{ transform: translateY(0); }
+      .ai-img-preview{height:120px;}
+
+      #nav-pad{left:12px;bottom:12px;}
+      #nav-pad .pad{grid-template-columns:38px 38px 38px;grid-template-rows:38px 38px 38px;gap:7px;padding:9px;}
+    }
   </style>
 </head>
 
@@ -654,7 +708,8 @@
           <p style="color: rgba(51,65,85,0.82); font-size: 14px; line-height: 1.6; margin-top: 0.8rem;" id="bp-desc">Analyzing your journey...</p>
           <div id="bp-steps" style="margin-top: 1.6rem;"></div>
         </div>
-        <div class="bp-right">
+        <div class="bp-right" id="bp-right">
+          <!-- fallback cards if catalog.json not used -->
           <div class="plan-card" onclick="toast('Coming soon: Checkout link')">
             <span class="plan-tag">Recommended</span>
             <h3 style="margin: 0; font-family:'Montserrat', sans-serif; font-weight: 900; letter-spacing: -0.2px;">LFC Live Studio</h3>
@@ -687,21 +742,38 @@
 
   <div id="canvas-container"></div>
 
+  <!-- NAV PAD -->
+  <div id="nav-pad">
+    <div class="pad">
+      <div></div><button data-m="f">▲</button><div></div>
+      <button data-m="l">◀</button><button data-m="z">◎</button><button data-m="r">▶</button>
+      <div></div><button data-m="b">▼</button><div></div>
+    </div>
+  </div>
+
   <script>
     /******************************************************************
-     * 0) SECURITY FIRST
-     * - DO NOT put Gemini keys in this file.
-     * - AI calls go to your Cloudflare Worker (which stores secrets).
+     * EDIT ME (SAFE)
      ******************************************************************/
+    // AI calls go to your Cloudflare Worker (worker stores secrets)
     const AI_GATEWAY_URL = "https://lfc-ai-gateway.fayechenca.workers.dev/api/gemini";
 
+    // If you want instant notifications when AI recommends a class with no buy-link:
+    // Option A (recommended): Set a webhook endpoint (Cloudflare Worker / Zapier / Make)
+    const NOTIFY_ENDPOINT = ""; // e.g. "https://your-worker.yourname.workers.dev/notify"
+    // Option B: Or just open an email draft via mailto:
+    const ADMIN_EMAIL = ""; // e.g. "you@email.com"
+
+    // If you do NOT want camera to auto-fly into artworks (your request), keep false.
+    const AUTO_FLY_TO_ARTWORK = false;
+
+    const AI_TIMEOUT_MS = 20000;
+
     /******************************************************************
-     * 1) FLOORS (DO NOT CHANGE THE FORMAT LIST — this is your elevator)
-     *    Reception = 0, then 12 medium-based floors.
+     * 1) FLOORS
      ******************************************************************/
     const FLOORS = [
       { id: 0, name: "Reception", type: "reception" },
-
       { id: 1, name: "Painting / Fine Art", type: "fineart" },
       { id: 2, name: "Print", type: "standard" },
       { id: 3, name: "Photography", type: "standard" },
@@ -710,51 +782,52 @@
       { id: 6, name: "Ceramics", type: "standard" },
       { id: 7, name: "Design", type: "standard" },
       { id: 8, name: "Animation", type: "standard" },
-      { id: 9, name: "Film / Video", type: "darkroom" },    // ONLY dark floor
+      { id: 9, name: "Film / Video", type: "darkroom" },
       { id: 10, name: "Performance", type: "standard" },
       { id: 11, name: "Sketch", type: "standard" },
       { id: 12, name: "Contemporary Lens", type: "standard" },
     ];
 
     /******************************************************************
-     * 2) ARTWORK DATA (flexible structure)
-     * You can load a future artworks.json (optional).
-     * Each artwork can include:
-     * { floor, title, artist, year, img, size, medium, note, videoUrl }
+     * 2) DATA (easy-edit for non-IT)
+     * - artworks.json (optional)
+     * - catalog.json  (optional, for buy links)
      ******************************************************************/
     const ARTWORKS = [];
+    const CATALOG = { products: [] };
 
     async function tryLoadArtworksJSON(){
       try{
         const r = await fetch("artworks.json", { cache: "no-store" });
         if(!r.ok) return;
-       const data = await r.json();
-
-// 1) If artworks.json is a simple array: [ {...}, {...} ]
-if (Array.isArray(data)) {
-  ARTWORKS.push(...data);
-}
-
-// 2) If artworks.json is structured like { floors: { "1": { name, items:[...] }, ... } }
-else if (data && data.floors && typeof data.floors === "object") {
-  for (const [floorId, floorObj] of Object.entries(data.floors)) {
-    const items = floorObj?.items;
-    if (Array.isArray(items)) {
-      items.forEach(it => {
-        // ensure floor number exists
-        if (it.floor == null) it.floor = Number(floorId);
-        // optional: keep floor name for display later
-        if (floorObj?.name && !it.floorName) it.floorName = floorObj.name;
-        ARTWORKS.push(it);
-      });
+        const data = await r.json();
+        if (Array.isArray(data)) ARTWORKS.push(...data);
+        else if (data && data.floors && typeof data.floors === "object") {
+          for (const [floorId, floorObj] of Object.entries(data.floors)) {
+            const items = floorObj?.items;
+            if (Array.isArray(items)) {
+              items.forEach(it => {
+                if (it.floor == null) it.floor = Number(floorId);
+                if (floorObj?.name && !it.floorName) it.floorName = floorObj.name;
+                ARTWORKS.push(it);
+              });
+            }
+          }
+        }
+      }catch(e){ /* ignore */ }
     }
-  }
-}
+
+    async function tryLoadCatalogJSON(){
+      try{
+        const r = await fetch("catalog.json", { cache: "no-store" });
+        if(!r.ok) return;
+        const data = await r.json();
+        if (data && Array.isArray(data.products)) CATALOG.products = data.products;
       }catch(e){ /* ignore */ }
     }
 
     /******************************************************************
-     * 3) THREE.JS ENGINE — keep the sky / glass futuristic tone
+     * 3) THREE.JS
      ******************************************************************/
     const container = document.getElementById("canvas-container");
     const scene = new THREE.Scene();
@@ -765,17 +838,18 @@ else if (data && data.floors && typeof data.floors === "object") {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-    renderer.setClearColor(0x000000, 0); // let CSS sky gradient show through
+    renderer.setClearColor(0x000000, 0);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputEncoding = THREE.sRGBEncoding;
     container.appendChild(renderer.domElement);
 
-    // Fog that matches the sky tone
+    // Important: pointer events only on the canvas
+    renderer.domElement.style.touchAction = "none";
+
     const skyFog = new THREE.Color(0xe0f2fe);
     scene.fog = new THREE.Fog(skyFog, 18, 160);
 
-    // Lights
     const hemi = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.75);
     scene.add(hemi);
 
@@ -790,7 +864,6 @@ else if (data && data.floors && typeof data.floors === "object") {
     accent.position.set(-30, 30, -10);
     scene.add(accent);
 
-    // Materials
     const textureLoader = new THREE.TextureLoader();
 
     const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.22, metalness: 0.10 });
@@ -814,17 +887,12 @@ else if (data && data.floors && typeof data.floors === "object") {
     });
 
     const matFrame = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8, metalness: 0.15 });
-
     const invisibleMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.0, depthWrite: false });
 
-    // Interactions
     const interactables = [];
     const builtLevels = new Set();
     const floorHeight = 35;
 
-    /******************************************************************
-     * 4) WORLD BASE PLANES (walk surface)
-     ******************************************************************/
     const walkPlane = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), invisibleMat);
     walkPlane.rotation.x = -Math.PI / 2;
     walkPlane.userData = { type: "floor" };
@@ -832,7 +900,7 @@ else if (data && data.floors && typeof data.floors === "object") {
     scene.add(walkPlane);
 
     /******************************************************************
-     * 5) BUILD FLOORS
+     * 5) BUILD FLOORS (same visuals)
      ******************************************************************/
     function buildLevel(level){
       if (builtLevels.has(level)) return;
@@ -844,18 +912,15 @@ else if (data && data.floors && typeof data.floors === "object") {
       const y = level * floorHeight;
       const group = new THREE.Group();
 
-      // Slightly wider corridor for better “sky gallery” feel
       const width = 44;
       const length = 110;
 
-      // materials by type
       let flMat = matFloor;
       let wMat  = matWallWhite;
 
       if (config.type === "darkroom") { flMat = matFloorDark; wMat = matWallDark; }
       if (config.type === "installation") { flMat = matFloor; wMat = matWallWhite; }
 
-      // Floor
       const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.5, length), flMat);
       floorMesh.position.set(0, y, 0);
       floorMesh.receiveShadow = true;
@@ -863,15 +928,12 @@ else if (data && data.floors && typeof data.floors === "object") {
       interactables.push(floorMesh);
       group.add(floorMesh);
 
-      // Ceiling (keep light tone except darkroom)
       const ceil = new THREE.Mesh(new THREE.BoxGeometry(width, 0.5, length), wMat);
       ceil.position.set(0, y + 15, 0);
       ceil.castShadow = true;
       group.add(ceil);
 
-      // Walls / style rules
       if (config.type === "darkroom") {
-        // Dark room: curtain left, solid right
         const curtain = new THREE.Mesh(new THREE.BoxGeometry(1, 15, length), matCurtain);
         curtain.position.set(-width/2 + 0.5, y + 7.5, 0);
         group.add(curtain);
@@ -881,7 +943,6 @@ else if (data && data.floors && typeof data.floors === "object") {
         group.add(rightWall);
 
       } else if (config.type === "fineart") {
-        // Fine art floor: window feel on left side (glass panel)
         const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 15, 46), wMat);
         w1.position.set(-width/2 + 0.5, y + 7.5, -28);
         group.add(w1);
@@ -899,12 +960,10 @@ else if (data && data.floors && typeof data.floors === "object") {
         group.add(rightWall);
 
       } else if (config.type === "installation") {
-        // Installation: glass left, OPEN right (more flexible 3D navigation feeling)
         const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.6, 15, length), matGlass);
         leftWall.position.set(-width/2 + 0.5, y + 7.5, 0);
         group.add(leftWall);
 
-        // short right wall only at ends (open middle)
         const rw1 = new THREE.Mesh(new THREE.BoxGeometry(1, 15, 35), wMat);
         rw1.position.set(width/2 - 0.5, y + 7.5, -37);
         group.add(rw1);
@@ -914,7 +973,6 @@ else if (data && data.floors && typeof data.floors === "object") {
         group.add(rw2);
 
       } else {
-        // Standard: glass left, solid right
         const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.6, 15, length), matGlass);
         leftWall.position.set(-width/2 + 0.5, y + 7.5, 0);
         group.add(leftWall);
@@ -924,7 +982,6 @@ else if (data && data.floors && typeof data.floors === "object") {
         group.add(rightWall);
       }
 
-      // Railings front/back
       const backRail = new THREE.Mesh(new THREE.BoxGeometry(width, 2, 0.12), matGlass);
       backRail.position.set(0, y + 1, -length/2);
       group.add(backRail);
@@ -933,9 +990,7 @@ else if (data && data.floors && typeof data.floors === "object") {
       frontRail.position.set(0, y + 1, length/2);
       group.add(frontRail);
 
-      // Populate content
       if (level === 0) {
-        // Reception signage
         createWallArt({
           floor: 0,
           title: "LFC SYSTEM",
@@ -965,11 +1020,68 @@ else if (data && data.floors && typeof data.floors === "object") {
       scene.add(group);
     }
 
+    function normalizeArtwork(a, floor){
+      const safe = (v) => (typeof v === "string" ? v.trim() : v);
+      return {
+        floor: Number(a.floor ?? floor),
+        title: safe(a.title) || "Untitled",
+        artist: safe(a.artist) || "Unknown",
+        year: safe(a.year) || "—",
+        size: safe(a.size) || "—",
+        medium: safe(a.medium) || "—",
+        note: safe(a.note) || "",
+        img: safe(a.img) || safe(a.image) || "",
+        videoUrl: safe(a.videoUrl) || safe(a.video) || "",
+        w: Number(a.w || 4),
+        h: Number(a.h || 5),
+      };
+    }
+
+    function createWallArt(data, parentGroup, isInfo){
+      const d = normalizeArtwork(data, data.floor);
+
+      const group = new THREE.Group();
+      group.position.set(data.x || 0, data.y || 0, data.z || 0);
+      group.rotation.y = data.rot || 0;
+
+      const frame = new THREE.Mesh(new THREE.BoxGeometry((data.w || d.w) + 0.12, (data.h || d.h) + 0.12, 0.12), matFrame);
+      frame.castShadow = true;
+      group.add(frame);
+
+      const placeholderMat = new THREE.MeshBasicMaterial({ color: 0xdddddd });
+      const canvas = new THREE.Mesh(new THREE.PlaneGeometry((data.w || d.w), (data.h || d.h)), placeholderMat);
+      canvas.position.z = 0.07;
+      group.add(canvas);
+
+      if (d.img){
+        textureLoader.load(d.img, (tex) => {
+          tex.encoding = THREE.sRGBEncoding;
+          tex.anisotropy = 8;
+          canvas.material = new THREE.MeshBasicMaterial({ map: tex });
+          canvas.material.needsUpdate = true;
+        });
+      }
+
+      if (!isInfo){
+        const hitbox = new THREE.Mesh(new THREE.BoxGeometry((data.w || d.w), (data.h || d.h), 0.7), invisibleMat);
+        hitbox.position.z = 0.2;
+        hitbox.userData = {
+          type: "art",
+          data: d,
+          lookAt: { x: group.position.x, y: group.position.y + 0.6, z: group.position.z },
+          viewPos: { x: group.position.x, y: group.position.y + 0.6, z: group.position.z + 8 }
+        };
+        interactables.push(hitbox);
+        group.add(hitbox);
+      }
+
+      parentGroup.add(group);
+    }
+
     function populateWallArtFromData(level, width, length, y, group, opts){
       const items = ARTWORKS.filter(a => Number(a.floor) === Number(level));
       if (items.length > 0){
-        // evenly distribute
-        const count = Math.min(items.length, 10); // keep performance safe; can raise later
+        const count = Math.min(items.length, 10);
         const startZ = -42;
         const spacing = 10;
         for (let i=0; i<count; i++){
@@ -980,19 +1092,13 @@ else if (data && data.floors && typeof data.floors === "object") {
           const rot = (side === "right") ? (-Math.PI/2) : (Math.PI/2);
 
           createWallArt({
-            ...a,
-            w: a.w || 4,
-            h: a.h || 5,
-            x,
-            y: y + 6,
-            z,
-            rot
+            ...a, w: a.w || 4, h: a.h || 5,
+            x, y: y + 6, z, rot
           }, group, false);
         }
         return;
       }
 
-      // fallback: procedural placeholder
       const startZ = -40;
       const spacing = 14;
       const count = 7;
@@ -1018,7 +1124,6 @@ else if (data && data.floors && typeof data.floors === "object") {
     }
 
     function populateVideoFloor(level, width, length, y, group){
-      // Darkroom screens (use artworks data if provided, else placeholders)
       const items = ARTWORKS.filter(a => Number(a.floor) === Number(level));
       const startZ = -35;
       const spacing = 18;
@@ -1036,8 +1141,7 @@ else if (data && data.floors && typeof data.floors === "object") {
           medium: a.medium || "Video",
           size: a.size || "—",
           img: a.img || "https://placehold.co/1200x700/0b0b10/ffffff?text=FILM+%2F+VIDEO",
-          videoUrl: a.videoUrl || a.video || "",
-          isVideo: true,
+          videoUrl: a.videoUrl || "",
           w: 6.6,
           h: 3.8,
           x: width/2 - 1.1,
@@ -1047,7 +1151,6 @@ else if (data && data.floors && typeof data.floors === "object") {
         }, group, false);
       }
 
-      // add a subtle “screen glow” strip
       const glow = new THREE.Mesh(
         new THREE.BoxGeometry(width * 0.9, 0.15, length * 0.9),
         new THREE.MeshBasicMaterial({ color: 0x0b1220, transparent:true, opacity: 0.08 })
@@ -1057,7 +1160,6 @@ else if (data && data.floors && typeof data.floors === "object") {
     }
 
     function populateInstallationFloor(level, width, length, y, group){
-      // Plinths + placeholder 3D “sculptures” — future-ready for scanned models
       const plinthMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.05 });
       const sculptureMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.45, metalness: 0.12 });
 
@@ -1075,14 +1177,12 @@ else if (data && data.floors && typeof data.floors === "object") {
         plinth.receiveShadow = true;
         group.add(plinth);
 
-        // placeholder sculpture
         const geo = (idx % 2 === 0) ? new THREE.TorusKnotGeometry(1.2, 0.35, 120, 16) : new THREE.IcosahedronGeometry(1.6, 1);
         const sculpt = new THREE.Mesh(geo, sculptureMat);
         sculpt.position.set(p.x, y + 3.1, p.z);
         sculpt.castShadow = true;
         group.add(sculpt);
 
-        // hitbox for clicking (so AI panel can still open for installation pieces)
         const hit = new THREE.Mesh(new THREE.BoxGeometry(6.2, 5.0, 6.2), invisibleMat);
         hit.position.set(p.x, y + 2.7, p.z);
         hit.userData = {
@@ -1097,75 +1197,12 @@ else if (data && data.floors && typeof data.floors === "object") {
             img: "https://placehold.co/1200x800/ffffff/1e3a8a?text=INSTALLATION",
             note: "3D display zone — future scanned models supported."
           }, level),
-          viewPos: { x: p.x + 7, y: y + 5, z: p.z + 9 },
-          lookAt: { x: p.x, y: y + 2.7, z: p.z }
+          lookAt: { x: p.x, y: y + 2.7, z: p.z },
+          viewPos: { x: p.x + 7, y: y + 5, z: p.z + 9 }
         };
         interactables.push(hit);
         group.add(hit);
       });
-    }
-
-    function normalizeArtwork(a, floor){
-      // Keep flexible: accept missing fields
-      const safe = (v) => (typeof v === "string" ? v.trim() : v);
-      return {
-        floor: Number(a.floor ?? floor),
-        title: safe(a.title) || "Untitled",
-        artist: safe(a.artist) || "Unknown",
-        year: safe(a.year) || "—",
-        size: safe(a.size) || "—",
-        medium: safe(a.medium) || "—",
-        note: safe(a.note) || "",
-        img: safe(a.img) || safe(a.image) || "",
-        videoUrl: safe(a.videoUrl) || safe(a.video) || "",
-        w: Number(a.w || 4),
-        h: Number(a.h || 5),
-      };
-    }
-
-    function createWallArt(data, parentGroup, isInfo){
-      const d = normalizeArtwork(data, data.floor);
-
-      const group = new THREE.Group();
-      group.position.set(data.x || 0, data.y || 0, data.z || 0);
-      group.rotation.y = data.rot || 0;
-
-      // Frame
-      const frame = new THREE.Mesh(new THREE.BoxGeometry((data.w || d.w) + 0.12, (data.h || d.h) + 0.12, 0.12), matFrame);
-      frame.castShadow = true;
-      group.add(frame);
-
-      // Canvas plane
-      const placeholderMat = new THREE.MeshBasicMaterial({ color: 0xdddddd });
-      const canvas = new THREE.Mesh(new THREE.PlaneGeometry((data.w || d.w), (data.h || d.h)), placeholderMat);
-      canvas.position.z = 0.07;
-      canvas.userData.isCanvas = true;
-      group.add(canvas);
-
-      if (d.img){
-        textureLoader.load(d.img, (tex) => {
-          tex.encoding = THREE.sRGBEncoding;
-          tex.anisotropy = 8;
-          canvas.material = new THREE.MeshBasicMaterial({ map: tex });
-          canvas.material.needsUpdate = true;
-        });
-      }
-
-      // Click hitbox
-      if (!isInfo){
-        const hitbox = new THREE.Mesh(new THREE.BoxGeometry((data.w || d.w), (data.h || d.h), 0.7), invisibleMat);
-        hitbox.position.z = 0.2;
-        hitbox.userData = {
-          type: "art",
-          data: d,
-          viewPos: { x: group.position.x + Math.sin(group.rotation.y) * 8, y: group.position.y + 0.6, z: group.position.z + Math.cos(group.rotation.y) * 8 },
-          lookAt: { x: group.position.x, y: group.position.y + 0.6, z: group.position.z }
-        };
-        interactables.push(hitbox);
-        group.add(hitbox);
-      }
-
-      parentGroup.add(group);
     }
 
     /******************************************************************
@@ -1175,7 +1212,6 @@ else if (data && data.floors && typeof data.floors === "object") {
       const elev = document.getElementById("elevator");
       elev.innerHTML = "";
 
-      // reverse so highest is at top (your original behavior)
       [...FLOORS].slice().reverse().forEach(f => {
         const b = document.createElement("div");
         b.className = "floor-item";
@@ -1195,46 +1231,99 @@ else if (data && data.floors && typeof data.floors === "object") {
     }
 
     /******************************************************************
-     * 7) CAMERA + NAVIGATION
+     * 7) CAMERA + NAVIGATION (FIXED)
+     * - No more "drag still triggers click"
+     * - No auto push into artwork
+     * - Orbit + zoom supported
      ******************************************************************/
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    let isDragging = false;
-    let startX = 0, startY = 0;
     let lon = 0, lat = 0;
 
     let isFocusing = false;
     let savedPos = new THREE.Vector3();
     let lookTarget = null;
 
-    function onDown(x,y,target){
-      if (target !== renderer.domElement) return;
-      isDragging = true;
-      startX = x; startY = y;
-    }
-    function onMove(x,y){
-      if(!isDragging) return;
-      lon -= (x - startX) * 0.15;
-      lat += (y - startY) * 0.15;
-      lat = Math.max(-85, Math.min(85, lat));
-      startX = x; startY = y;
-    }
-    function onUp(x,y,target){
-      if (target !== renderer.domElement) { isDragging = false; return; }
-      const click = Math.abs(x - startX) < 5 && Math.abs(y - startY) < 5;
-      isDragging = false;
-      if (click) handleClick(x,y);
+    // Orbit state while focusing
+    let focusOrbit = null;
+
+    function setFocusOrbit(targetVec3){
+      const off = camera.position.clone().sub(targetVec3);
+      const dist = Math.max(3, Math.min(22, off.length() || 10));
+      const polar = Math.acos(THREE.MathUtils.clamp(off.y / dist, -1, 1));
+      const azim = Math.atan2(off.x, off.z);
+      focusOrbit = { target: targetVec3.clone(), dist, polar, azim };
     }
 
-    document.addEventListener("mousedown", e => onDown(e.clientX, e.clientY, e.target));
-    document.addEventListener("mousemove", e => onMove(e.clientX, e.clientY));
-    document.addEventListener("mouseup",   e => onUp(e.clientX, e.clientY, e.target));
-    document.addEventListener("touchstart", e => onDown(e.touches[0].clientX, e.touches[0].clientY, e.target), { passive: true });
-    document.addEventListener("touchmove",  e => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    document.addEventListener("touchend",   e => onUp(e.changedTouches[0].clientX, e.changedTouches[0].clientY, renderer.domElement), { passive: true });
+    function updateFocusOrbit(){
+      if (!focusOrbit) return;
+      const t = focusOrbit.target;
+      focusOrbit.polar = THREE.MathUtils.clamp(focusOrbit.polar, 0.15, Math.PI - 0.15);
+      focusOrbit.dist = THREE.MathUtils.clamp(focusOrbit.dist, 3, 22);
+
+      const sinP = Math.sin(focusOrbit.polar);
+      camera.position.set(
+        t.x + focusOrbit.dist * sinP * Math.sin(focusOrbit.azim),
+        t.y + focusOrbit.dist * Math.cos(focusOrbit.polar),
+        t.z + focusOrbit.dist * sinP * Math.cos(focusOrbit.azim)
+      );
+      lookTarget = t;
+    }
+
+    // Pointer events ONLY on canvas
+    let pointerDown = false;
+    let downX = 0, downY = 0;
+    let lastX = 0, lastY = 0;
+    let moved = false;
+
+    renderer.domElement.addEventListener("pointerdown", (e) => {
+      pointerDown = true;
+      moved = false;
+      downX = lastX = e.clientX;
+      downY = lastY = e.clientY;
+      renderer.domElement.setPointerCapture(e.pointerId);
+    });
+
+    renderer.domElement.addEventListener("pointermove", (e) => {
+      if(!pointerDown) return;
+
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+
+      if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 7) moved = true;
+
+      if (isFocusing && focusOrbit){
+        focusOrbit.azim -= dx * 0.008;
+        focusOrbit.polar += dy * 0.008;
+        updateFocusOrbit();
+        return;
+      }
+
+      lon -= dx * 0.15;
+      lat += dy * 0.15;
+      lat = Math.max(-85, Math.min(85, lat));
+    });
+
+    renderer.domElement.addEventListener("pointerup", (e) => {
+      pointerDown = false;
+      try { renderer.domElement.releasePointerCapture(e.pointerId); } catch(_) {}
+
+      if (!moved){
+        handleClick(e.clientX, e.clientY);
+      }
+    });
+
+    renderer.domElement.addEventListener("pointercancel", () => {
+      pointerDown = false;
+    });
 
     function handleClick(x,y){
+      // When focusing: do NOT force-exit on click (prevents accidental closes)
+      if (isFocusing) return;
+
       mouse.x = (x / window.innerWidth) * 2 - 1;
       mouse.y = -(y / window.innerHeight) * 2 + 1;
 
@@ -1242,21 +1331,17 @@ else if (data && data.floors && typeof data.floors === "object") {
       const hits = raycaster.intersectObjects(interactables, true);
       if (!hits.length) return;
 
-      const obj = hits[0].object;
-      const ud = obj.userData || {};
-
-      // If focusing: click outside artwork -> exit
-      if (isFocusing){
-        if (ud.type === "art") return;
-        exitFocus();
-        return;
-      }
+      const ud = hits[0].object?.userData || {};
 
       if (ud.type === "floor"){
-        // move on same floor height
         const currentY = Math.floor(camera.position.y / floorHeight) * floorHeight + 5;
         const pt = hits[0].point;
-        moveCamera(pt.x, currentY, pt.z);
+
+        // Keep movement inside corridor so it doesn't jump through walls
+        const clampX = THREE.MathUtils.clamp(pt.x, -14, 14);
+        const clampZ = THREE.MathUtils.clamp(pt.z, -50, 50);
+
+        moveCamera(clampX, currentY, clampZ);
       }
 
       if (ud.type === "art"){
@@ -1275,36 +1360,161 @@ else if (data && data.floors && typeof data.floors === "object") {
       isFocusing = true;
       savedPos.copy(camera.position);
 
-      new TWEEN.Tween(camera.position)
-        .to(ud.viewPos, 1100)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .start();
-
       lookTarget = new THREE.Vector3(ud.lookAt.x, ud.lookAt.y, ud.lookAt.z);
+      setFocusOrbit(lookTarget);
 
-      setTimeout(() => {
-        document.getElementById("back-btn").classList.add("visible");
-        startAI(ud.data);
-      }, 850);
+      // Do NOT auto-fly into artwork (your request)
+      if (AUTO_FLY_TO_ARTWORK){
+        new TWEEN.Tween(camera.position)
+          .to(ud.viewPos, 1000)
+          .easing(TWEEN.Easing.Cubic.InOut)
+          .onComplete(() => {
+            setFocusOrbit(lookTarget);
+          })
+          .start();
+      }
+
+      document.getElementById("back-btn").classList.add("visible");
+      startAI(ud.data);
     }
 
     function exitFocus(){
       isFocusing = false;
       lookTarget = null;
+      focusOrbit = null;
 
+      document.body.classList.remove("ai-open");
       document.getElementById("back-btn").classList.remove("visible");
       document.getElementById("ai-panel").classList.remove("active");
       document.getElementById("blueprint").classList.remove("active");
       document.getElementById("registration").classList.remove("active");
 
-      new TWEEN.Tween(camera.position)
-        .to({ x: savedPos.x, y: savedPos.y, z: savedPos.z }, 900)
-        .easing(TWEEN.Easing.Cubic.Out)
-        .start();
+      if (AUTO_FLY_TO_ARTWORK){
+        new TWEEN.Tween(camera.position)
+          .to({ x: savedPos.x, y: savedPos.y, z: savedPos.z }, 900)
+          .easing(TWEEN.Easing.Cubic.Out)
+          .start();
+      }
     }
 
+    // Wheel zoom (desktop)
+    renderer.domElement.addEventListener("wheel", (e) => {
+      const active = document.activeElement;
+      if (active && active.id === "user-input") return;
+
+      e.preventDefault();
+
+      if (isFocusing && focusOrbit){
+        focusOrbit.dist += Math.sign(e.deltaY) * 1.2;
+        updateFocusOrbit();
+        return;
+      }
+
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+      dir.y = 0;
+      dir.normalize();
+
+      const step = Math.sign(e.deltaY) * 2.0;
+      camera.position.addScaledVector(dir, step);
+    }, { passive: false });
+
+    // Pinch zoom (mobile)
+    let pinchStartDist = null;
+    renderer.domElement.addEventListener("touchstart", (e) => {
+      if (e.touches && e.touches.length === 2){
+        pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+      }
+    }, { passive: false });
+
+    renderer.domElement.addEventListener("touchmove", (e) => {
+      if (!e.touches || e.touches.length !== 2 || pinchStartDist == null) return;
+      e.preventDefault();
+
+      const d = touchDist(e.touches[0], e.touches[1]);
+      const delta = d - pinchStartDist;
+      pinchStartDist = d;
+
+      if (isFocusing && focusOrbit){
+        focusOrbit.dist -= delta * 0.01;
+        updateFocusOrbit();
+        return;
+      }
+
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+      dir.y = 0;
+      dir.normalize();
+      camera.position.addScaledVector(dir, -delta * 0.02);
+    }, { passive: false });
+
+    renderer.domElement.addEventListener("touchend", () => {
+      pinchStartDist = null;
+    });
+
+    function touchDist(t1, t2){
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+
+    // Keyboard nav (desktop): WASD / arrows
+    window.addEventListener("keydown", (e) => {
+      const active = document.activeElement;
+      if (active && (active.id === "user-input")) return;
+
+      const forward = new THREE.Vector3();
+      camera.getWorldDirection(forward);
+      forward.y = 0;
+      forward.normalize();
+      const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0,1,0)).normalize();
+
+      const step = 1.6;
+      if (e.key === "w" || e.key === "ArrowUp") camera.position.addScaledVector(forward, step);
+      if (e.key === "s" || e.key === "ArrowDown") camera.position.addScaledVector(forward, -step);
+      if (e.key === "a" || e.key === "ArrowLeft") camera.position.addScaledVector(right, -step);
+      if (e.key === "d" || e.key === "ArrowRight") camera.position.addScaledVector(right, step);
+    });
+
+    // Nav pad actions
+    (function navPad(){
+      const wrap = document.getElementById("nav-pad");
+      if (!wrap) return;
+
+      function move(dir){
+        if (isFocusing && focusOrbit){
+          if (dir === "f") focusOrbit.dist = Math.max(3, focusOrbit.dist - 0.8);
+          if (dir === "b") focusOrbit.dist = Math.min(22, focusOrbit.dist + 0.8);
+          if (dir === "l") focusOrbit.azim += 0.08;
+          if (dir === "r") focusOrbit.azim -= 0.08;
+          updateFocusOrbit();
+          return;
+        }
+
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        forward.y = 0;
+        forward.normalize();
+        const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0,1,0)).normalize();
+
+        const step = 2.2;
+        if (dir === "f") camera.position.addScaledVector(forward, step);
+        if (dir === "b") camera.position.addScaledVector(forward, -step);
+        if (dir === "l") camera.position.addScaledVector(right, -step);
+        if (dir === "r") camera.position.addScaledVector(right, step);
+      }
+
+      wrap.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const m = btn.getAttribute("data-m");
+          if (m === "z") return;
+          move(m);
+        });
+      });
+    })();
+
     /******************************************************************
-     * 8) AI + JOURNEY LOGIC
+     * 8) AI + JOURNEY LOGIC (more stable)
      ******************************************************************/
     let collectedInterests = [];
     let currentArtData = null;
@@ -1312,7 +1522,6 @@ else if (data && data.floors && typeof data.floors === "object") {
     let currentPersona = "docent";
     let userProfile = { age: null, goal: null };
 
-    // premium curator: allow 6 model replies then prompt upgrade
     const CURATOR_FREE_TURNS = 6;
     let curatorModelReplies = 0;
 
@@ -1322,7 +1531,6 @@ else if (data && data.floors && typeof data.floors === "object") {
       const btn = document.getElementById("btn-" + mode);
       if (btn) btn.classList.add("active");
 
-      // show gentle notice when switching to curator
       if (mode === "curator" && curatorModelReplies >= CURATOR_FREE_TURNS){
         addMsg("ai", "Curator access has reached the free limit. Unlock Curator Chat to continue deeper critique.");
         document.getElementById("blueprint").classList.add("active");
@@ -1337,10 +1545,10 @@ else if (data && data.floors && typeof data.floors === "object") {
       chatHistory = [];
       curatorModelReplies = 0;
 
+      document.body.classList.add("ai-open");
       document.getElementById("ai-img").src = currentArtData.img || "https://placehold.co/1200x800/ffffff/1e3a8a?text=Artwork";
       document.getElementById("ai-title").innerText = currentArtData.title || "Untitled";
 
-      // show more info: artist, year, medium, size (your request)
       const meta = [
         currentArtData.artist || "Unknown",
         currentArtData.year || "—",
@@ -1353,11 +1561,7 @@ else if (data && data.floors && typeof data.floors === "object") {
       document.getElementById("ai-panel").classList.add("active");
       switchMode("docent");
 
-      const intro = (currentArtData.videoUrl || currentArtData.isVideo)
-        ? "Welcome. This is the video room. What do you notice first — atmosphere, rhythm, or concept?"
-        : "Welcome. I’m your guide. What strikes you first about this piece?";
-
-      addMsg("ai", intro);
+      addMsg("ai", "Welcome. I’m your guide. What strikes you first about this piece?");
     }
 
     function handleKey(e){
@@ -1373,7 +1577,7 @@ else if (data && data.floors && typeof data.floors === "object") {
     }
 
     function addMsg(role, txt){
-      const id = Date.now() + Math.floor(Math.random() * 1000);
+      const id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (String(Date.now()) + "_" + Math.random().toString(16).slice(2));
       const d = document.createElement("div");
       d.className = `msg msg-${role}`;
       d.id = `msg-${id}`;
@@ -1386,31 +1590,40 @@ else if (data && data.floors && typeof data.floors === "object") {
     }
 
     async function callAI(prompt){
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
       try{
         const r = await fetch(AI_GATEWAY_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt })
+          body: JSON.stringify({ prompt }),
+          signal: controller.signal
         });
 
-        const data = await r.json().catch(()=> ({}));
+        const raw = await r.text();
+        let data = null;
+
+        try { data = JSON.parse(raw); } catch(_) { data = raw; }
 
         if (!r.ok){
-          console.error("AI gateway error", data);
-          return { __error: true, message: data?.error || "AI gateway error. Please try again." };
+          return { __error: true, message: (data && data.error) ? data.error : ("AI gateway error (" + r.status + ")") };
         }
 
-        // We accept multiple possible response shapes to avoid breakage
-        // Expected best: { reply, save, tag } or { title, desc, steps }
-        return data;
+        // if gateway returns text, wrap it
+        if (typeof data === "string"){
+          return { reply: data };
+        }
+
+        return data || { __error: true, message: "AI response empty." };
       }catch(e){
-        console.error("AI exception", e);
-        return { __error: true, message: "Network error. Please try again." };
+        return { __error: true, message: "Network/timeout error. Please try again." };
+      }finally{
+        clearTimeout(t);
       }
     }
 
     async function sendText(txt){
-      // Premium limit check
       if (currentPersona === "curator" && curatorModelReplies >= CURATOR_FREE_TURNS){
         addMsg("ai", "Curator access is locked in free mode. Unlock to continue deeper critique.");
         document.getElementById("blueprint").classList.add("active");
@@ -1421,7 +1634,6 @@ else if (data && data.floors && typeof data.floors === "object") {
       }
 
       addMsg("user", txt);
-
       chatHistory.push({ role: "user", text: txt });
 
       const loadingId = addMsg("ai", "…");
@@ -1472,20 +1684,16 @@ Return STRICT JSON only:
         return;
       }
 
-      // If gateway returns already parsed JSON
-      const reply = res?.reply || (typeof res === "string" ? res : "I’m here—ask me again.");
+      const reply = res?.reply || "I’m here — ask me again.";
       addMsg("ai", reply);
-
       chatHistory.push({ role: "model", text: reply });
 
       if (currentPersona === "curator") curatorModelReplies++;
 
-      // add follow-up question if exists (nice UX)
       if (res?.suggested_question){
         addMsg("ai", "→ " + res.suggested_question);
       }
 
-      // Save Insight button
       if (res?.save){
         const tag = res.tag || "Concept";
         const btnId = "save-" + (Date.now() + Math.floor(Math.random() * 1000));
@@ -1533,6 +1741,99 @@ Return STRICT JSON only:
       showFinalCurriculum();
     }
 
+    function findProductById(id){
+      return (CATALOG.products || []).find(p => String(p.id || "").toLowerCase() === String(id || "").toLowerCase());
+    }
+
+    async function notifyMissingProduct(productName, aiReason){
+      const payload = {
+        productName,
+        reason: aiReason || "",
+        userProfile,
+        interests: collectedInterests,
+        time: new Date().toISOString()
+      };
+
+      if (NOTIFY_ENDPOINT && NOTIFY_ENDPOINT.startsWith("http")){
+        try{
+          await fetch(NOTIFY_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          toast("Request sent");
+          return;
+        }catch(e){
+          toast("Notify failed");
+          return;
+        }
+      }
+
+      if (ADMIN_EMAIL){
+        const subject = encodeURIComponent("[LFC] Missing class link needed");
+        const body = encodeURIComponent(
+          `A visitor received a curriculum recommendation with no buy link.\n\n` +
+          `Product/Class: ${productName}\n` +
+          `Reason: ${aiReason || ""}\n\n` +
+          `Profile: ${JSON.stringify(userProfile)}\n` +
+          `Interests: ${JSON.stringify(collectedInterests, null, 2)}\n`
+        );
+        window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
+        toast("Email draft opened");
+        return;
+      }
+
+      toast("Set ADMIN_EMAIL or NOTIFY_ENDPOINT");
+    }
+
+    function renderPlanCards(recommendations){
+      const right = document.getElementById("bp-right");
+      if (!right) return;
+
+      // If no recommendations provided, use defaults
+      const recs = Array.isArray(recommendations) && recommendations.length
+        ? recommendations
+        : [
+            { id: "LFC_LIVE_STUDIO", tag: "Recommended" },
+            { id: "LFC_SELF_GUIDED_PACK", tag: "Self-paced" },
+            { id: "LFC_CURATOR_CHAT", tag: "Premium" }
+          ];
+
+      // If catalog exists, render from catalog; otherwise keep fallback HTML
+      const hasCatalog = Array.isArray(CATALOG.products) && CATALOG.products.length > 0;
+      if (!hasCatalog) return;
+
+      right.innerHTML = "";
+      recs.slice(0,3).forEach((r, idx) => {
+        const prod = findProductById(r.id) || findProductById(r.sku) || null;
+
+        const tag = (r.tag || (idx === 0 ? "Recommended" : (idx === 1 ? "Self-paced" : "Premium"))).toUpperCase();
+        const title = prod?.title || r.title || r.id || "Class";
+        const price = prod?.price || r.price || "";
+        const url = prod?.url || prod?.link || "";
+
+        const card = document.createElement("div");
+        card.className = "plan-card";
+
+        card.innerHTML = `
+          <span class="plan-tag">${escapeHTML(tag)}</span>
+          <h3 style="margin: 0; font-family:'Montserrat', sans-serif; font-weight: 900; letter-spacing: -0.2px;">${escapeHTML(title)}</h3>
+          ${price ? `<span class="plan-price">${escapeHTML(price)}</span>` : `<span class="plan-price"> </span>`}
+          <button class="plan-btn">${url ? "Buy" : "Request Link"}</button>
+        `;
+
+        card.onclick = async () => {
+          if (url){
+            window.open(url, "_blank", "noopener,noreferrer");
+          } else {
+            await notifyMissingProduct(title, r.reason || "AI recommended this but catalog has no URL yet.");
+          }
+        };
+
+        right.appendChild(card);
+      });
+    }
+
     async function showFinalCurriculum(){
       document.getElementById("blueprint").classList.add("active");
       document.getElementById("bp-title").innerText = "Generating...";
@@ -1556,6 +1857,9 @@ Return STRICT JSON only:
     "Level 1: ...",
     "Level 2: ...",
     "Level 3: ..."
+  ],
+  "recommendations": [
+    { "id": "CATALOG_PRODUCT_ID", "tag": "Recommended|Self-paced|Premium", "reason": "one line" }
   ]
 }
 `;
@@ -1587,6 +1891,9 @@ Return STRICT JSON only:
         `;
       });
       document.getElementById("bp-steps").innerHTML = html;
+
+      // Render plan cards from catalog.json (if available)
+      renderPlanCards(data?.recommendations);
     }
 
     function closeBlueprint(){ document.getElementById("blueprint").classList.remove("active"); }
@@ -1595,8 +1902,7 @@ Return STRICT JSON only:
      * 9) TOP BUTTONS
      ******************************************************************/
     function openHelp(){
-      toast("Tip: Drag to look • Click floor to walk • Click artwork to talk");
-      addMsg("ai", "Tip: Drag to look. Click on the floor to walk. Click on an artwork (or installation piece) to open Docent / Curator.");
+      toast("Drag to look • Click floor to walk • Click art to chat • Wheel/pinch to zoom");
     }
 
     function manualAddArt(){
@@ -1605,7 +1911,6 @@ Return STRICT JSON only:
 
       toast("Test art added to current floor");
 
-      // Add to ARTWORKS quickly for demo
       const currentFloor = Math.max(0, Math.min(12, Math.round(camera.position.y / floorHeight)));
       ARTWORKS.push({
         floor: currentFloor,
@@ -1617,7 +1922,6 @@ Return STRICT JSON only:
         img: url
       });
 
-      // Rebuild current floor is complex; simplest: go out and come back to refresh
       goToLevel(currentFloor);
     }
 
@@ -1664,15 +1968,18 @@ Return STRICT JSON only:
      * 11) INIT
      ******************************************************************/
     async function init(){
-      // loader progress
       const fill = document.getElementById("load-fill");
-      fill.style.width = "20%";
+      fill.style.width = "18%";
+
       await tryLoadArtworksJSON();
       fill.style.width = "55%";
 
+      await tryLoadCatalogJSON();
+      fill.style.width = "62%";
+
       buildLevel(0);
       buildLevel(1);
-      fill.style.width = "80%";
+      fill.style.width = "82%";
 
       buildElevatorUI();
       fill.style.width = "100%";
@@ -1727,260 +2034,7 @@ Return STRICT JSON only:
     window.handleKey = handleKey;
     window.manualAddArt = manualAddArt;
     window.openHelp = openHelp;
-/* ===============================
-   PATCH: Better AI + Better Navigation
-   Paste at VERY END of your <script>
-================================= */
-
-// 1) Point your front-end to Cloudflare Worker (NO API key in browser)
-const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; // <-- change if yours differs
-
-// 2) Fix message IDs so loading bubbles can be removed
-addMsg = function(role, txt) {
-  const id = String(Date.now()) + "_" + Math.random().toString(16).slice(2);
-  const d = document.createElement('div');
-  d.className = `msg msg-${role}`;
-  d.id = `msg-${id}`;
-  d.innerText = txt;
-  const s = document.getElementById('chat-stream');
-  s.appendChild(d);
-  s.scrollTop = s.scrollHeight;
-  return id;
-};
-
-// 3) Replace Gemini call with Worker call (keeps memory + stops repeating)
-async function callAIWorker({ mode, art, history, message, userProfile }) {
-  const r = await fetch(AI_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, art, history, message, userProfile })
-  });
-  if (!r.ok) throw new Error("AI request failed");
-  return await r.json();
-}
-
-// Override sendText to use Worker
-sendText = async function(txt) {
-  addMsg('user', txt);
-  chatHistory.push({ role: 'user', parts: [{ text: txt }] });
-
-  const loadingId = addMsg('ai', '...');
-  try {
-    const res = await callAIWorker({
-      mode: currentPersona,
-      art: currentArtData || {},
-      history: chatHistory,
-      message: txt,
-      userProfile
-    });
-
-    // remove loading bubble
-    const el = document.getElementById(`msg-${loadingId}`);
-    if (el) el.remove();
-
-    const reply = res?.reply || "AI error. Please try again.";
-    addMsg('ai', reply);
-    chatHistory.push({ role: 'model', parts: [{ text: reply }] });
-
-    // optional follow-up (if provided)
-    if (res?.followUp) {
-      addMsg('ai', res.followUp);
-      chatHistory.push({ role: 'model', parts: [{ text: res.followUp }] });
-    }
-
-    // save insight button
-    if (res?.save && res?.tag) {
-      setTimeout(() => {
-        const btnId = "save_" + Date.now();
-        const div = document.createElement('div');
-        div.style.textAlign = 'center';
-        div.innerHTML = `<button id="${btnId}" style="margin-top:10px;padding:10px 14px;cursor:pointer;border:1px solid #cbd5e1;background:#fff;border-radius:20px;font-family:Montserrat;font-weight:700;font-size:12px;">
-          + Save Insight: ${res.tag}
-        </button>`;
-        document.getElementById('chat-stream').appendChild(div);
-
-        document.getElementById(btnId).onclick = function() {
-          this.disabled = true;
-          this.innerText = "Saved";
-          collectedInterests.push({ art: currentArtData?.title || "Unknown", tag: res.tag });
-          document.getElementById('journey-count').innerText = collectedInterests.length;
-        };
-      }, 300);
-    }
-
-  } catch (e) {
-    const el = document.getElementById(`msg-${loadingId}`);
-    if (el) el.remove();
-    addMsg('ai', "AI gateway error. Please try again.");
-  }
-};
-
-// 4) Orbit + zoom while focusing (without breaking your visual design)
-let __focusOrbit = null;
-function __setFocusOrbit(targetVec3) {
-  const off = camera.position.clone().sub(targetVec3);
-  const dist = Math.max(3, Math.min(20, off.length()));
-  const polar = Math.acos(off.y / dist);      // 0..PI
-  const azim = Math.atan2(off.x, off.z);      // -PI..PI
-  __focusOrbit = { target: targetVec3.clone(), dist, polar, azim };
-}
-function __updateFocusOrbit() {
-  if (!__focusOrbit) return;
-  const t = __focusOrbit.target;
-  const dist = __focusOrbit.dist;
-  const polar = Math.max(0.15, Math.min(Math.PI - 0.15, __focusOrbit.polar));
-  const azim = __focusOrbit.azim;
-
-  const sinP = Math.sin(polar);
-  camera.position.set(
-    t.x + dist * sinP * Math.sin(azim),
-    t.y + dist * Math.cos(polar),
-    t.z + dist * sinP * Math.cos(azim)
-  );
-  lookTarget = t; // keep your existing render loop behavior
-}
-
-// Capture-phase handlers: stop the old “focus click” lock from blocking orbit
-let __draggingFocus = false;
-let __lastX = 0;
-let __lastY = 0;
-
-document.addEventListener("mousedown", (e) => {
-  if (!isFocusing) return;
-  if (e.target !== renderer.domElement) return;
-  __draggingFocus = true;
-  __lastX = e.clientX;
-  __lastY = e.clientY;
-  e.preventDefault();
-  e.stopImmediatePropagation();
-}, true);
-
-document.addEventListener("mousemove", (e) => {
-  if (!isFocusing || !__draggingFocus || !__focusOrbit) return;
-  const dx = e.clientX - __lastX;
-  const dy = e.clientY - __lastY;
-  __lastX = e.clientX;
-  __lastY = e.clientY;
-
-  __focusOrbit.azim -= dx * 0.008;
-  __focusOrbit.polar += dy * 0.008;
-  __updateFocusOrbit();
-
-  e.preventDefault();
-  e.stopImmediatePropagation();
-}, true);
-
-document.addEventListener("mouseup", (e) => {
-  if (!isFocusing) return;
-  __draggingFocus = false;
-  e.stopImmediatePropagation();
-}, true);
-
-// Wheel zoom: works in focus (orbit distance) and walk (move forward/back)
-window.addEventListener("wheel", (e) => {
-  // don’t zoom while typing in input
-  const active = document.activeElement;
-  if (active && active.id === "user-input") return;
-
-  if (isFocusing && __focusOrbit) {
-    __focusOrbit.dist += Math.sign(e.deltaY) * 1.2;
-    __focusOrbit.dist = Math.max(3, Math.min(22, __focusOrbit.dist));
-    __updateFocusOrbit();
-    e.preventDefault();
-    return;
-  }
-
-  // walk zoom = move camera forward/back
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
-  dir.y = 0;
-  dir.normalize();
-  const step = Math.sign(e.deltaY) * 2.0;
-  camera.position.addScaledVector(dir, step);
-}, { passive: false });
-
-// Hook orbit setup when focusing
-const __oldFocusArt = focusArt;
-focusArt = function(data) {
-  __oldFocusArt(data);
-  setTimeout(() => {
-    if (lookTarget) __setFocusOrbit(lookTarget);
-  }, 1300);
-};
-
-// When exiting focus, clear orbit
-const __oldExitFocus = exitFocus;
-exitFocus = function() {
-  __oldExitFocus();
-  __focusOrbit = null;
-  __draggingFocus = false;
-};
-
-// 5) Small on-screen nav pad (optional, but very helpful)
-(function injectNavPad(){
-  const css = document.createElement("style");
-  css.innerHTML = `
-  #nav-pad{position:fixed;left:20px;bottom:20px;z-index:80;pointer-events:auto;font-family:Montserrat;}
-  #nav-pad .pad{display:grid;grid-template-columns:44px 44px 44px;grid-template-rows:44px 44px 44px;gap:8px;background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);border:1px solid rgba(30,58,138,0.25);padding:10px;box-shadow:0 10px 30px rgba(0,0,0,0.08)}
-  #nav-pad button{border:1px solid rgba(30,58,138,0.25);background:#fff;color:#1e3a8a;font-weight:800;cursor:pointer}
-  #nav-pad button:active{transform:translateY(1px)}
-  `;
-  document.head.appendChild(css);
-
-  const wrap = document.createElement("div");
-  wrap.id = "nav-pad";
-  wrap.innerHTML = `
-    <div class="pad">
-      <div></div><button data-m="f">▲</button><div></div>
-      <button data-m="l">◀</button><button data-m="z">◎</button><button data-m="r">▶</button>
-      <div></div><button data-m="b">▼</button><div></div>
-    </div>
-  `;
-  document.body.appendChild(wrap);
-
-  function moveLRFB(dir) {
-    // If focusing, nudge orbit instead (small)
-    if (isFocusing && __focusOrbit) {
-      if (dir === "f") __focusOrbit.dist = Math.max(3, __focusOrbit.dist - 0.8);
-      if (dir === "b") __focusOrbit.dist = Math.min(22, __focusOrbit.dist + 0.8);
-      if (dir === "l") __focusOrbit.azim += 0.08;
-      if (dir === "r") __focusOrbit.azim -= 0.08;
-      __updateFocusOrbit();
-      return;
-    }
-
-    const forward = new THREE.Vector3();
-    camera.getWorldDirection(forward);
-    forward.y = 0;
-    forward.normalize();
-    const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0,1,0)).normalize();
-
-    const step = 2.2;
-    if (dir === "f") camera.position.addScaledVector(forward, step);
-    if (dir === "b") camera.position.addScaledVector(forward, -step);
-    if (dir === "l") camera.position.addScaledVector(right, -step);
-    if (dir === "r") camera.position.addScaledVector(right, step);
-  }
-
-  wrap.querySelectorAll("button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const m = btn.getAttribute("data-m");
-      if (m === "z") { /* center button: do nothing for now */ return; }
-      moveLRFB(m);
-    });
-  });
-})();
-    window.addEventListener("wheel", (e) => {
-  if (!isFocusing) return;
-  if (typeof __focusOrbit === "undefined") return;
-  if (typeof __updateFocusOrbit !== "function") return;
-
-  e.preventDefault();
-
-  const delta = Math.sign(e.deltaY); // +1 or -1
-  __focusOrbit.dist = THREE.MathUtils.clamp(__focusOrbit.dist + delta * 1.2, 3, 20);
-  __updateFocusOrbit();
-}, { passive: false });
   </script>
 </body>
 </html>
+
