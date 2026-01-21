@@ -1,0 +1,90 @@
+{
+  "currency": "CAD",
+  "defaultFallbackUrl": "https://www.feiteamart.com/course-list",
+  "ownerNotify": {
+    "type": "mailto",
+    "email": "YOUR_EMAIL_HERE"
+  },
+  "products": [
+    {
+      "id": "leathercraft_foundations",
+      "title": "Leathercraft Foundations — Shape, Carve, Dye",
+      "price": 450,
+      "type": "live_or_pack",
+      "ageGroup": ["teen", "adult"],
+      "tags": ["craft", "material", "handmade"],
+      "buyUrl": "",
+      "detailsUrl": "https://www.feiteamart.com/course-list"
+    },
+    {
+      "id": "micro_brand_creator_apparel",
+      "title": "Micro Brand Creator — Create Your Own Brand (Apparel)",
+      "price": 120,
+      "type": "self_paced_or_pack",
+      "ageGroup": ["teen", "adult"],
+      "tags": ["design", "branding", "fashion"],
+      "buyUrl": "",
+      "detailsUrl": "https://www.feiteamart.com/course-list"
+    },
+    {
+      "id": "lfc_001_intro_sketch_basic",
+      "title": "LFC 001 — Intro Sketch (Basic)",
+      "price": 0,
+      "type": "class",
+      "ageGroup": ["teen", "adult"],
+      "tags": ["drawing", "foundation"],
+      "buyUrl": "",
+      "detailsUrl": "https://www.feiteamart.com/course-list"
+    },
+    {
+      "id": "lfc_002_shading",
+      "title": "LFC 002 — Shading",
+      "price": 0,
+      "type": "class",
+      "ageGroup": ["teen", "adult"],
+      "tags": ["drawing", "value"],
+      "buyUrl": "",
+      "detailsUrl": "https://www.feiteamart.com/course-list"
+    },
+    {
+      "id": "lfc_003_color_theory",
+      "title": "LFC 003 — Color Theory",
+      "price": 0,
+      "type": "class",
+      "ageGroup": ["teen", "adult"],
+      "tags": ["color", "painting"],
+      "buyUrl": "",
+      "detailsUrl": "https://www.feiteamart.com/course-list"
+    },
+    {
+      "id": "lfc_004_architecture_drawing_basic",
+      "title": "LFC 004 — Architecture Drawing (Basic)",
+      "price": 0,
+      "type": "class",
+      "ageGroup": ["teen", "adult"],
+      "tags": ["perspective", "design"],
+      "buyUrl": "",
+      "detailsUrl": "https://www.feiteamart.com/course-list"
+    },
+    {
+      "id": "lfc_005_character_anatomy_foundation",
+      "title": "LFC 005 — Character Design (Anatomy Foundations)",
+      "price": 0,
+      "type": "class",
+      "ageGroup": ["teen", "adult"],
+      "tags": ["character", "anatomy"],
+      "buyUrl": "",
+      "detailsUrl": "https://www.feiteamart.com/course-list"
+    },
+    {
+      "id": "lfc_006_draw_with_me_13_18",
+      "title": "LFC 006 — Draw a Character With Me (13–18)",
+      "price": 0,
+      "type": "class",
+      "ageGroup": ["teen"],
+      "tags": ["sketch", "confidence"],
+      "buyUrl": "",
+      "detailsUrl": "https://www.feiteamart.com/course-list"
+    }
+  ]
+}
