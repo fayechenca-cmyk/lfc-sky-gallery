@@ -6,81 +6,130 @@
   <title>LFC SKY ARTSPACE</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
   <style>
-    :root{ --blue:#1e3a8a; --blue2:#1e40af; --ink:#0f172a; --glass: rgba(255,255,255,0.25); --ok:#22c55e; --gray:#64748b; }
+    :root{ --blue:#1e3a8a; --ink:#0f172a; --glass: rgba(255,255,255,0.1); --ok:#22c55e; --gray:#94a3b8; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #e0f2fe; font-family: 'Montserrat', sans-serif; touch-action: none; user-select: none; }
 
-    /* --- ENTRANCE & REGISTRATION --- */
+    /* --- 1. DARK GLASS ENTRANCE --- */
     #entrance-layer { position: absolute; inset: 0; z-index: 2000; display: flex; pointer-events: auto; }
-    .door-panel { flex: 1; height: 100%; background: rgba(240, 249, 255, 0.45); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.3); transition: transform 1.8s cubic-bezier(0.19, 1, 0.22, 1); position: relative; }
-    .door-panel.left { border-right: 1px solid rgba(255,255,255,0.5); } .door-panel.right { border-left: 1px solid rgba(255,255,255,0.5); }
-    #entrance-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 2005; transition: opacity 0.8s ease; }
-    /* ✅ FONT FIX: Updated family to Montserrat */
-    .enter-title { font-family: 'Montserrat', sans-serif; font-weight: 700; letter-spacing: 4px; font-size: 16px; text-transform: uppercase; color: var(--blue); margin-bottom: 2rem; }
-    .poster-frame { width: 320px; height: 460px; background: #fff; box-shadow: 0 40px 80px rgba(30,58,138,0.15); padding: 15px; display: inline-block; transition: transform 0.8s ease; cursor: pointer; }
-    .poster-img { width: 100%; height: 100%; object-fit: cover; }
-    .poster-frame:hover { transform: scale(1.02); }
-    .enter-hint { margin-top: 2rem; font-size: 12px; color: var(--blue); opacity: 0.7; letter-spacing: 2px; text-transform: uppercase; animation: pulse 3s infinite; }
+    
+    /* Darker, elegant frosted glass */
+    .door-panel { 
+      flex: 1; height: 100%; 
+      background: rgba(15, 23, 42, 0.85); /* Dark Blue/Black Tint */
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
+      border: 1px solid rgba(255,255,255,0.05); 
+      transition: transform 2.0s cubic-bezier(0.19, 1, 0.22, 1); 
+      position: relative; 
+    }
+    .door-panel.left { border-right: 1px solid rgba(255,255,255,0.1); } 
+    .door-panel.right { border-left: 1px solid rgba(255,255,255,0.1); }
 
-    /* ✅ NEW REGISTRATION PANEL */
-    #reg-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); padding: 3rem; border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.1); z-index: 2010; text-align: center; opacity: 0; pointer-events: none; transition: all 0.5s ease; max-width: 500px; width: 90%; }
+    /* The Typographic Poster */
+    #entrance-content { 
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+      text-align: center; z-index: 2005; transition: opacity 0.8s ease; 
+      color: #fff; max-width: 680px; width: 90%;
+    }
+
+    .poster-title {
+      font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 2.2rem;
+      letter-spacing: -1px; margin-bottom: 0.5rem; text-transform: uppercase;
+      background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .poster-tagline {
+      font-family: 'Playfair Display', serif; font-size: 1.2rem; font-style: italic;
+      color: var(--ok); margin-bottom: 2rem; opacity: 0.9;
+    }
+    .poster-desc {
+      font-size: 13px; line-height: 1.8; color: #cbd5e1; margin-bottom: 2.5rem;
+      font-weight: 400; text-align: justify; text-align-last: center; /* Elegant block text */
+    }
+    .begin-btn {
+      padding: 1rem 3rem; border: 1px solid rgba(255,255,255,0.3); color: #fff;
+      background: rgba(255,255,255,0.05); border-radius: 50px;
+      font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.3s ease;
+    }
+    .begin-btn:hover { background: #fff; color: var(--ink); box-shadow: 0 0 30px rgba(255,255,255,0.2); }
+
+    /* --- 2. REGISTRATION PANEL --- */
+    #reg-panel { 
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); 
+      background: rgba(255,255,255,0.98); backdrop-filter: blur(25px); 
+      padding: 3rem; border-radius: 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.3); 
+      z-index: 2010; text-align: center; opacity: 0; pointer-events: none; 
+      transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1); max-width: 550px; width: 90%; 
+    }
     #reg-panel.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
-    .reg-step h2 { color: var(--blue); font-family: 'Playfair Display', serif; margin-bottom: 1.5rem; }
+    
     .reg-options { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 2rem; }
-    .reg-btn { padding: 10px 20px; border: 2px solid var(--blue); color: var(--blue); background: transparent; border-radius: 30px; cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.2s; }
-    .reg-btn:hover, .reg-btn.selected { background: var(--blue); color: #fff; }
-    .final-enter-btn { background: var(--blue); color: #fff; border: none; padding: 1rem 3rem; border-radius: 50px; font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; opacity: 0.5; pointer-events: none; transition: 0.3s; }
-    .final-enter-btn.ready { opacity: 1; pointer-events: auto; }
+    .reg-btn { 
+      padding: 10px 22px; border: 1px solid #cbd5e1; color: #64748b; background: #fff; 
+      border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.2s; 
+    }
+    .reg-btn:hover { border-color: var(--blue); color: var(--blue); }
+    /* Active State for Multi-Select */
+    .reg-btn.selected { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: 0 4px 15px rgba(30,58,138,0.2); }
+    
+    .final-enter-btn { 
+      background: #0f172a; color: #fff; border: none; padding: 1.2rem 3rem; 
+      border-radius: 8px; font-size: 12px; font-weight: 800; letter-spacing: 2px; 
+      text-transform: uppercase; cursor: pointer; opacity: 0.4; pointer-events: none; transition: 0.3s; 
+    }
+    .final-enter-btn.ready { opacity: 1; pointer-events: auto; box-shadow: 0 10px 30px rgba(15,23,42,0.2); }
 
+    /* Open State */
     body.doors-open .door-panel.left { transform: translateX(-100%); }
     body.doors-open .door-panel.right { transform: translateX(100%); }
-    body.doors-open #entrance-content, body.doors-open #reg-panel { opacity: 0; pointer-events: none; transition-delay: 0s; }
-    @keyframes pulse { 0%{opacity:0.5} 50%{opacity:1} 100%{opacity:0.5} }
+    body.doors-open #entrance-content, body.doors-open #reg-panel { opacity: 0; pointer-events: none; }
 
-    /* --- MAIN UI LAYER --- */
+    /* --- 3. UI LAYERS --- */
     #ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
     #canvas-container { position:absolute; inset:0; z-index: 0; }
     #hud { position: absolute; top: 2rem; left: 2rem; pointer-events: auto; }
     h1 { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.8rem; margin: 0; color: var(--blue); letter-spacing: -1px; text-transform: uppercase; }
-    .subtitle { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: var(--blue2); margin-top: 6px; display: flex; align-items: center; gap: 8px; }
+    .subtitle { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: var(--blue); margin-top: 6px; display: flex; align-items: center; gap: 8px; }
     .live-dot { width: 6px; height: 6px; background: var(--ok); border-radius: 50%; box-shadow: 0 0 10px var(--ok); }
-    #journey-btn { margin-top: 1.5rem; background: rgba(255,255,255,0.85); border: 1px solid var(--blue); padding: 1rem 1.2rem; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; pointer-events: auto; box-shadow: 0 12px 35px rgba(0,0,0,0.08); backdrop-filter: blur(12px); transition: transform 0.2s; }
-    #journey-btn:hover { transform: translateY(-2px); }
-    .counter { background: var(--blue); color: #fff; width: 20px; height: 20px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; }
-    #elevator { position: absolute; top: 50%; right: 2rem; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; pointer-events: auto; max-height: 70vh; overflow-y: auto; padding: 10px 0; }
+    #journey-btn { margin-top: 1.5rem; background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; padding: 1rem 1.2rem; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; pointer-events: auto; box-shadow: 0 12px 35px rgba(0,0,0,0.05); backdrop-filter: blur(12px); transition: transform 0.2s; color: var(--blue); }
+    
+    #elevator { position: absolute; top: 50%; right: 2rem; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; pointer-events: auto; max-height: 70vh; overflow-y: auto; padding: 10px 0; z-index: 20; }
     .floor-item { display: flex; align-items: center; justify-content: flex-end; gap: 10px; cursor: pointer; opacity: 0.82; transition: all 0.2s; }
     .floor-item:hover, .floor-item.active { opacity: 1; transform: translateX(-5px); }
-    .floor-label { background: rgba(255,255,255,0.86); padding: 8px 14px; border-radius: 10px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--blue); backdrop-filter: blur(14px); }
-    .floor-num { width: 32px; height: 32px; background: rgba(255,255,255,0.92); color: var(--blue); border: 1px solid rgba(30,58,138,0.35); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; border-radius: 999px; }
+    .floor-label { background: rgba(255,255,255,0.9); padding: 8px 14px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--blue); backdrop-filter: blur(14px); }
+    .floor-num { width: 32px; height: 32px; background: #fff; color: var(--blue); border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; border-radius: 999px; }
     .floor-item.active .floor-num { background: var(--blue); color: #fff; }
-    #ai-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 450px; max-width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(22px); transform: translateX(100%); transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); pointer-events: auto; display: flex; flex-direction: column; z-index: 50; box-shadow: -22px 0 60px rgba(0,0,0,0.10); }
+
+    #ai-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 450px; max-width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(25px); transform: translateX(100%); transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); pointer-events: auto; display: flex; flex-direction: column; z-index: 50; box-shadow: -22px 0 60px rgba(0,0,0,0.10); }
     #ai-panel.active { transform: translateX(0); }
-    .ai-header { padding: 1.6rem; border-bottom: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.65); position: relative; }
+    .ai-header { padding: 1.6rem; border-bottom: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.6); position: relative; }
     .ai-img-preview { width: 100%; height: 160px; object-fit: contain; border-radius: 12px; margin-bottom: 1rem; background: #f1f5f9; }
-    .panel-close { position: absolute; top: 1rem; right: 1rem; font-size: 1.5rem; cursor: pointer; color: var(--blue); font-weight: 800; }
+    .panel-close { position: absolute; top: 1rem; right: 1rem; font-size: 2rem; cursor: pointer; color: var(--blue); font-weight: 800; z-index: 100; padding: 10px; }
     #chat-stream { flex: 1; padding: 1.6rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
-    .msg { padding: 14px 16px; border-radius: 14px; font-size: 14px; line-height: 1.55; max-width: 88%; animation: fadeUp 0.3s ease; font-family: 'Montserrat', sans-serif; white-space: pre-wrap; }
-    .msg-ai { background: rgba(248,250,252,0.95); color: #334155; align-self: flex-start; border-left: 3px solid var(--blue); }
-    .msg-user { background: rgba(17,17,17,0.92); color: #fff; align-self: flex-end; }
+    .msg { padding: 14px 16px; border-radius: 14px; font-size: 14px; line-height: 1.55; max-width: 88%; animation: fadeUp 0.3s ease; white-space: pre-wrap; }
+    .msg-ai { background: #f1f5f9; color: #334155; align-self: flex-start; border-left: 3px solid var(--blue); }
+    .msg-user { background: #0f172a; color: #fff; align-self: flex-end; }
     .chat-input-area { padding: 1rem; border-top: 1px solid rgba(0,0,0,0.06); background: #fff; display: flex; gap: 10px; }
-    #user-input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Montserrat'; outline: none; }
-    #send-btn { background: var(--blue); color: #fff; border: none; padding: 12px 18px; border-radius: 12px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+    #user-input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Montserrat'; outline: none; }
+    #send-btn { background: var(--blue); color: #fff; border: none; padding: 12px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+
     #blueprint { position: absolute; inset: 0; background: rgba(255,255,255,0.98); z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.4s; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; backdrop-filter: blur(10px); }
     #blueprint.active { opacity: 1; pointer-events: auto; }
     .bp-container { width: 92%; max-width: 900px; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; height: 80vh; overflow-y: auto; }
-    .plan-card { border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 16px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 1rem; }
-    .plan-tag { font-size: 10px; font-weight: 900; text-transform: uppercase; color: var(--ok); letter-spacing: 1px; }
-    .plan-btn { width: 100%; padding: 1rem; margin-top: 1rem; background: var(--blue); color: #fff; border: none; border-radius: 99px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
-    .waitlist-btn { background: #64748b; }
+    .plan-card { border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 12px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+    .plan-btn { width: 100%; padding: 1rem; margin-top: 1rem; background: var(--blue); color: #fff; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+    
     #nav-pad { position: fixed; left: 20px; bottom: 20px; z-index: 85; pointer-events: auto; }
-    .pad { display: grid; grid-template-columns: 44px 44px 44px; gap: 8px; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); padding: 10px; border-radius: 16px; border: 1px solid rgba(30,58,138,0.2); }
-    .pad button { width: 100%; height: 44px; border: 1px solid rgba(30,58,138,0.2); background: #fff; color: var(--blue); border-radius: 12px; font-weight: 900; cursor: pointer; font-size: 16px; }
-    .pad button:active { background: var(--blue); color: #fff; }
-    #back-btn { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--blue); color: #fff; padding: 1rem 2rem; border-radius: 99px; font-weight: 800; cursor: pointer; pointer-events: auto; opacity: 0; transition: all 0.4s; z-index: 80; text-transform: uppercase; letter-spacing: 1px; }
+    .pad { display: grid; grid-template-columns: 44px 44px 44px; gap: 8px; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 10px; border-radius: 16px; border: 1px solid #cbd5e1; }
+    .pad button { width: 100%; height: 44px; border: 1px solid #cbd5e1; background: #fff; color: var(--blue); border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 16px; }
+    
+    /* Return Button - High Z-Index */
+    #back-btn { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: #fff; padding: 1rem 2rem; border-radius: 50px; font-weight: 700; cursor: pointer; pointer-events: auto; opacity: 0; transition: all 0.4s; z-index: 200; text-transform: uppercase; letter-spacing: 2px; font-size: 11px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
     #back-btn.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
-    @media (max-width: 768px) { .bp-container { grid-template-columns: 1fr; } #ai-panel { width: 100%; height: 60vh; top: auto; bottom: 0; transform: translateY(100%); border-radius: 20px 20px 0 0; } #ai-panel.active { transform: translateY(0); } #nav-pad { bottom: 20px; left: 50%; transform: translateX(-50%); } body.ai-open #nav-pad { display: none; } .poster-frame { width: 240px; height: 340px; } }
+
+    @media (max-width: 768px) { .bp-container { grid-template-columns: 1fr; } #ai-panel { width: 100%; height: 60vh; top: auto; bottom: 0; transform: translateY(100%); border-radius: 20px 20px 0 0; } #ai-panel.active { transform: translateY(0); } #nav-pad { bottom: 20px; left: 50%; transform: translateX(-50%); } body.ai-open #nav-pad { display: none; } }
     @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
   </style>
 </head>
@@ -91,37 +140,40 @@
     <div class="door-panel left"></div>
     <div class="door-panel right"></div>
     <div id="entrance-content">
-      <div class="enter-title">FEI TEAMART PRESENTS</div>
-      <div class="poster-frame" onclick="showRegistration()">
-        <img class="poster-img" src="https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68863231e93734033552533c_LFC%20Poster.jpg" alt="LFC Sky Artspace">
+      <div class="poster-title">LFC Sky Artspace</div>
+      <div class="poster-tagline">From Viewing to Knowing. From Knowing to Making.</div>
+      <div class="poster-desc">
+        LFC Sky Artspace is a collection-led art education system that mirrors the experience of learning inside a real art space—online. 
+        Students visit selected artworks, explore personal taste, then build deeper understanding through guided layers: historical background, artist intention, materials, visual structure, and contemporary theory.
+        <br><br>
+        <strong>Collection-to-Creation Framework (CCF)</strong><br>
+        Visit → Analyze → Discuss → Connect → Create
       </div>
-      <div class="enter-hint">Click Poster to Begin</div>
+      <button class="begin-btn" onclick="showRegistration()">Begin Journey</button>
     </div>
   </div>
 
   <div id="reg-panel">
-    <div class="reg-step" id="reg-step-1">
-      <h2>Setup Your Profile</h2>
-      <p style="color:var(--gray); margin-bottom:1rem;">Help the AI curator personalize your experience.</p>
-      
-      <div style="text-align:left; margin-bottom:1rem;"><strong style="color:var(--blue); font-size:12px; letter-spacing:1px;">I AM A...</strong></div>
-      <div class="reg-options" id="opt-role">
-        <button class="reg-btn" onclick="selectOption('role', this)">Student</button>
-        <button class="reg-btn" onclick="selectOption('role', this)">Artist</button>
-        <button class="reg-btn" onclick="selectOption('role', this)">Collector</button>
-        <button class="reg-btn" onclick="selectOption('role', this)">Curious Visitor</button>
-      </div>
-
-      <div style="text-align:left; margin-bottom:1rem;"><strong style="color:var(--blue); font-size:12px; letter-spacing:1px;">MY GOAL IS TO...</strong></div>
-      <div class="reg-options" id="opt-goal">
-        <button class="reg-btn" onclick="selectOption('goal', this)">Learn Art History</button>
-        <button class="reg-btn" onclick="selectOption('goal', this)">Find Inspiration</button>
-        <button class="reg-btn" onclick="selectOption('goal', this)">View Exhibition</button>
-        <button class="reg-btn" onclick="selectOption('goal', this)">Understand Techniques</button>
-      </div>
-      
-      <button id="final-enter-btn" class="final-enter-btn" onclick="completeRegistration()">Enter Sky Artspace</button>
+    <h2 style="color:var(--ink); font-family:'Montserrat',sans-serif; margin-bottom:0.5rem; font-weight:800;">VISITOR PROFILE</h2>
+    <p style="color:var(--gray); margin-bottom:2rem; font-size:13px;">Select all that apply to personalize your AI guide.</p>
+    
+    <div style="text-align:left; margin-bottom:0.8rem;"><strong style="color:var(--blue); font-size:10px; letter-spacing:1px; text-transform:uppercase;">I identify as...</strong></div>
+    <div class="reg-options">
+      <button class="reg-btn" onclick="toggleOption('role', this)">Student</button>
+      <button class="reg-btn" onclick="toggleOption('role', this)">Artist</button>
+      <button class="reg-btn" onclick="toggleOption('role', this)">Curator</button>
+      <button class="reg-btn" onclick="toggleOption('role', this)">Collector</button>
     </div>
+
+    <div style="text-align:left; margin-bottom:0.8rem;"><strong style="color:var(--blue); font-size:10px; letter-spacing:1px; text-transform:uppercase;">I am here to...</strong></div>
+    <div class="reg-options">
+      <button class="reg-btn" onclick="toggleOption('goal', this)">Learn History</button>
+      <button class="reg-btn" onclick="toggleOption('goal', this)">Find Inspiration</button>
+      <button class="reg-btn" onclick="toggleOption('goal', this)">Critique Art</button>
+      <button class="reg-btn" onclick="toggleOption('goal', this)">Check Exhibitions</button>
+    </div>
+    
+    <button id="final-enter-btn" class="final-enter-btn" onclick="completeRegistration()">Enter Gallery</button>
   </div>
 
   <div id="ui-layer">
@@ -135,6 +187,7 @@
     </div>
     <div id="elevator"></div>
     <div id="back-btn" onclick="exitFocus()">← Return to Walk</div>
+    
     <div id="ai-panel">
       <div class="ai-header">
         <span class="panel-close" onclick="exitFocus()">×</span>
@@ -148,18 +201,20 @@
         <button id="send-btn">Send</button>
       </div>
     </div>
+
     <div id="blueprint">
       <div class="panel-close" onclick="closeBlueprint()" style="top:2rem; right:2rem; font-size: 2rem;">×</div>
       <div class="bp-container">
         <div>
           <h2 style="font-family:'Playfair Display'; font-size: 2.5rem; color: var(--blue); margin-bottom: 0.5rem;">Your Curriculum</h2>
-          <p style="color: #64748b; line-height: 1.6;" id="bp-desc">Based on your interests, here is your personalized path.</p>
+          <p style="color: #64748b; line-height: 1.6;" id="bp-desc">Your path.</p>
           <div id="bp-steps" style="margin-top:2rem;"></div>
         </div>
         <div id="bp-products" style="display: flex; flex-direction: column; gap: 1rem;"></div>
       </div>
     </div>
   </div>
+
   <div id="nav-pad">
     <div class="pad">
       <div></div><button onmousedown="moveStart('f')" ontouchstart="moveStart('f')" onmouseup="moveStop()" ontouchend="moveStop()">▲</button><div></div>
