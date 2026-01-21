@@ -1,33 +1,45 @@
 // ==========================================
-// 1. CONFIGURATION & SETUP
+// 1. CONFIGURATION (AI & FLOORS)
 // ==========================================
 
-// ⚠️ REPLACE THIS with your Cloudflare Worker URL
-const AI_ENDPOINT = "https://lfc-gallery-api.YOURNAME.workers.dev/chat"; 
+// ⚠️ CHANGE THIS URL to your real Cloudflare worker!
+// Example: "https://lfc-gallery-api.fayechenca.workers.dev/chat"
+const AI_ENDPOINT = "https://lfc-gallery-api.fayechenca.workers.dev/chat"; 
 
+// The Full Floor Plan (Restored)
 const FLOORS = [
   { id: 0, name: "Reception", type: "reception" },
-  { id: 1, name: "Painting", type: "standard" },
-  { id: 2, name: "Photography", type: "standard" },
-  { id: 3, name: "Design", type: "standard" },
+  { id: 1, name: "Painting / Fine Art", type: "fineart" },
+  { id: 2, name: "Print", type: "standard" },
+  { id: 3, name: "Photography", type: "standard" },
   { id: 4, name: "Sculpture", type: "standard" },
-  { id: 5, name: "Film/Video", type: "darkroom" }
+  { id: 5, name: "Installation", type: "installation" }, // Flexible 3D space
+  { id: 6, name: "Ceramics", type: "standard" },
+  { id: 7, name: "Design", type: "standard" },
+  { id: 8, name: "Animation", type: "standard" },
+  { id: 9, name: "Film / Video", type: "darkroom" }, // Dark room
+  { id: 10, name: "Performance", type: "standard" },
+  { id: 11, name: "Sketch", type: "standard" },
+  { id: 12, name: "Contemporary Lens", type: "standard" },
 ];
 
 let ART_DATA = []; 
 let CATALOG = [];  
 let chatHistory = [];
 let collectedInterests = [];
-const interactables = []; // Things we can click on
+const interactables = []; 
 
-// --- THREE.JS SCENE SETUP ---
+// ==========================================
+// 2. THREE.JS SCENE SETUP
+// ==========================================
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xe0f2fe);
-scene.fog = new THREE.Fog(0xe0f2fe, 15, 120);
+const skyColor = new THREE.Color(0xe0f2fe);
+scene.background = skyColor;
+scene.fog = new THREE.Fog(skyColor, 15, 140);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(0, 5, 30); // Start position
+camera.position.set(0, 5, 30); 
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -44,56 +56,85 @@ scene.add(dirLight);
 
 // Materials
 const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+const matFloorDark = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.6 }); // For Video Room
 const matWall = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+const matWallDark = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 }); // For Video Room
 const matFrame = new THREE.MeshStandardMaterial({ color: 0x111111 });
+const matPlinth = new THREE.MeshStandardMaterial({ color: 0xeeeeee }); // For Installation stands
 
 // ==========================================
-// 2. GALLERY BUILDER (Floors & Art)
+// 3. RICH GALLERY BUILDER
 // ==========================================
-const floorHeight = 35;
+const floorHeight = 40; // More space between floors
 
 function buildGallery() {
   FLOORS.forEach(f => {
     const y = f.id * floorHeight;
     const group = new THREE.Group();
     
+    // Choose Materials based on Room Type
+    let fMat = matFloor;
+    let wMat = matWall;
+    if (f.type === "darkroom") { fMat = matFloorDark; wMat = matWallDark; }
+
     // Floor
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 100), matFloor);
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), fMat);
     floor.position.set(0, y, 0);
-    // Don't add floors to interactables, we use logic to change floors
     group.add(floor);
 
     // Ceiling
-    const ceil = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 100), matWall);
-    ceil.position.set(0, y+15, 0);
+    const ceil = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), wMat);
+    ceil.position.set(0, y+16, 0);
     group.add(ceil);
 
     // Side Walls
-    const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 15, 100), matWall);
-    w1.position.set(19.5, y+7.5, 0);
+    const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat);
+    w1.position.set(19.5, y+8, 0);
     group.add(w1);
     
-    const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 15, 100), matWall);
-    w2.position.set(-19.5, y+7.5, 0);
+    const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat);
+    w2.position.set(-19.5, y+8, 0);
     group.add(w2);
 
-    // Populate Art
+    // SPECIAL ROOMS: Installation (Stands) & Video
+    if (f.type === "installation") {
+      createPlinths(group, y);
+    } 
+
+    // POPULATE ART
     const arts = ART_DATA.filter(a => a.floor == f.id);
+    
+    // If we have data, use it
     if(arts.length > 0) {
       arts.forEach((data, i) => {
+        // Layout: Left/Right walls
         const isRight = i % 2 === 0;
-        const x = isRight ? 19 : -19;
-        const z = -40 + (i * 15); 
-        createArtFrame(group, x, y+6, z, isRight ? -Math.PI/2 : Math.PI/2, data);
+        const x = isRight ? 19.4 : -19.4;
+        const z = -45 + (i * 12); 
+        const rot = isRight ? -Math.PI/2 : Math.PI/2;
+        
+        // Video room screens are larger and horizontal
+        let w = 4, h = 5;
+        if(f.type === "darkroom") { w = 8; h = 4.5; }
+
+        createArtFrame(group, x, y+6.5, z, rot, w, h, data);
       });
     } else {
-      // Empty floor placeholder
-      createArtFrame(group, 0, y+6, -45, 0, { title: f.name, artist: "LFC Gallery", img: "" });
+      // Empty floor placeholders
+      for(let i=0; i<6; i++) {
+        const isRight = i % 2 === 0;
+        const x = isRight ? 19.4 : -19.4;
+        const z = -40 + (i * 15);
+        const rot = isRight ? -Math.PI/2 : Math.PI/2;
+        createArtFrame(group, x, y+6.5, z, rot, 4, 5, { 
+          title: `Floor ${f.id}`, artist: f.name, img: "" 
+        });
+      }
     }
 
     scene.add(group);
     
-    // Add Elevator Button to HTML
+    // Elevator UI
     const btn = document.createElement("div");
     btn.className = "floor-item";
     btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`;
@@ -102,17 +143,38 @@ function buildGallery() {
   });
 }
 
-function createArtFrame(group, x, y, z, rot, data) {
+function createPlinths(group, y) {
+  // Create 3 stands in the middle of the room for 3D objects
+  const positions = [0, -15, 15];
+  positions.forEach(z => {
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth);
+    plinth.position.set(0, y + 0.6, z);
+    group.add(plinth);
+    
+    // Invisible hitbox for the stand
+    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false }));
+    hitbox.position.set(0, y+3, z);
+    hitbox.userData = { 
+      type: "art", 
+      data: { title: "Installation View", artist: "3D Works", img: "" },
+      viewPos: { x: 8, y: y+5, z: z+8 } // Stand back to see it
+    };
+    interactables.push(hitbox);
+    group.add(hitbox);
+  });
+}
+
+function createArtFrame(group, x, y, z, rot, w, h, data) {
   const frameGroup = new THREE.Group();
   frameGroup.position.set(x, y, z);
   frameGroup.rotation.y = rot;
 
   // Frame
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(4.2, 5.2, 0.2), matFrame);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.2, h+0.2, 0.2), matFrame);
   frameGroup.add(frame);
 
   // Canvas
-  const canvas = new THREE.Mesh(new THREE.PlaneGeometry(4, 5), new THREE.MeshBasicMaterial({ color: 0xeeeeee }));
+  const canvas = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xeeeeee }));
   canvas.position.z = 0.11;
   frameGroup.add(canvas);
 
@@ -124,8 +186,13 @@ function createArtFrame(group, x, y, z, rot, data) {
   }
 
   // Hitbox (Clickable)
-  const hitbox = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
-  hitbox.userData = { type: "art", data: data, viewPos: { x: x + Math.sin(rot)*8, y: y, z: z + Math.cos(rot)*8 } };
+  const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
+  // viewPos: We stand 8 units back and slightly angled to see it clearly
+  hitbox.userData = { 
+    type: "art", 
+    data: data, 
+    viewPos: { x: x + Math.sin(rot)*10, y: y, z: z + Math.cos(rot)*10 } 
+  };
   interactables.push(hitbox);
   frameGroup.add(hitbox);
 
@@ -133,16 +200,15 @@ function createArtFrame(group, x, y, z, rot, data) {
 }
 
 // ==========================================
-// 3. PHYSICS NAVIGATION (The Game Feel)
+// 4. PHYSICS NAVIGATION (Game Feel)
 // ==========================================
 const velocity = new THREE.Vector3();
 const speed = 1.8;
-const friction = 0.85;
+const friction = 0.85; // Sliding feel
 const lookSpeed = 0.002;
 
 let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
 
-// Keyboard Listeners
 document.addEventListener('keydown', (e) => {
   if(e.code === 'ArrowUp' || e.code === 'KeyW') moveForward = true;
   if(e.code === 'ArrowLeft' || e.code === 'KeyA') moveLeft = true;
@@ -155,14 +221,6 @@ document.addEventListener('keyup', (e) => {
   if(e.code === 'ArrowDown' || e.code === 'KeyS') moveBackward = false;
   if(e.code === 'ArrowRight' || e.code === 'KeyD') moveRight = false;
 });
-
-// Mouse Wheel Walk
-document.addEventListener('wheel', (e) => {
-  if(document.body.classList.contains("ai-open")) return;
-  const delta = Math.sign(e.deltaY) * -1;
-  const forward = getForwardVector();
-  velocity.addScaledVector(forward, delta * 5.0);
-}, { passive: false });
 
 // Physics Loop
 function updatePhysics() {
@@ -183,9 +241,9 @@ function updatePhysics() {
   camera.position.x += velocity.x * delta;
   camera.position.z += velocity.z * delta;
 
-  // Simple Collision (Stay in hall)
+  // Collision (Stay in hall)
   camera.position.x = Math.max(-18, Math.min(18, camera.position.x));
-  camera.position.z = Math.max(-48, Math.min(48, camera.position.z));
+  camera.position.z = Math.max(-100, Math.min(100, camera.position.z));
 }
 
 function getForwardVector() {
@@ -200,7 +258,7 @@ function getRightVector() {
   return new THREE.Vector3().crossVectors(forward, up).normalize();
 }
 
-// Looking Around (Drag)
+// Look Around (Drag)
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 
@@ -224,7 +282,7 @@ document.addEventListener('pointermove', (e) => {
   previousMousePosition = { x: e.clientX, y: e.clientY };
 });
 
-// Mobile Pad hooks
+// Mobile Controls
 window.moveStart = function(dir) {
   if (dir === 'f') moveForward = true;
   if (dir === 'b') moveBackward = true;
@@ -236,15 +294,15 @@ window.moveStop = function() {
 };
 
 // ==========================================
-// 4. INTERACTION & AI LOGIC
+// 5. INTERACTION & AI LOGIC
 // ==========================================
 
 function goToFloor(id) {
   closeBlueprint();
   exitFocus();
-  // Elevator
+  // Smooth Elevator
   new TWEEN.Tween(camera.position)
-    .to({ y: (id * floorHeight) + 5 }, 2000)
+    .to({ y: (id * floorHeight) + 5 }, 2500)
     .easing(TWEEN.Easing.Quadratic.InOut)
     .start();
 }
@@ -252,14 +310,15 @@ function goToFloor(id) {
 function focusArt(userData) {
   document.body.classList.add("ai-open");
   
+  // Save return spot
   camera.userData.returnPos = camera.position.clone();
   camera.userData.returnQuat = camera.quaternion.clone();
 
   const targetPos = userData.viewPos;
   
-  // Move to Art
+  // Smoothly move to Viewing Position (Not too close!)
   new TWEEN.Tween(camera.position)
-    .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1500)
+    .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1800)
     .easing(TWEEN.Easing.Cubic.Out)
     .onComplete(() => {
         openAI(userData.data);
@@ -267,9 +326,10 @@ function focusArt(userData) {
     })
     .start();
 
-  // Look at Art
+  // Rotate to face Art
   const dummy = new THREE.Object3D();
   dummy.position.copy(targetPos);
+  // Look slightly up or down depending on art height
   dummy.lookAt(userData.data.x || targetPos.x, targetPos.y, userData.data.z || targetPos.z);
   
   new TWEEN.Tween(camera.quaternion)
@@ -284,12 +344,13 @@ function exitFocus() {
   document.getElementById("back-btn").classList.remove("visible");
 
   if (camera.userData.returnPos) {
-    new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1000).easing(TWEEN.Easing.Quadratic.Out).start();
-    new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1000).easing(TWEEN.Easing.Quadratic.Out).start();
+    // Return to where we were standing
+    new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).start();
+    new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start();
   }
 }
 
-// AI Chat
+// AI CHAT & DIAGNOSIS
 function openAI(data) {
   document.getElementById("ai-panel").classList.add("active");
   document.getElementById("ai-img").src = data.img;
@@ -298,7 +359,7 @@ function openAI(data) {
   
   chatHistory = [];
   document.getElementById("chat-stream").innerHTML = "";
-  addChatMsg("ai", "Hello. What catches your eye about this piece?");
+  addChatMsg("ai", "I am observing this piece with you. What do you see?");
 }
 
 async function sendChat() {
@@ -325,8 +386,10 @@ async function sendChat() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
+
+    if (!res.ok) throw new Error(`Server Error: ${res.status}`);
+
     const data = await res.json();
-    
     addChatMsg("ai", data.reply);
     chatHistory.push({ role: "user", parts: [{ text: txt }] });
     chatHistory.push({ role: "model", parts: [{ text: data.reply }] });
@@ -337,7 +400,15 @@ async function sendChat() {
     }
 
   } catch(e) {
-    addChatMsg("ai", "I'm having trouble connecting to the archive.");
+    console.error(e);
+    // DETAILED ERROR MESSAGE FOR YOU
+    if(e.message.includes("404")) {
+      addChatMsg("ai", "⚠️ Error 404: The URL is wrong. Check the 'AI_ENDPOINT' line in app.js.");
+    } else if(e.message.includes("500")) {
+      addChatMsg("ai", "⚠️ Error 500: Cloudflare Key is missing. Check your Worker 'Variables'.");
+    } else {
+      addChatMsg("ai", "⚠️ Connection Failed. Please check your internet or Cloudflare URL.");
+    }
   }
 }
 
@@ -348,50 +419,9 @@ function addChatMsg(role, text) {
   document.getElementById("chat-stream").appendChild(div);
 }
 
-// --- BLUEPRINT / CATALOG SYSTEM ---
-function startBlueprint() {
-  document.getElementById("blueprint").classList.add("active");
-  const container = document.getElementById("bp-products");
-  container.innerHTML = "<h3>Loading Recommendations...</h3>";
-  
-  // Simulated AI Logic for now
-  const interests = collectedInterests.join(", ");
-  
-  setTimeout(() => {
-    const recs = [];
-    if (interests.toLowerCase().includes("paint")) recs.push("intro-painting");
-    else recs.push("art-history-101"); 
-    recs.push("vr-sculpting-advanced"); 
-
-    let html = "";
-    recs.forEach(id => {
-      const product = CATALOG.products.find(p => p.id === id);
-      if (product) {
-        html += `
-        <div class="plan-card">
-          <span class="plan-tag">Available Now</span>
-          <h3>${product.title}</h3>
-          <p>${product.price}</p>
-          <button class="plan-btn" onclick="window.open('${product.url}','_blank')">Enroll Now</button>
-        </div>`;
-      } else {
-        html += `
-        <div class="plan-card">
-          <span class="plan-tag" style="color:var(--gray)">Coming Soon</span>
-          <h3>Advanced VR Sculpting</h3>
-          <p>Interest detected. Join waitlist.</p>
-          <button class="plan-btn waitlist-btn" onclick="window.location.href='mailto:you@email.com'">Request Class</button>
-        </div>`;
-      }
-    });
-
-    container.innerHTML = html;
-    document.getElementById("bp-steps").innerHTML = "<p>Based on your interests: <strong>" + (interests || "General Art") + "</strong></p>";
-  }, 1000);
-}
-function closeBlueprint() { document.getElementById("blueprint").classList.remove("active"); }
-
-// --- MAIN LOOP ---
+// ==========================================
+// 6. MAIN LOOP & INIT
+// ==========================================
 function animate() {
   requestAnimationFrame(animate);
   TWEEN.update();
@@ -400,7 +430,7 @@ function animate() {
 }
 animate();
 
-// --- CLICK HANDLER ---
+// Click Handler
 const clickRaycaster = new THREE.Raycaster();
 const clickMouse = new THREE.Vector2();
 document.addEventListener('pointerup', (event) => {
@@ -415,7 +445,7 @@ document.addEventListener('pointerup', (event) => {
   }
 });
 
-// --- LOAD DATA ---
+// Load Data
 fetch('artworks.json').then(r => r.json()).then(data => {
   if(data.floors) {
     Object.values(data.floors).forEach(f => {
@@ -425,16 +455,17 @@ fetch('artworks.json').then(r => r.json()).then(data => {
     ART_DATA = data;
   }
   buildGallery();
-}).catch(e => console.log("No artworks.json, using defaults"));
-
-fetch('catalog.json').then(r => r.json()).then(data => {
-  CATALOG = data;
+}).catch(() => {
+  console.log("Using default data");
+  buildGallery();
 });
+
+fetch('catalog.json').then(r => r.json()).then(data => { CATALOG = data; });
 
 // Bind UI
 document.getElementById("send-btn").onclick = sendChat;
 document.getElementById("user-input").onkeypress = (e) => { if(e.key === "Enter") sendChat(); };
-window.startBlueprint = startBlueprint;
-window.closeBlueprint = closeBlueprint;
+window.startBlueprint = function() { document.getElementById("blueprint").classList.add("active"); };
+window.closeBlueprint = function() { document.getElementById("blueprint").classList.remove("active"); };
 window.exitFocus = exitFocus;
 window.goToFloor = goToFloor;
