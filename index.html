@@ -3,27 +3,105 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>LFC SKY GALLERY — Contemporary Lens</title>
+  <title>LFC SKY ARTSPACE</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
 
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --blue:#1e3a8a; --blue2:#1e40af; --ink:#111;
-      --glass: rgba(255,255,255,0.60); --ok:#22c55e; --gray:#64748b;
+      --blue:#1e3a8a; --blue2:#1e40af; --ink:#0f172a;
+      --glass: rgba(255,255,255,0.25); 
+      --ok:#22c55e; --gray:#64748b;
     }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
     body {
-      background: linear-gradient(to bottom, #e0f2fe 0%, #f0f9ff 100%);
+      background: #e0f2fe; /* Fallback color */
       font-family: 'Montserrat', sans-serif;
       touch-action: none; user-select: none;
     }
 
-    /* --- UI LAYERS --- */
-    #ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+    /* --- 1. THE GLASS ENTRANCE (New) --- */
+    #entrance-layer {
+      position: absolute; inset: 0; z-index: 2000;
+      display: flex; pointer-events: auto; cursor: pointer;
+    }
+    
+    /* The two glass panels */
+    .door-panel {
+      flex: 1; height: 100%;
+      background: rgba(240, 249, 255, 0.45); /* Very subtle blue-white */
+      backdrop-filter: blur(18px); /* The Frosted Glass Effect */
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.3);
+      transition: transform 1.8s cubic-bezier(0.19, 1, 0.22, 1); /* Slow, elegant easing */
+      position: relative;
+    }
+    .door-panel.left { border-right: 1px solid rgba(255,255,255,0.5); }
+    .door-panel.right { border-left: 1px solid rgba(255,255,255,0.5); }
+
+    /* The Content on the door */
+    #entrance-content {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 2005;
+      transition: opacity 0.8s ease;
+    }
+
+    .enter-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 200;
+      letter-spacing: 8px;
+      font-size: 14px;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 2rem;
+    }
+
+    .poster-frame {
+      width: 320px; height: 460px;
+      background: #fff;
+      box-shadow: 0 40px 80px rgba(30,58,138,0.15);
+      padding: 15px;
+      display: inline-block;
+      transform: scale(1);
+      transition: transform 0.8s ease;
+    }
+
+    .poster-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: grayscale(100%); /* Minimalist look */
+      transition: filter 0.8s ease;
+    }
+    
+    .poster-frame:hover .poster-img { filter: grayscale(0%); }
+
+    .enter-btn {
+      margin-top: 2.5rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--blue);
+      font-style: italic;
+      opacity: 0.8;
+      animation: pulse 3s infinite;
+    }
+
+    /* Animation State: OPEN */
+    body.doors-open #entrance-layer { pointer-events: none; }
+    body.doors-open .door-panel.left { transform: translateX(-100%); }
+    body.doors-open .door-panel.right { transform: translateX(100%); }
+    body.doors-open #entrance-content { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+
+    @keyframes pulse { 0%{opacity:0.5} 50%{opacity:1} 100%{opacity:0.5} }
+
+
+    /* --- 2. EXISTING UI LAYERS (Hidden initially if you want, or just behind glass) --- */
+    #ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; transition: opacity 1s; }
     #canvas-container { position:absolute; inset:0; z-index: 0; }
     
     /* HUD */
@@ -51,7 +129,7 @@
     .floor-num { width: 32px; height: 32px; background: rgba(255,255,255,0.92); color: var(--blue); border: 1px solid rgba(30,58,138,0.35); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; border-radius: 999px; }
     .floor-item.active .floor-num { background: var(--blue); color: #fff; }
 
-    /* AI PANEL (Chat) */
+    /* AI PANEL */
     #ai-panel {
       position: absolute; top: 0; right: 0; bottom: 0; width: 450px; max-width: 100%;
       background: rgba(255,255,255,0.95); backdrop-filter: blur(22px);
@@ -73,7 +151,7 @@
     #user-input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Montserrat'; outline: none; }
     #send-btn { background: var(--blue); color: #fff; border: none; padding: 12px 18px; border-radius: 12px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 11px; }
 
-    /* BLUEPRINT (Curriculum) */
+    /* BLUEPRINT */
     #blueprint {
       position: absolute; inset: 0; background: rgba(255,255,255,0.98); z-index: 60;
       opacity: 0; pointer-events: none; transition: opacity 0.4s; display: flex; flex-direction: column;
@@ -84,26 +162,25 @@
     .plan-card { border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 16px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 1rem; }
     .plan-tag { font-size: 10px; font-weight: 900; text-transform: uppercase; color: var(--ok); letter-spacing: 1px; }
     .plan-btn { width: 100%; padding: 1rem; margin-top: 1rem; background: var(--blue); color: #fff; border: none; border-radius: 99px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
-    .waitlist-btn { background: #64748b; } /* Grey for waitlist */
+    .waitlist-btn { background: #64748b; }
 
-    /* NAVIGATION PAD (Mobile) */
+    /* NAV PAD */
     #nav-pad { position: fixed; left: 20px; bottom: 20px; z-index: 85; pointer-events: auto; }
     .pad { display: grid; grid-template-columns: 44px 44px 44px; gap: 8px; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); padding: 10px; border-radius: 16px; border: 1px solid rgba(30,58,138,0.2); }
     .pad button { width: 100%; height: 44px; border: 1px solid rgba(30,58,138,0.2); background: #fff; color: var(--blue); border-radius: 12px; font-weight: 900; cursor: pointer; font-size: 16px; }
     .pad button:active { background: var(--blue); color: #fff; }
 
-    /* BACK BUTTON (Exit Art) */
+    /* BACK BUTTON */
     #back-btn { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--blue); color: #fff; padding: 1rem 2rem; border-radius: 99px; font-weight: 800; cursor: pointer; pointer-events: auto; opacity: 0; transition: all 0.4s; z-index: 80; text-transform: uppercase; letter-spacing: 1px; }
     #back-btn.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* MEDIA QUERIES */
     @media (max-width: 768px) {
       .bp-container { grid-template-columns: 1fr; }
       #ai-panel { width: 100%; height: 60vh; top: auto; bottom: 0; transform: translateY(100%); border-radius: 20px 20px 0 0; }
       #ai-panel.active { transform: translateY(0); }
       #nav-pad { bottom: 20px; left: 50%; transform: translateX(-50%); } 
-      /* Hide nav pad when AI is open so it doesn't block text */
       body.ai-open #nav-pad { display: none; }
+      .poster-frame { width: 240px; height: 340px; }
     }
     @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
   </style>
@@ -112,10 +189,25 @@
 <body>
   <div id="canvas-container"></div>
 
+  <div id="entrance-layer" onclick="openDoors()">
+    <div class="door-panel left"></div>
+    <div class="door-panel right"></div>
+    
+    <div id="entrance-content">
+      <div class="enter-title">FEI TEAMART PRESENTS</div>
+      
+      <div class="poster-frame">
+        <img class="poster-img" src="https://placehold.co/600x900/1e3a8a/ffffff?text=LFC+SKY+ARTSPACE" alt="Current Show">
+      </div>
+      
+      <div class="enter-btn">Click to Enter</div>
+    </div>
+  </div>
+
   <div id="ui-layer">
     <div id="hud">
       <h1>LFC SYSTEM</h1>
-      <div class="subtitle"><div class="live-dot"></div> SKY GALLERY</div>
+      <div class="subtitle"><div class="live-dot"></div> SKY ARTSPACE</div>
       <div id="journey-btn" onclick="startBlueprint()">
         <span>My Journey</span>
         <div class="counter" id="journey-count">0</div>
@@ -163,6 +255,12 @@
       <div></div><button onmousedown="moveStart('b')" ontouchstart="moveStart('b')" onmouseup="moveStop()" ontouchend="moveStop()">▼</button><div></div>
     </div>
   </div>
+
+  <script>
+    function openDoors() {
+      document.body.classList.add('doors-open');
+    }
+  </script>
 
   <script src="app.js"></script>
 </body>
