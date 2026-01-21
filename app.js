@@ -1,29 +1,30 @@
 // ==========================================
 // 1. CONFIGURATION
 // ==========================================
-const AI_ENDPOINT = "[https://lfc-ai-gateway.fayechenca.workers.dev/chat](https://lfc-ai-gateway.fayechenca.workers.dev/chat)"; 
+const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; 
 
 let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 
 const ATRIUM_CONFIG = {
-  videoLink: "[https://www.youtube.com/watch?v=ooi2V2Fp2-k](https://www.youtube.com/watch?v=ooi2V2Fp2-k)",
-  videoThumb: "[https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg](https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg)",
+  videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
+  videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg",
   title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing. From Knowing to Making.",
   desc: "LFC Sky Artspace is a collection-led art education system.",
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
+// ✅ RESTORED: Full 12 Floors with Types
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
   { id: 2, name: "Print", type: "standard" },
   { id: 3, name: "Photography", type: "standard" },
   { id: 4, name: "Sculpture", type: "standard" },
-  { id: 5, name: "Installation", type: "installation" },
+  { id: 5, name: "Installation", type: "installation" }, // 3D Plinths
   { id: 6, name: "Ceramics", type: "standard" },
   { id: 7, name: "Design", type: "standard" },
   { id: 8, name: "Animation", type: "standard" },
-  { id: 9, name: "Film / Video", type: "darkroom" },
+  { id: 9, name: "Film / Video", type: "darkroom" }, // Black Walls
   { id: 10, name: "Performance", type: "standard" },
   { id: 11, name: "Sketch", type: "standard" },
   { id: 12, name: "Contemporary Lens", type: "standard" },
@@ -32,7 +33,7 @@ const FLOORS = [
 let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterests = []; let currentOpenArt = null; const interactables = []; 
 
 // ==========================================
-// 2. REGISTRATION & ENTRANCE LOGIC
+// 2. REGISTRATION & ENTRANCE
 // ==========================================
 function showRegistration() {
   document.getElementById('entrance-content').style.opacity = '0';
@@ -42,26 +43,17 @@ function showRegistration() {
 function toggleOption(category, btn) {
   btn.classList.toggle('selected');
   const txt = btn.innerText;
-  
   const idx = userProfile[category].indexOf(txt);
-  if(idx > -1) {
-    userProfile[category].splice(idx, 1); 
-  } else {
-    userProfile[category].push(txt); 
-  }
+  if(idx > -1) userProfile[category].splice(idx, 1); else userProfile[category].push(txt);
   
   const enterBtn = document.getElementById('final-enter-btn');
-  if(userProfile.role.length > 0 && userProfile.goal.length > 0) {
-    enterBtn.classList.add('ready');
-  } else {
-    enterBtn.classList.remove('ready');
-  }
+  if(userProfile.role.length > 0 && userProfile.goal.length > 0) enterBtn.classList.add('ready');
+  else enterBtn.classList.remove('ready');
 }
 
 function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
-  // UNFREEZE FIX
   setTimeout(() => {
     document.getElementById('entrance-layer').style.display = 'none';
     document.getElementById('reg-panel').style.display = 'none';
@@ -73,17 +65,22 @@ function completeRegistration() {
 // ==========================================
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
-const skyColor = new THREE.Color(0xe0f2fe);
+const skyColor = new THREE.Color(0xf0f9ff);
 scene.background = skyColor;
 scene.fog = new THREE.Fog(skyColor, 15, 140);
+
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
 camera.position.set(0, 5, 30); 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 container.appendChild(renderer.domElement);
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.6); scene.add(hemiLight);
+
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe0f2fe, 0.7); scene.add(hemiLight);
 const dirLight = new THREE.DirectionalLight(0xfffaed, 1); dirLight.position.set(50, 100, 50); dirLight.castShadow = true; scene.add(dirLight);
+
+// --- MATERIALS (Restored Variety) ---
 const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
 const matFloorDark = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.6 });
 const matWall = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
@@ -95,9 +92,10 @@ const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = "anonymous"; 
 
 // ==========================================
-// 4. GALLERY BUILDER
+// 4. RICH GALLERY BUILDER
 // ==========================================
 const floorHeight = 40; 
+
 function createTextTexture(cfg) {
   const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 1024, 1024);
@@ -111,60 +109,106 @@ function createTextTexture(cfg) {
   return new THREE.CanvasTexture(canvas);
 }
 
-// ✅ FIX 2: FORCE FALLBACK IF IMAGE FAILS
 function createFallbackTexture(text) {
   const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 640; const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, 512, 640);
-  ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center';
-  ctx.fillText("IMAGE", 256, 300); ctx.fillText("UNAVAILABLE", 256, 350);
-  ctx.font = 'italic 20px Arial'; ctx.fillStyle = '#64748b'; ctx.fillText(text.substring(0,30), 256, 400);
+  ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 30px Arial'; ctx.textAlign = 'center';
+  ctx.fillText("LFC COLLECTION", 256, 300); 
+  ctx.font = 'italic 18px Arial'; ctx.fillStyle = '#64748b'; ctx.fillText(text.substring(0,30), 256, 350);
   return new THREE.CanvasTexture(canvas);
 }
 
 function buildGallery() {
   FLOORS.forEach(f => {
-    const y = f.id * floorHeight; const group = new THREE.Group();
-    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; let wMat = (f.type === "darkroom") ? matWallDark : matWall;
+    const y = f.id * floorHeight; 
+    const group = new THREE.Group();
+    
+    // ✅ RESTORED: Dynamic Materials based on Room Type
+    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; 
+    let wMat = (f.type === "darkroom") ? matWallDark : matWall;
+
+    // Floor & Ceiling
     const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), fMat); floor.position.set(0, y, 0); group.add(floor);
     const ceil = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), wMat); ceil.position.set(0, y+16, 0); group.add(ceil);
+    
+    // Side Walls
     const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w1.position.set(19.5, y+8, 0); group.add(w1);
     const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w2.position.set(-19.5, y+8, 0); group.add(w2);
+
+    // --- ATRIUM (Floor 0) ---
     if (f.id === 0) {
       createArtFrame(group, -19.4, y+6, -10, Math.PI/2, 10, 6, { title: "Introduction Video", artist: "Watch on YouTube", img: ATRIUM_CONFIG.videoThumb, link: ATRIUM_CONFIG.videoLink, isExternal: true });
       createArtFrame(group, 19.4, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
-      createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "[https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE](https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE)" });
+      createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
     }
+
+    // --- ✅ RESTORED: SPECIAL ROOMS ---
     if (f.type === "installation") createPlinths(group, y);
+
+    // --- ARTWORK PLACEMENT (With Safety Net) ---
     const arts = ART_DATA.filter(a => a.floor == f.id);
-    if(arts.length > 0) { arts.forEach((data, i) => { const isRight = i % 2 === 0; const x = isRight ? 19.4 : -19.4; const z = -45 + (i * 12); let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; } createArtFrame(group, x, y+6.5, z, isRight ? -Math.PI/2 : Math.PI/2, w, h, data); }); } 
-    else if (f.id !== 0) { for(let i=0; i<6; i++) { createArtFrame(group, (i%2===0)?19.4:-19.4, y+6.5, -40+(i*15), (i%2===0)?-Math.PI/2:Math.PI/2, 4, 5, { title: `Floor ${f.id}`, artist: f.name, img: "" }); } }
+    
+    if(arts.length > 0) {
+      // We have data for this floor
+      arts.forEach((data, i) => {
+        const isRight = i % 2 === 0;
+        const x = isRight ? 19.4 : -19.4;
+        const z = -45 + (i * 12); 
+        
+        let w = 4, h = 5;
+        if(f.type === "darkroom") { w = 8; h = 4.5; } // Widescreen for video
+        
+        createArtFrame(group, x, y+6.5, z, isRight ? -Math.PI/2 : Math.PI/2, w, h, data);
+      });
+    } else if (f.id !== 0) {
+      // ✅ RESTORED: If no data, fill with placeholders so it's not empty!
+      for(let i=0; i<6; i++) {
+        const isRight = i % 2 === 0;
+        createArtFrame(group, isRight?19.4:-19.4, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { 
+          title: `Future Exhibit`, artist: f.name, img: "" 
+        });
+      }
+    }
+
     scene.add(group);
+    
+    // Elevator Button
     const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
   });
 }
-function createPlinths(group, y) { [0, -15, 15].forEach(z => { const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); plinth.position.set(0, y + 0.6, z); group.add(plinth); const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); hitbox.position.set(0, y+3, z); hitbox.userData = { type: "art", data: { title: "Installation View", artist: "3D Works", img: "" }, viewPos: { x: 8, y: y+5, z: z+8 } }; interactables.push(hitbox); group.add(hitbox); }); }
+
+function createPlinths(group, y) {
+  // Create 3 stands in the middle of the room for 3D objects
+  [0, -15, 15].forEach(z => {
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); 
+    plinth.position.set(0, y + 0.6, z); 
+    group.add(plinth);
+    
+    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); 
+    hitbox.position.set(0, y+3, z); 
+    hitbox.userData = { type: "art", data: { title: "Installation View", artist: "3D Works", img: "" }, viewPos: { x: 8, y: y+5, z: z+8 } }; 
+    interactables.push(hitbox); group.add(hitbox);
+  });
+}
 
 function createArtFrame(group, x, y, z, rot, w, h, data) {
   const frameGroup = new THREE.Group(); frameGroup.position.set(x, y, z); frameGroup.rotation.y = rot;
   const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.2, h+0.2, 0.2), matFrame); frameGroup.add(frame);
   const canvas = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xeeeeee })); 
-  // Pushed Z forward slightly more to prevent z-fighting
   canvas.position.z = 0.15; 
   frameGroup.add(canvas);
 
   if (data.texture) {
     canvas.material = new THREE.MeshBasicMaterial({ map: data.texture });
   } else if (data.img) {
-    // Attempt to load image
+    // Attempt load, fallback if fails
     textureLoader.load(data.img, (tex) => {
       canvas.material = new THREE.MeshBasicMaterial({ map: tex });
       canvas.material.needsUpdate = true;
-    }, undefined, () => {
-      // If load fails, apply Fallback
+    }, undefined, () => { 
       canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) });
     });
   } else {
-    // If no img data at all
     canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) });
   }
 
@@ -201,7 +245,7 @@ function exitFocus() { document.body.classList.remove("ai-open"); document.getEl
 
 function openAI(data) {
   document.getElementById("ai-panel").classList.add("active");
-  if (data.texture) document.getElementById("ai-img").src = "[https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info](https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info)"; else document.getElementById("ai-img").src = data.img;
+  if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = data.img;
   document.getElementById("ai-title").innerText = data.title; document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
   chatHistory = []; document.getElementById("chat-stream").innerHTML = "";
   addChatMsg("ai", "I am observing this piece with you. What do you see?");
@@ -219,79 +263,22 @@ async function sendChat() {
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
-    // ✅ FIX 1: AGGRESSIVE JSON CLEANER (The "Scrubber")
+    // JSON Scrubber
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
-        // Remove markdown blocks
         cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
-        // If it still looks like an object, parse it and extract 'reply'
-        if(cleanReply.startsWith('{')) {
-            try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){}
-        }
+        if(cleanReply.startsWith('{')) { try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){} }
     }
 
     addChatMsg("ai", cleanReply); chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
-    if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; document.getElementById("bp-desc").innerHTML = `Based on your interest in <strong>${collectedInterests.join(", ")}</strong>, here is your personalized path.`; }
+    if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; }
   } catch(e) { 
     console.error(e);
     addChatMsg("ai", "⚠️ Connection Error. Please check your internet connection.");
   }
 }
 function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
-
-// ✅ SMART CURRICULUM GENERATOR
-function startBlueprint() {
-  document.getElementById("blueprint").classList.add("active");
-  const container = document.getElementById("bp-products");
-  container.innerHTML = "<h3>Generating Plan...</h3>";
-  
-  setTimeout(() => {
-    let recs = [];
-    const roles = userProfile.role.join(" ").toLowerCase();
-    const goals = userProfile.goal.join(" ").toLowerCase();
-    
-    if (CATALOG.products) {
-      if (roles.includes("student") || goals.includes("learn")) {
-        recs.push(CATALOG.products.find(p => p.id.includes("001")) || {title:"Intro Course"});
-        recs.push(CATALOG.products.find(p => p.id.includes("003")) || {title:"Color Theory"});
-      }
-      if (roles.includes("artist") || goals.includes("create")) {
-        recs.push(CATALOG.products.find(p => p.id.includes("brand")) || {title:"Brand Creator"});
-      }
-      if (recs.length === 0) recs.push(CATALOG.products[0]);
-    }
-
-    let html = "";
-    recs.forEach(p => {
-      if(p) {
-        html += `
-        <div class="plan-card">
-          <span class="plan-tag">Recommended</span>
-          <h3>${p.title}</h3>
-          <p>${p.price > 0 ? "$"+p.price : "Free"}</p>
-          <button class="plan-btn" onclick="window.open('${p.buyUrl||p.detailsUrl}', '_blank')">
-            ${p.buyUrl ? "Enroll Now" : "Join Waitlist"}
-          </button>
-        </div>`;
-      }
-    });
-    container.innerHTML = html;
-    
-    // Dynamic Description
-    document.getElementById("bp-desc").innerHTML = `
-      As a <strong>${userProfile.role.join(", ")}</strong> interested in <strong>${userProfile.goal.join(", ")}</strong>, 
-      and having explored <em>${collectedInterests.length > 0 ? collectedInterests.join(", ") : "various concepts"}</em>, 
-      we recommend this path:
-    `;
-    
-    document.getElementById("bp-steps").innerHTML = `
-      <div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--blue);"><strong>Step 1: Observation</strong><br>Analyze visual structures in the gallery.</div>
-      <div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid #22c55e;"><strong>Step 2: Context</strong><br>Connect historical references to modern theory.</div>
-    `;
-
-  }, 800);
-}
 
 // ==========================================
 // 7. INIT
@@ -304,6 +291,7 @@ document.addEventListener('pointerup',(e)=>{if(isDragging)return; cm.x=(e.client
 fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.floors).forEach(f=>f.items.forEach(i=>ART_DATA.push(i))); else ART_DATA=d; buildGallery(); }).catch(()=>buildGallery());
 fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
 
+// Bind UI
 window.showRegistration = showRegistration;
 window.toggleOption = toggleOption;
 window.completeRegistration = completeRegistration;
