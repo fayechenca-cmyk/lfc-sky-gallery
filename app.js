@@ -1,21 +1,21 @@
 // ==========================================
-// 1. CONFIGURATION & STATE
+// 1. CONFIGURATION
 // ==========================================
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; 
 
-// ✅ NEW: User Profile Data (Collected during registration)
+// ✅ Multi-Select Support: Arrays []
 let userProfile = {
-  role: null,
-  goal: null,
-  ageGroup: "Adult" // Default
+  role: [], 
+  goal: [],
+  ageGroup: "Adult"
 };
 
 const ATRIUM_CONFIG = {
   videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
   videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg",
   title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing. From Knowing to Making.",
-  desc: "LFC Sky Artspace is a collection-led art education system that mirrors the experience of learning inside a real art space—online. Students visit selected artworks, explore personal taste, then build deeper understanding through guided layers: historical background, artist intention, materials/process, visual structure, and contemporary theory.",
-  method: "Collection-to-Creation Framework (CCF)", steps: "Visit → Analyze → Discuss → Connect → Create"
+  desc: "LFC Sky Artspace is a collection-led art education system that mirrors the experience of learning inside a real art space.",
+  method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
 const FLOORS = [
@@ -41,29 +41,38 @@ let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterest
 // ==========================================
 function showRegistration() {
   document.getElementById('entrance-content').style.opacity = '0';
-  setTimeout(() => {
-     document.getElementById('reg-panel').classList.add('active');
-  }, 300);
+  setTimeout(() => { document.getElementById('reg-panel').classList.add('active'); }, 300);
 }
 
-function selectOption(category, btn) {
-  // Deselect others in the same group
-  btn.parentElement.querySelectorAll('.reg-btn').forEach(b => b.classList.remove('selected'));
-  // Select this one
-  btn.classList.add('selected');
-  userProfile[category] = btn.innerText;
+// ✅ Multi-Select Toggle Function
+function toggleOption(category, btn) {
+  btn.classList.toggle('selected');
+  const txt = btn.innerText;
   
-  // Check if ready to enter
+  const idx = userProfile[category].indexOf(txt);
+  if(idx > -1) {
+    userProfile[category].splice(idx, 1); // Remove
+  } else {
+    userProfile[category].push(txt); // Add
+  }
+  
   const enterBtn = document.getElementById('final-enter-btn');
-  if(userProfile.role && userProfile.goal) {
+  if(userProfile.role.length > 0 && userProfile.goal.length > 0) {
     enterBtn.classList.add('ready');
+  } else {
+    enterBtn.classList.remove('ready');
   }
 }
 
 function completeRegistration() {
-  if(!userProfile.role || !userProfile.goal) return;
+  if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
-  // Optional: Play background music here if you add it later
+  
+  // ✅ UNFREEZE FIX: Force hide the panels so they don't block clicks
+  setTimeout(() => {
+    document.getElementById('entrance-layer').style.display = 'none';
+    document.getElementById('reg-panel').style.display = 'none';
+  }, 1000);
 }
 
 // ==========================================
@@ -88,6 +97,9 @@ const matWall = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5
 const matWallDark = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
 const matFrame = new THREE.MeshStandardMaterial({ color: 0x111111 });
 const matPlinth = new THREE.MeshStandardMaterial({ color: 0xeeeeee });
+
+const textureLoader = new THREE.TextureLoader();
+textureLoader.crossOrigin = "anonymous"; 
 
 // ==========================================
 // 4. GALLERY BUILDER
@@ -137,14 +149,10 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
   if (data.texture) {
     canvas.material = new THREE.MeshBasicMaterial({ map: data.texture });
   } else if (data.img) {
-    // ✅ FIX 2: ROBUST CORS IMAGE LOADING
-    // We use a specific loader for each image to ensure CORS is handled correctly every time.
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin('anonymous'); 
-    loader.load(data.img, (tex) => {
+    textureLoader.load(data.img, (tex) => {
       canvas.material = new THREE.MeshBasicMaterial({ map: tex });
       canvas.material.needsUpdate = true;
-    }, undefined, (err) => { console.warn("Could not load image:", data.img); });
+    }, undefined, (err) => { console.warn("Could not load:", data.img); });
   }
 
   const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
@@ -191,33 +199,20 @@ async function sendChat() {
   addChatMsg("user",txt); i.value="";
   try {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
-    // ✅ FIX 3: SEND USER PROFILE DATA TO AI
     const res = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
       message:txt, history:chatHistory, art: artPayload, 
-      userProfile: userProfile // Send the data collected at registration
+      userProfile: userProfile // Send array of roles/goals
     })});
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
-    // ✅ FIX 4: CLEAN THE RAW JSON RESPONSE FROM AI
     let cleanReply = d.reply;
-    if (cleanReply && cleanReply.startsWith('```json')) {
-        cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
-        // Sometimes the AI wraps the actual text in another quote set after markdown
-        if(cleanReply.startsWith('"') && cleanReply.endsWith('"')) {
-             cleanReply = cleanReply.substring(1, cleanReply.length - 1);
-        }
-    }
+    if (cleanReply && cleanReply.startsWith('```json')) { cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim(); }
+    if (cleanReply && cleanReply.startsWith('{')) { try { const p = JSON.parse(cleanReply); cleanReply = p.reply; } catch(e){} }
 
     addChatMsg("ai", cleanReply); chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
-    // ✅ FIX 5: COLLECT TAGS FOR JOURNEY
-    if(d.save && d.tag) { 
-        collectedInterests.push(d.tag); 
-        document.getElementById("journey-count").innerText=collectedInterests.length; 
-        // Update Blueprint description immediately
-        document.getElementById("bp-desc").innerHTML = `Based on your interest in <strong>${collectedInterests.join(", ")}</strong>, here is your personalized path.`;
-    }
+    if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; document.getElementById("bp-desc").innerHTML = `Based on your interest in <strong>${collectedInterests.join(", ")}</strong>, here is your personalized path.`; }
   } catch(e) { 
     console.error(e);
     addChatMsg("ai", "⚠️ Connection Error. Please check your internet connection.");
@@ -236,9 +231,9 @@ document.addEventListener('pointerup',(e)=>{if(isDragging)return; cm.x=(e.client
 fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.floors).forEach(f=>f.items.forEach(i=>ART_DATA.push(i))); else ART_DATA=d; buildGallery(); }).catch(()=>buildGallery());
 fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
 
-// Bind UI functions to window so HTML can see them
+// Bind UI
 window.showRegistration = showRegistration;
-window.selectOption = selectOption;
+window.toggleOption = toggleOption;
 window.completeRegistration = completeRegistration;
 document.getElementById("send-btn").onclick=sendChat; document.getElementById("user-input").onkeypress=(e)=>{if(e.key==="Enter")sendChat();};
 window.startBlueprint=()=>{document.getElementById("blueprint").classList.add("active");}; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=goToFloor;
