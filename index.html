@@ -1727,7 +1727,260 @@ Return STRICT JSON only:
     window.handleKey = handleKey;
     window.manualAddArt = manualAddArt;
     window.openHelp = openHelp;
+/* ===============================
+   PATCH: Better AI + Better Navigation
+   Paste at VERY END of your <script>
+================================= */
 
+// 1) Point your front-end to Cloudflare Worker (NO API key in browser)
+const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; // <-- change if yours differs
+
+// 2) Fix message IDs so loading bubbles can be removed
+addMsg = function(role, txt) {
+  const id = String(Date.now()) + "_" + Math.random().toString(16).slice(2);
+  const d = document.createElement('div');
+  d.className = `msg msg-${role}`;
+  d.id = `msg-${id}`;
+  d.innerText = txt;
+  const s = document.getElementById('chat-stream');
+  s.appendChild(d);
+  s.scrollTop = s.scrollHeight;
+  return id;
+};
+
+// 3) Replace Gemini call with Worker call (keeps memory + stops repeating)
+async function callAIWorker({ mode, art, history, message, userProfile }) {
+  const r = await fetch(AI_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode, art, history, message, userProfile })
+  });
+  if (!r.ok) throw new Error("AI request failed");
+  return await r.json();
+}
+
+// Override sendText to use Worker
+sendText = async function(txt) {
+  addMsg('user', txt);
+  chatHistory.push({ role: 'user', parts: [{ text: txt }] });
+
+  const loadingId = addMsg('ai', '...');
+  try {
+    const res = await callAIWorker({
+      mode: currentPersona,
+      art: currentArtData || {},
+      history: chatHistory,
+      message: txt,
+      userProfile
+    });
+
+    // remove loading bubble
+    const el = document.getElementById(`msg-${loadingId}`);
+    if (el) el.remove();
+
+    const reply = res?.reply || "AI error. Please try again.";
+    addMsg('ai', reply);
+    chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+
+    // optional follow-up (if provided)
+    if (res?.followUp) {
+      addMsg('ai', res.followUp);
+      chatHistory.push({ role: 'model', parts: [{ text: res.followUp }] });
+    }
+
+    // save insight button
+    if (res?.save && res?.tag) {
+      setTimeout(() => {
+        const btnId = "save_" + Date.now();
+        const div = document.createElement('div');
+        div.style.textAlign = 'center';
+        div.innerHTML = `<button id="${btnId}" style="margin-top:10px;padding:10px 14px;cursor:pointer;border:1px solid #cbd5e1;background:#fff;border-radius:20px;font-family:Montserrat;font-weight:700;font-size:12px;">
+          + Save Insight: ${res.tag}
+        </button>`;
+        document.getElementById('chat-stream').appendChild(div);
+
+        document.getElementById(btnId).onclick = function() {
+          this.disabled = true;
+          this.innerText = "Saved";
+          collectedInterests.push({ art: currentArtData?.title || "Unknown", tag: res.tag });
+          document.getElementById('journey-count').innerText = collectedInterests.length;
+        };
+      }, 300);
+    }
+
+  } catch (e) {
+    const el = document.getElementById(`msg-${loadingId}`);
+    if (el) el.remove();
+    addMsg('ai', "AI gateway error. Please try again.");
+  }
+};
+
+// 4) Orbit + zoom while focusing (without breaking your visual design)
+let __focusOrbit = null;
+function __setFocusOrbit(targetVec3) {
+  const off = camera.position.clone().sub(targetVec3);
+  const dist = Math.max(3, Math.min(20, off.length()));
+  const polar = Math.acos(off.y / dist);      // 0..PI
+  const azim = Math.atan2(off.x, off.z);      // -PI..PI
+  __focusOrbit = { target: targetVec3.clone(), dist, polar, azim };
+}
+function __updateFocusOrbit() {
+  if (!__focusOrbit) return;
+  const t = __focusOrbit.target;
+  const dist = __focusOrbit.dist;
+  const polar = Math.max(0.15, Math.min(Math.PI - 0.15, __focusOrbit.polar));
+  const azim = __focusOrbit.azim;
+
+  const sinP = Math.sin(polar);
+  camera.position.set(
+    t.x + dist * sinP * Math.sin(azim),
+    t.y + dist * Math.cos(polar),
+    t.z + dist * sinP * Math.cos(azim)
+  );
+  lookTarget = t; // keep your existing render loop behavior
+}
+
+// Capture-phase handlers: stop the old “focus click” lock from blocking orbit
+let __draggingFocus = false;
+let __lastX = 0;
+let __lastY = 0;
+
+document.addEventListener("mousedown", (e) => {
+  if (!isFocusing) return;
+  if (e.target !== renderer.domElement) return;
+  __draggingFocus = true;
+  __lastX = e.clientX;
+  __lastY = e.clientY;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+}, true);
+
+document.addEventListener("mousemove", (e) => {
+  if (!isFocusing || !__draggingFocus || !__focusOrbit) return;
+  const dx = e.clientX - __lastX;
+  const dy = e.clientY - __lastY;
+  __lastX = e.clientX;
+  __lastY = e.clientY;
+
+  __focusOrbit.azim -= dx * 0.008;
+  __focusOrbit.polar += dy * 0.008;
+  __updateFocusOrbit();
+
+  e.preventDefault();
+  e.stopImmediatePropagation();
+}, true);
+
+document.addEventListener("mouseup", (e) => {
+  if (!isFocusing) return;
+  __draggingFocus = false;
+  e.stopImmediatePropagation();
+}, true);
+
+// Wheel zoom: works in focus (orbit distance) and walk (move forward/back)
+window.addEventListener("wheel", (e) => {
+  // don’t zoom while typing in input
+  const active = document.activeElement;
+  if (active && active.id === "user-input") return;
+
+  if (isFocusing && __focusOrbit) {
+    __focusOrbit.dist += Math.sign(e.deltaY) * 1.2;
+    __focusOrbit.dist = Math.max(3, Math.min(22, __focusOrbit.dist));
+    __updateFocusOrbit();
+    e.preventDefault();
+    return;
+  }
+
+  // walk zoom = move camera forward/back
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  dir.y = 0;
+  dir.normalize();
+  const step = Math.sign(e.deltaY) * 2.0;
+  camera.position.addScaledVector(dir, step);
+}, { passive: false });
+
+// Hook orbit setup when focusing
+const __oldFocusArt = focusArt;
+focusArt = function(data) {
+  __oldFocusArt(data);
+  setTimeout(() => {
+    if (lookTarget) __setFocusOrbit(lookTarget);
+  }, 1300);
+};
+
+// When exiting focus, clear orbit
+const __oldExitFocus = exitFocus;
+exitFocus = function() {
+  __oldExitFocus();
+  __focusOrbit = null;
+  __draggingFocus = false;
+};
+
+// 5) Small on-screen nav pad (optional, but very helpful)
+(function injectNavPad(){
+  const css = document.createElement("style");
+  css.innerHTML = `
+  #nav-pad{position:fixed;left:20px;bottom:20px;z-index:80;pointer-events:auto;font-family:Montserrat;}
+  #nav-pad .pad{display:grid;grid-template-columns:44px 44px 44px;grid-template-rows:44px 44px 44px;gap:8px;background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);border:1px solid rgba(30,58,138,0.25);padding:10px;box-shadow:0 10px 30px rgba(0,0,0,0.08)}
+  #nav-pad button{border:1px solid rgba(30,58,138,0.25);background:#fff;color:#1e3a8a;font-weight:800;cursor:pointer}
+  #nav-pad button:active{transform:translateY(1px)}
+  `;
+  document.head.appendChild(css);
+
+  const wrap = document.createElement("div");
+  wrap.id = "nav-pad";
+  wrap.innerHTML = `
+    <div class="pad">
+      <div></div><button data-m="f">▲</button><div></div>
+      <button data-m="l">◀</button><button data-m="z">◎</button><button data-m="r">▶</button>
+      <div></div><button data-m="b">▼</button><div></div>
+    </div>
+  `;
+  document.body.appendChild(wrap);
+
+  function moveLRFB(dir) {
+    // If focusing, nudge orbit instead (small)
+    if (isFocusing && __focusOrbit) {
+      if (dir === "f") __focusOrbit.dist = Math.max(3, __focusOrbit.dist - 0.8);
+      if (dir === "b") __focusOrbit.dist = Math.min(22, __focusOrbit.dist + 0.8);
+      if (dir === "l") __focusOrbit.azim += 0.08;
+      if (dir === "r") __focusOrbit.azim -= 0.08;
+      __updateFocusOrbit();
+      return;
+    }
+
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    forward.y = 0;
+    forward.normalize();
+    const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0,1,0)).normalize();
+
+    const step = 2.2;
+    if (dir === "f") camera.position.addScaledVector(forward, step);
+    if (dir === "b") camera.position.addScaledVector(forward, -step);
+    if (dir === "l") camera.position.addScaledVector(right, -step);
+    if (dir === "r") camera.position.addScaledVector(right, step);
+  }
+
+  wrap.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const m = btn.getAttribute("data-m");
+      if (m === "z") { /* center button: do nothing for now */ return; }
+      moveLRFB(m);
+    });
+  });
+})();
+    window.addEventListener("wheel", (e) => {
+  if (!isFocusing) return;
+  if (typeof __focusOrbit === "undefined") return;
+  if (typeof __updateFocusOrbit !== "function") return;
+
+  e.preventDefault();
+
+  const delta = Math.sign(e.deltaY); // +1 or -1
+  __focusOrbit.dist = THREE.MathUtils.clamp(__focusOrbit.dist + delta * 1.2, 3, 20);
+  __updateFocusOrbit();
+}, { passive: false });
   </script>
 </body>
 </html>
