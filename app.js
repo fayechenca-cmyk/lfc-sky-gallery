@@ -6,15 +6,14 @@ const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 
 const ATRIUM_CONFIG = {
-  // ✅ FIX: Exact video and thumbnail you requested
   videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
-  videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg",
+  // ✅ FIX: High-Res Thumbnail for clarity
+  videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/maxresdefault.jpg",
   title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing.",
   desc: "LFC Sky Artspace is a collection-led art education system.",
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
-// ✅ RESTORED: All 12 Floors
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
@@ -25,7 +24,7 @@ const FLOORS = [
   { id: 6, name: "Ceramics", type: "standard" },
   { id: 7, name: "Design", type: "standard" },
   { id: 8, name: "Animation", type: "standard" },
-  { id: 9, name: "Film / Video", type: "darkroom" }, 
+  { id: 9, name: "Film / Video", type: "darkroom" },
   { id: 10, name: "Performance", type: "standard" },
   { id: 11, name: "Sketch", type: "standard" },
   { id: 12, name: "Contemporary Lens", type: "standard" },
@@ -58,10 +57,11 @@ function toggleOption(category, btn) {
 function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
+  // Unlock UI
   setTimeout(() => {
     document.getElementById('entrance-layer').style.display = 'none';
     document.getElementById('reg-panel').style.display = 'none';
-  }, 2000);
+  }, 1500);
 }
 
 // ==========================================
@@ -95,7 +95,7 @@ const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = "anonymous"; 
 
 // ==========================================
-// 4. GALLERY BUILDER (Smart Layout)
+// 4. GALLERY BUILDER (Corrected Coordinates)
 // ==========================================
 const floorHeight = 40; 
 
@@ -134,19 +134,21 @@ function buildGallery() {
     const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w1.position.set(19.5, y+8, 0); group.add(w1);
     const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w2.position.set(-19.5, y+8, 0); group.add(w2);
 
-    // ATRIUM
+    // --- ATRIUM (Video & Text) ---
     if (f.id === 0) {
-      createArtFrame(group, -19.0, y+6, -10, Math.PI/2, 10, 6, { 
+      // ✅ FIX: Moved X to -18.5 so it floats clearly off the wall
+      createArtFrame(group, -18.5, y+6, -10, Math.PI/2, 10, 6, { 
         title: "Introduction Video", artist: "Watch on YouTube", 
         img: ATRIUM_CONFIG.videoThumb, link: ATRIUM_CONFIG.videoLink, isExternal: true 
       });
-      createArtFrame(group, 19.0, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
+      createArtFrame(group, 18.5, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
       createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
     }
 
     if (f.type === "installation") createPlinths(group, y);
 
-    // ✅ SMART DISTRIBUTION
+    // --- ARTWORK DISTRIBUTION ---
+    // Ensure ID is matched as Number
     const arts = ART_DATA.filter(a => Number(a.floor) === f.id);
     
     if(arts.length > 0) {
@@ -156,27 +158,33 @@ function buildGallery() {
       let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; }
       const zMin = -50, zMax = 50;
 
-      // Place Right
+      // ✅ FIX: Using 18.5/-18.5 to prevent "buried in wall" look
       right.forEach((data, idx) => {
         const zPos = (right.length <= 1) ? 0 : zMin + (idx * ((zMax - zMin) / (right.length - 1 || 1)));
-        createArtFrame(group, 18.9, y+6.5, zPos, -Math.PI/2, w, h, data);
+        createArtFrame(group, 18.5, y+6.5, zPos, -Math.PI/2, w, h, data);
       });
 
-      // Place Left
       left.forEach((data, idx) => {
         const zPos = (left.length <= 1) ? 0 : zMin + (idx * ((zMax - zMin) / (left.length - 1 || 1)));
-        createArtFrame(group, -18.9, y+6.5, zPos, Math.PI/2, w, h, data);
+        createArtFrame(group, -18.5, y+6.5, zPos, Math.PI/2, w, h, data);
       });
 
     } else if (f.id !== 0) {
       for(let i=0; i<6; i++) {
         const isRight = i % 2 === 0;
-        createArtFrame(group, isRight?18.9:-18.9, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" });
+        createArtFrame(group, isRight?18.5:-18.5, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" });
       }
     }
 
     scene.add(group);
-    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
+    
+    // ELEVATOR UI GENERATION
+    const btn = document.createElement("div"); 
+    btn.className = "floor-item"; 
+    btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; 
+    // This onclick was being blocked by pointer events. Fixed below in listeners.
+    btn.onclick = () => goToFloor(f.id); 
+    document.getElementById("elevator").prepend(btn);
   });
 }
 
@@ -214,7 +222,7 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
 }
 
 // ==========================================
-// 5. PHYSICS NAVIGATION
+// 5. PHYSICS NAVIGATION & EVENT LISTENERS
 // ==========================================
 const velocity = new THREE.Vector3(); const speed = 1.8; const friction = 0.8; const lookSpeed = 0.002;
 let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
@@ -232,8 +240,15 @@ function updatePhysics() {
 }
 function getForwardVector() { const d=new THREE.Vector3(); camera.getWorldDirection(d); d.y=0; d.normalize(); return d; }
 function getRightVector() { const f=getForwardVector(); return new THREE.Vector3().crossVectors(f, new THREE.Vector3(0,1,0)).normalize(); }
+
 let isDragging=false, prevMouse={x:0,y:0};
-document.addEventListener('pointerdown', (e)=>{ if(!e.target.closest('button') && !e.target.closest('#ai-panel') && !e.target.closest('#entrance-layer')) { isDragging=true; prevMouse={x:e.clientX,y:e.clientY}; }});
+
+// ✅ FIX: Ignore clicks on Elevator (.floor-item) so they don't trigger "Drag"
+document.addEventListener('pointerdown', (e)=>{ 
+  if(!e.target.closest('button') && !e.target.closest('#ai-panel') && !e.target.closest('#entrance-layer') && !e.target.closest('.floor-item')) { 
+    isDragging=true; prevMouse={x:e.clientX,y:e.clientY}; 
+  }
+});
 document.addEventListener('pointerup', ()=>{isDragging=false;});
 document.addEventListener('pointermove', (e)=>{ if(!isDragging || isInputLocked) return; const dx=e.clientX-prevMouse.x, dy=e.clientY-prevMouse.y; const euler=new THREE.Euler(0,0,0,'YXZ'); euler.setFromQuaternion(camera.quaternion); euler.y-=dx*lookSpeed; euler.x-=dy*lookSpeed; euler.x=Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, euler.x)); camera.quaternion.setFromEuler(euler); prevMouse={x:e.clientX,y:e.clientY}; });
 window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;if(d==='l')moveLeft=true;if(d==='r')moveRight=true;}; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
@@ -243,18 +258,26 @@ window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;
 // ==========================================
 function goToFloor(id) { 
   closeBlueprint(); exitFocus(); 
-  isInputLocked = true; 
-  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2000).easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => { isInputLocked = false; }).start(); 
+  isInputLocked = true; // Lock physics
+  // Smoothly move camera up/down
+  new TWEEN.Tween(camera.position)
+    .to({ y: (id * floorHeight) + 5 }, 2000)
+    .easing(TWEEN.Easing.Quadratic.InOut)
+    .onComplete(() => { isInputLocked = false; }) // Unlock when arrived
+    .start(); 
 }
 
 function focusArt(userData) {
   if (userData.data.isExternal && userData.data.link) { window.open(userData.data.link, "_blank"); return; }
+  
   currentOpenArt = userData.data; 
   isInputLocked = true; 
   document.body.classList.add("ai-open"); 
+  
   camera.userData.returnPos = camera.position.clone(); 
   camera.userData.returnQuat = camera.quaternion.clone(); 
   const t = userData.viewPos; 
+  
   new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); 
   const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); 
   new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
@@ -285,16 +308,20 @@ async function sendChat() {
   try {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
     const res = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
-      message:txt, history:chatHistory, art: artPayload, userProfile: userProfile 
+      message:txt, history:chatHistory, art: artPayload, 
+      userProfile: userProfile 
     })});
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
+    
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
         cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
         if(cleanReply.startsWith('{')) { try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){} }
     }
+
     addChatMsg("ai", cleanReply); chatHistory.push({role:"model", parts:[{text:cleanReply}]});
+    
     if(d.save && d.tag) { collectedInterests.push(d.tag); document.getElementById("journey-count").innerText=collectedInterests.length; }
   } catch(e) { console.error(e); addChatMsg("ai", "⚠️ Connection Error. Please check your internet connection."); }
 }
