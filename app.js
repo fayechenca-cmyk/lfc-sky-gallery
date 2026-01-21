@@ -1,6 +1,7 @@
 // ==========================================
 // 1. CONFIGURATION
 // ==========================================
+// ✅ YOUR URL
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; 
 
 let userProfile = { role: [], goal: [], ageGroup: "Adult" };
@@ -8,7 +9,7 @@ let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 const ATRIUM_CONFIG = {
   videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
   videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg",
-  title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing. From Knowing to Making.",
+  title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing.",
   desc: "LFC Sky Artspace is a collection-led art education system.",
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
@@ -109,6 +110,7 @@ function createTextTexture(cfg) {
   return new THREE.CanvasTexture(canvas);
 }
 
+// ✅ FALLBACK TEXTURE (Safety Net)
 function createFallbackTexture(text) {
   const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 640; const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, 512, 640);
@@ -123,69 +125,52 @@ function buildGallery() {
     const y = f.id * floorHeight; 
     const group = new THREE.Group();
     
-    // ✅ RESTORED: Dynamic Materials based on Room Type
+    // ✅ RESTORED: Dynamic Materials
     let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; 
     let wMat = (f.type === "darkroom") ? matWallDark : matWall;
 
-    // Floor & Ceiling
     const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), fMat); floor.position.set(0, y, 0); group.add(floor);
     const ceil = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), wMat); ceil.position.set(0, y+16, 0); group.add(ceil);
-    
-    // Side Walls
     const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w1.position.set(19.5, y+8, 0); group.add(w1);
     const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w2.position.set(-19.5, y+8, 0); group.add(w2);
 
-    // --- ATRIUM (Floor 0) ---
+    // ATRIUM
     if (f.id === 0) {
       createArtFrame(group, -19.4, y+6, -10, Math.PI/2, 10, 6, { title: "Introduction Video", artist: "Watch on YouTube", img: ATRIUM_CONFIG.videoThumb, link: ATRIUM_CONFIG.videoLink, isExternal: true });
       createArtFrame(group, 19.4, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
       createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
     }
 
-    // --- ✅ RESTORED: SPECIAL ROOMS ---
+    // SPECIAL ROOMS
     if (f.type === "installation") createPlinths(group, y);
 
-    // --- ARTWORK PLACEMENT (With Safety Net) ---
+    // ARTWORK PLACEMENT (With Safety Net)
     const arts = ART_DATA.filter(a => a.floor == f.id);
     
     if(arts.length > 0) {
-      // We have data for this floor
       arts.forEach((data, i) => {
-        const isRight = i % 2 === 0;
-        const x = isRight ? 19.4 : -19.4;
-        const z = -45 + (i * 12); 
-        
-        let w = 4, h = 5;
-        if(f.type === "darkroom") { w = 8; h = 4.5; } // Widescreen for video
-        
+        const isRight = i % 2 === 0; const x = isRight ? 19.4 : -19.4; const z = -45 + (i * 12); 
+        let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; }
         createArtFrame(group, x, y+6.5, z, isRight ? -Math.PI/2 : Math.PI/2, w, h, data);
       });
     } else if (f.id !== 0) {
-      // ✅ RESTORED: If no data, fill with placeholders so it's not empty!
+      // ✅ RESTORED: If no data, fill with placeholders
       for(let i=0; i<6; i++) {
         const isRight = i % 2 === 0;
-        createArtFrame(group, isRight?19.4:-19.4, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { 
-          title: `Future Exhibit`, artist: f.name, img: "" 
-        });
+        createArtFrame(group, isRight?19.4:-19.4, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" });
       }
     }
 
     scene.add(group);
     
-    // Elevator Button
     const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
   });
 }
 
 function createPlinths(group, y) {
-  // Create 3 stands in the middle of the room for 3D objects
   [0, -15, 15].forEach(z => {
-    const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); 
-    plinth.position.set(0, y + 0.6, z); 
-    group.add(plinth);
-    
-    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); 
-    hitbox.position.set(0, y+3, z); 
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); plinth.position.set(0, y + 0.6, z); group.add(plinth);
+    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); hitbox.position.set(0, y+3, z); 
     hitbox.userData = { type: "art", data: { title: "Installation View", artist: "3D Works", img: "" }, viewPos: { x: 8, y: y+5, z: z+8 } }; 
     interactables.push(hitbox); group.add(hitbox);
   });
@@ -195,13 +180,12 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
   const frameGroup = new THREE.Group(); frameGroup.position.set(x, y, z); frameGroup.rotation.y = rot;
   const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.2, h+0.2, 0.2), matFrame); frameGroup.add(frame);
   const canvas = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xeeeeee })); 
-  canvas.position.z = 0.15; 
-  frameGroup.add(canvas);
+  canvas.position.z = 0.15; frameGroup.add(canvas);
 
   if (data.texture) {
     canvas.material = new THREE.MeshBasicMaterial({ map: data.texture });
   } else if (data.img) {
-    // Attempt load, fallback if fails
+    // ✅ FALLBACK SYSTEM
     textureLoader.load(data.img, (tex) => {
       canvas.material = new THREE.MeshBasicMaterial({ map: tex });
       canvas.material.needsUpdate = true;
@@ -263,7 +247,7 @@ async function sendChat() {
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
-    // JSON Scrubber
+    // ✅ FIX: SCRUB JSON
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
         cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -280,6 +264,58 @@ async function sendChat() {
 }
 function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
 
+// ✅ SMART CURRICULUM GENERATOR
+function startBlueprint() {
+  document.getElementById("blueprint").classList.add("active");
+  const container = document.getElementById("bp-products");
+  container.innerHTML = "<h3>Generating Plan...</h3>";
+  
+  setTimeout(() => {
+    let recs = [];
+    const roles = userProfile.role.join(" ").toLowerCase();
+    const goals = userProfile.goal.join(" ").toLowerCase();
+    
+    if (CATALOG.products) {
+      if (roles.includes("student") || goals.includes("learn") || goals.includes("teach")) {
+        recs.push(CATALOG.products.find(p => p.id.includes("001")) || {title:"Intro Course"});
+        recs.push(CATALOG.products.find(p => p.id.includes("003")) || {title:"Color Theory"});
+      }
+      if (roles.includes("artist") || goals.includes("market") || goals.includes("technique")) {
+        recs.push(CATALOG.products.find(p => p.id.includes("brand")) || {title:"Brand Creator"});
+      }
+      if (recs.length === 0) recs.push(CATALOG.products[0]);
+    }
+
+    let html = "";
+    recs.forEach(p => {
+      if(p) {
+        html += `
+        <div class="plan-card">
+          <span class="plan-tag">Recommended</span>
+          <h3>${p.title}</h3>
+          <p>${p.price > 0 ? "$"+p.price : "Free"}</p>
+          <button class="plan-btn" onclick="window.open('${p.buyUrl||p.detailsUrl}', '_blank')">
+            ${p.buyUrl ? "Enroll Now" : "Join Waitlist"}
+          </button>
+        </div>`;
+      }
+    });
+    container.innerHTML = html;
+    
+    document.getElementById("bp-desc").innerHTML = `
+      As a <strong>${userProfile.role.join(", ")}</strong> interested in <strong>${userProfile.goal.join(", ")}</strong>, 
+      and having explored <em>${collectedInterests.length > 0 ? collectedInterests.join(", ") : "various concepts"}</em>, 
+      we recommend this path:
+    `;
+    
+    document.getElementById("bp-steps").innerHTML = `
+      <div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--blue);"><strong>Step 1: Observation</strong><br>Analyze visual structures in the gallery.</div>
+      <div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid #22c55e;"><strong>Step 2: Context</strong><br>Connect historical references to modern theory.</div>
+    `;
+
+  }, 800);
+}
+
 // ==========================================
 // 7. INIT
 // ==========================================
@@ -291,7 +327,6 @@ document.addEventListener('pointerup',(e)=>{if(isDragging)return; cm.x=(e.client
 fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.floors).forEach(f=>f.items.forEach(i=>ART_DATA.push(i))); else ART_DATA=d; buildGallery(); }).catch(()=>buildGallery());
 fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
 
-// Bind UI
 window.showRegistration = showRegistration;
 window.toggleOption = toggleOption;
 window.completeRegistration = completeRegistration;
