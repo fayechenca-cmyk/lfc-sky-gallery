@@ -1,435 +1,440 @@
-// ✅ Your Cloudflare Worker AI endpoint (NO KEY here)
-const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
+// ==========================================
+// 1. CONFIGURATION & SETUP
+// ==========================================
 
-// --- Floors ---
-const FLOORS = [{ id: 0, name: "Reception", type: "reception" }];
-const floorNames = ["Fine Art", "Photography", "Design", "Sculpture", "New Media", "Textile", "Performance", "Architecture", "Ceramics", "Film", "Concepts", "Masters"];
-for (let i = 1; i <= 12; i++) {
-  const name = floorNames[(i - 1) % floorNames.length];
-  let type = "standard";
-  if (name === "Fine Art") type = "fineart";
-  if (name === "New Media") type = "newmedia";
-  FLOORS.push({ id: i, name, type });
-}
+// ⚠️ REPLACE THIS with your Cloudflare Worker URL
+const AI_ENDPOINT = "https://lfc-gallery-api.YOURNAME.workers.dev/chat"; 
 
-// You will later replace this with real data in artworks.json
-const IMPORTED_ART_DATA = [];
-const builtLevels = new Set();
+const FLOORS = [
+  { id: 0, name: "Reception", type: "reception" },
+  { id: 1, name: "Painting", type: "standard" },
+  { id: 2, name: "Photography", type: "standard" },
+  { id: 3, name: "Design", type: "standard" },
+  { id: 4, name: "Sculpture", type: "standard" },
+  { id: 5, name: "Film/Video", type: "darkroom" }
+];
 
-// --- Three.js setup ---
+let ART_DATA = []; 
+let CATALOG = [];  
+let chatHistory = [];
+let collectedInterests = [];
+const interactables = []; // Things we can click on
+
+// --- THREE.JS SCENE SETUP ---
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
-const skyColor = new THREE.Color(0xe0f2fe);
-scene.background = skyColor;
-scene.fog = new THREE.Fog(skyColor, 20, 150);
+scene.background = new THREE.Color(0xe0f2fe);
+scene.fog = new THREE.Fog(0xe0f2fe, 15, 120);
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(0, 5, 30); // Start position
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 container.appendChild(renderer.domElement);
 
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.7);
+// Lighting
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.6);
 scene.add(hemiLight);
-const sun = new THREE.DirectionalLight(0xfffaed, 0.9);
-sun.position.set(50, 100, 50);
-sun.castShadow = true;
-sun.shadow.mapSize.width = 2048;
-sun.shadow.mapSize.height = 2048;
-scene.add(sun);
+const dirLight = new THREE.DirectionalLight(0xfffaed, 1);
+dirLight.position.set(50, 100, 50);
+dirLight.castShadow = true;
+scene.add(dirLight);
 
-const textureLoader = new THREE.TextureLoader();
-textureLoader.crossOrigin = "anonymous";
+// Materials
+const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+const matWall = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+const matFrame = new THREE.MeshStandardMaterial({ color: 0x111111 });
 
-const matFloor = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.1 });
-const matFloorDark = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
-const matWallWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
-const matWallDark = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
-const matGlass = new THREE.MeshPhysicalMaterial({ color: 0x8899a6, transmission: 0.9, opacity: 0.3, transparent: true, roughness: 0.0, side: THREE.DoubleSide });
-const matCurtain = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 1.0 });
-const invisibleMat = new THREE.MeshBasicMaterial({ visible: true, transparent: true, opacity: 0 });
-
-const interactables = [];
+// ==========================================
+// 2. GALLERY BUILDER (Floors & Art)
+// ==========================================
 const floorHeight = 35;
 
-// Base planes
-const infiniteFloor = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), matFloor);
-infiniteFloor.rotation.x = -Math.PI / 2;
-infiniteFloor.receiveShadow = true;
-scene.add(infiniteFloor);
+function buildGallery() {
+  FLOORS.forEach(f => {
+    const y = f.id * floorHeight;
+    const group = new THREE.Group();
+    
+    // Floor
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 100), matFloor);
+    floor.position.set(0, y, 0);
+    // Don't add floors to interactables, we use logic to change floors
+    group.add(floor);
 
-const walkPlane = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), invisibleMat);
-walkPlane.rotation.x = -Math.PI / 2;
-walkPlane.userData = { type: "floor" };
-interactables.push(walkPlane);
-scene.add(walkPlane);
+    // Ceiling
+    const ceil = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 100), matWall);
+    ceil.position.set(0, y+15, 0);
+    group.add(ceil);
 
-// --- Build level (cached) ---
-function buildLevel(level) {
-  if (builtLevels.has(level)) return;
-  builtLevels.add(level);
+    // Side Walls
+    const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 15, 100), matWall);
+    w1.position.set(19.5, y+7.5, 0);
+    group.add(w1);
+    
+    const w2 = new THREE.Mesh(new THREE.BoxGeometry(1, 15, 100), matWall);
+    w2.position.set(-19.5, y+7.5, 0);
+    group.add(w2);
 
-  const y = level * floorHeight;
-  const group = new THREE.Group();
-  const config = FLOORS[level];
-  const width = 40, length = 100;
+    // Populate Art
+    const arts = ART_DATA.filter(a => a.floor == f.id);
+    if(arts.length > 0) {
+      arts.forEach((data, i) => {
+        const isRight = i % 2 === 0;
+        const x = isRight ? 19 : -19;
+        const z = -40 + (i * 15); 
+        createArtFrame(group, x, y+6, z, isRight ? -Math.PI/2 : Math.PI/2, data);
+      });
+    } else {
+      // Empty floor placeholder
+      createArtFrame(group, 0, y+6, -45, 0, { title: f.name, artist: "LFC Gallery", img: "" });
+    }
 
-  let flMat = matFloor, wMat = matWallWhite;
-  if (config.type === "newmedia") { flMat = matFloorDark; wMat = matWallDark; }
-
-  const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.5, length), flMat);
-  floorMesh.position.set(0, y, 0);
-  floorMesh.receiveShadow = true;
-  floorMesh.userData = { type: "floor", level };
-  interactables.push(floorMesh);
-  group.add(floorMesh);
-
-  const ceil = new THREE.Mesh(new THREE.BoxGeometry(width, 0.5, length), wMat);
-  ceil.position.set(0, y + 15, 0);
-  group.add(ceil);
-
-  if (config.type === "newmedia") {
-    const curtain = new THREE.Mesh(new THREE.BoxGeometry(1, 15, length), matCurtain);
-    curtain.position.set(-width / 2 + 0.5, y + 7.5, 0);
-    group.add(curtain);
-
-    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 15, length), wMat);
-    rightWall.position.set(width / 2 - 0.5, y + 7.5, 0);
-    group.add(rightWall);
-  } else {
-    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 15, length), matGlass);
-    leftWall.position.set(-width / 2 + 0.5, y + 7.5, 0);
-    group.add(leftWall);
-
-    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 15, length), wMat);
-    rightWall.position.set(width / 2 - 0.5, y + 7.5, 0);
-    group.add(rightWall);
-  }
-
-  // Simple art population
-  if (level === 0) {
-    createArt({
-      floor: 0, w: 8, h: 5, x: width / 2 - 1, y: y + 6, z: 0, rot: -Math.PI / 2,
-      title: "LFC SYSTEM",
-      artist: "FEI TeamArt",
-      year: "2026",
-      img: "https://placehold.co/1200x800/111/fff?text=LFC+SYSTEM"
-    }, true, group);
-  } else {
-    const floorArt = IMPORTED_ART_DATA.filter(a => a.floor === level);
-    if (floorArt.length) floorArt.forEach(a => createArt(a, false, group));
-    else populateFallback(level, group);
-  }
-
-  scene.add(group);
+    scene.add(group);
+    
+    // Add Elevator Button to HTML
+    const btn = document.createElement("div");
+    btn.className = "floor-item";
+    btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`;
+    btn.onclick = () => goToFloor(f.id);
+    document.getElementById("elevator").prepend(btn);
+  });
 }
 
-function populateFallback(level, group) {
-  const wallX = 19.4, startZ = -40, spacing = 15;
-  for (let i = 0; i < 6; i++) {
-    const z = startZ + i * spacing;
-    createArt({
-      floor: level,
-      title: `Work ${level}-${i + 1}`,
-      artist: "Collection",
-      year: "202X",
-      img: `https://placehold.co/1200x800/0b1220/ffffff?text=Floor+${level}+Work+${i + 1}`,
-      w: 4, h: 5, x: wallX, z, rot: -Math.PI / 2,
-      y: (level * floorHeight) + 6
-    }, false, group);
-  }
-}
+function createArtFrame(group, x, y, z, rot, data) {
+  const frameGroup = new THREE.Group();
+  frameGroup.position.set(x, y, z);
+  frameGroup.rotation.y = rot;
 
-function createArt(data, isInfo, parentGroup) {
-  const group = new THREE.Group();
-  group.position.set(data.x || 0, data.y || 0, data.z || 0);
-  group.rotation.y = data.rot || 0;
+  // Frame
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(4.2, 5.2, 0.2), matFrame);
+  frameGroup.add(frame);
 
-  const frame = new THREE.Mesh(new THREE.BoxGeometry((data.w || 4) + 0.1, (data.h || 5) + 0.1, 0.1), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-  group.add(frame);
-
-  const placeholderMat = new THREE.MeshBasicMaterial({ color: 0xcccccc });
-  const canvas = new THREE.Mesh(new THREE.PlaneGeometry(data.w || 4, data.h || 5), placeholderMat);
-  canvas.position.z = 0.06;
-  group.add(canvas);
+  // Canvas
+  const canvas = new THREE.Mesh(new THREE.PlaneGeometry(4, 5), new THREE.MeshBasicMaterial({ color: 0xeeeeee }));
+  canvas.position.z = 0.11;
+  frameGroup.add(canvas);
 
   if (data.img) {
-    textureLoader.load(data.img, (tex) => {
-      tex.encoding = THREE.sRGBEncoding;
+    new THREE.TextureLoader().load(data.img, (tex) => {
       canvas.material = new THREE.MeshBasicMaterial({ map: tex });
+      canvas.material.needsUpdate = true;
     });
   }
 
-  if (!isInfo) {
-    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(data.w || 4, data.h || 5, 0.6), invisibleMat);
-    hitbox.userData = {
-      type: "art",
-      data,
-      viewPos: { x: group.position.x + Math.sin(group.rotation.y) * 8, y: group.position.y, z: group.position.z + Math.cos(group.rotation.y) * 8 },
-      lookAt: { x: group.position.x, y: group.position.y, z: group.position.z }
-    };
-    interactables.push(hitbox);
-    group.add(hitbox);
-  }
+  // Hitbox (Clickable)
+  const hitbox = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
+  hitbox.userData = { type: "art", data: data, viewPos: { x: x + Math.sin(rot)*8, y: y, z: z + Math.cos(rot)*8 } };
+  interactables.push(hitbox);
+  frameGroup.add(hitbox);
 
-  parentGroup.add(group);
+  group.add(frameGroup);
 }
 
-// --- UI build ---
-function buildElevator() {
-  const elev = document.getElementById("elevator");
-  elev.innerHTML = "";
-  FLOORS.slice().reverse().forEach(f => {
-    const b = document.createElement("div");
-    b.className = "floor-item";
-    b.id = `flr-${f.id}`;
-    b.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`;
-    b.onclick = () => goToLevel(f.id);
-    elev.appendChild(b);
-  });
-  updateElevator(0);
+// ==========================================
+// 3. PHYSICS NAVIGATION (The Game Feel)
+// ==========================================
+const velocity = new THREE.Vector3();
+const speed = 1.8;
+const friction = 0.85;
+const lookSpeed = 0.002;
+
+let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+
+// Keyboard Listeners
+document.addEventListener('keydown', (e) => {
+  if(e.code === 'ArrowUp' || e.code === 'KeyW') moveForward = true;
+  if(e.code === 'ArrowLeft' || e.code === 'KeyA') moveLeft = true;
+  if(e.code === 'ArrowDown' || e.code === 'KeyS') moveBackward = true;
+  if(e.code === 'ArrowRight' || e.code === 'KeyD') moveRight = true;
+});
+document.addEventListener('keyup', (e) => {
+  if(e.code === 'ArrowUp' || e.code === 'KeyW') moveForward = false;
+  if(e.code === 'ArrowLeft' || e.code === 'KeyA') moveLeft = false;
+  if(e.code === 'ArrowDown' || e.code === 'KeyS') moveBackward = false;
+  if(e.code === 'ArrowRight' || e.code === 'KeyD') moveRight = false;
+});
+
+// Mouse Wheel Walk
+document.addEventListener('wheel', (e) => {
+  if(document.body.classList.contains("ai-open")) return;
+  const delta = Math.sign(e.deltaY) * -1;
+  const forward = getForwardVector();
+  velocity.addScaledVector(forward, delta * 5.0);
+}, { passive: false });
+
+// Physics Loop
+function updatePhysics() {
+  if (document.body.classList.contains("ai-open")) return;
+
+  velocity.x *= friction;
+  velocity.z *= friction;
+
+  const forward = getForwardVector();
+  const right = getRightVector();
+
+  if (moveForward) velocity.addScaledVector(forward, speed);
+  if (moveBackward) velocity.addScaledVector(forward, -speed);
+  if (moveLeft) velocity.addScaledVector(right, -speed);
+  if (moveRight) velocity.addScaledVector(right, speed);
+
+  const delta = 0.015; 
+  camera.position.x += velocity.x * delta;
+  camera.position.z += velocity.z * delta;
+
+  // Simple Collision (Stay in hall)
+  camera.position.x = Math.max(-18, Math.min(18, camera.position.x));
+  camera.position.z = Math.max(-48, Math.min(48, camera.position.z));
 }
 
-function updateElevator(l) {
-  document.querySelectorAll(".floor-item").forEach(b => b.classList.remove("active"));
-  const el = document.getElementById(`flr-${l}`);
-  if (el) el.classList.add("active");
+function getForwardVector() {
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  dir.y = 0; dir.normalize();
+  return dir;
+}
+function getRightVector() {
+  const forward = getForwardVector();
+  const up = new THREE.Vector3(0, 1, 0);
+  return new THREE.Vector3().crossVectors(forward, up).normalize();
 }
 
-// --- Camera / navigation ---
-camera.position.set(0, 5, 30);
+// Looking Around (Drag)
+let isDragging = false;
+let previousMousePosition = { x: 0, y: 0 };
 
-let isDragging = false, startX = 0, startY = 0, lon = 0, lat = 0;
-let isFocusing = false;
-let savedPos = new THREE.Vector3();
-let lookTarget = null;
-
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-function onDown(x, y, target) {
-  if (target !== renderer.domElement) return;
+document.addEventListener('pointerdown', (e) => {
+  if(e.target.closest('button') || e.target.closest('#ai-panel')) return;
   isDragging = true;
-  startX = x; startY = y;
-}
-function onMove(x, y) {
-  if (!isDragging || isFocusing) return;
-  lon -= (x - startX) * 0.15;
-  lat += (y - startY) * 0.15;
-  lat = Math.max(-85, Math.min(85, lat));
-  startX = x; startY = y;
-}
-function onUp(x, y, target) {
-  if (target !== renderer.domElement) { isDragging = false; return; }
-  const isClick = Math.abs(x - startX) < 5 && Math.abs(y - startY) < 5;
-  isDragging = false;
-  if (isClick) handleClick(x, y);
-}
+  previousMousePosition = { x: e.clientX, y: e.clientY };
+});
+document.addEventListener('pointerup', () => { isDragging = false; });
+document.addEventListener('pointermove', (e) => {
+  if (!isDragging || document.body.classList.contains("ai-open")) return;
+  const deltaMove = { x: e.clientX - previousMousePosition.x, y: e.clientY - previousMousePosition.y };
+  
+  const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+  euler.setFromQuaternion(camera.quaternion);
+  euler.y -= deltaMove.x * lookSpeed;
+  euler.x -= deltaMove.y * lookSpeed;
+  euler.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, euler.x));
+  
+  camera.quaternion.setFromEuler(euler);
+  previousMousePosition = { x: e.clientX, y: e.clientY };
+});
 
-document.addEventListener("mousedown", e => onDown(e.clientX, e.clientY, e.target));
-document.addEventListener("mousemove", e => onMove(e.clientX, e.clientY));
-document.addEventListener("mouseup", e => onUp(e.clientX, e.clientY, e.target));
-document.addEventListener("touchstart", e => onDown(e.touches[0].clientX, e.touches[0].clientY, e.target));
-document.addEventListener("touchmove", e => onMove(e.touches[0].clientX, e.touches[0].clientY));
-document.addEventListener("touchend", e => onUp(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.target));
+// Mobile Pad hooks
+window.moveStart = function(dir) {
+  if (dir === 'f') moveForward = true;
+  if (dir === 'b') moveBackward = true;
+  if (dir === 'l') moveLeft = true;
+  if (dir === 'r') moveRight = true;
+};
+window.moveStop = function() {
+  moveForward = false; moveBackward = false; moveLeft = false; moveRight = false;
+};
 
-function handleClick(x, y) {
-  mouse.x = (x / window.innerWidth) * 2 - 1;
-  mouse.y = -(y / window.innerHeight) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
+// ==========================================
+// 4. INTERACTION & AI LOGIC
+// ==========================================
 
-  const intersects = raycaster.intersectObjects(interactables);
-  if (!intersects.length) return;
-
-  const target = intersects[0].object;
-  if (target.userData.type === "floor" && !isFocusing) {
-    const currentY = Math.floor(camera.position.y / floorHeight) * floorHeight;
-    moveCamera(intersects[0].point.x, currentY + 5, intersects[0].point.z);
-  }
-  if (target.userData.type === "art" && !isFocusing) {
-    focusArt(target.userData);
-  }
-}
-
-function moveCamera(x, y, z) {
-  new TWEEN.Tween(camera.position).to({ x, y, z }, 1200).easing(TWEEN.Easing.Cubic.Out).start();
+function goToFloor(id) {
+  closeBlueprint();
+  exitFocus();
+  // Elevator
+  new TWEEN.Tween(camera.position)
+    .to({ y: (id * floorHeight) + 5 }, 2000)
+    .easing(TWEEN.Easing.Quadratic.InOut)
+    .start();
 }
 
-function focusArt(ud) {
-  isFocusing = true;
-  savedPos.copy(camera.position);
+function focusArt(userData) {
+  document.body.classList.add("ai-open");
+  
+  camera.userData.returnPos = camera.position.clone();
+  camera.userData.returnQuat = camera.quaternion.clone();
 
-  new TWEEN.Tween(camera.position).to(ud.viewPos, 1000).easing(TWEEN.Easing.Cubic.InOut).start();
-  lookTarget = new THREE.Vector3(ud.lookAt.x, ud.lookAt.y, ud.lookAt.z);
+  const targetPos = userData.viewPos;
+  
+  // Move to Art
+  new TWEEN.Tween(camera.position)
+    .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1500)
+    .easing(TWEEN.Easing.Cubic.Out)
+    .onComplete(() => {
+        openAI(userData.data);
+        document.getElementById("back-btn").classList.add("visible");
+    })
+    .start();
 
-  setTimeout(() => {
-    document.getElementById("back-btn").classList.add("visible");
-    startAI(ud.data);
-  }, 800);
+  // Look at Art
+  const dummy = new THREE.Object3D();
+  dummy.position.copy(targetPos);
+  dummy.lookAt(userData.data.x || targetPos.x, targetPos.y, userData.data.z || targetPos.z);
+  
+  new TWEEN.Tween(camera.quaternion)
+    .to({ x: dummy.quaternion.x, y: dummy.quaternion.y, z: dummy.quaternion.z, w: dummy.quaternion.w }, 1500)
+    .easing(TWEEN.Easing.Cubic.Out)
+    .start();
 }
 
 function exitFocus() {
-  isFocusing = false;
-  lookTarget = null;
-  document.getElementById("back-btn").classList.remove("visible");
+  document.body.classList.remove("ai-open");
   document.getElementById("ai-panel").classList.remove("active");
-  new TWEEN.Tween(camera.position).to(savedPos, 800).easing(TWEEN.Easing.Cubic.Out).start();
+  document.getElementById("back-btn").classList.remove("visible");
+
+  if (camera.userData.returnPos) {
+    new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1000).easing(TWEEN.Easing.Quadratic.Out).start();
+    new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1000).easing(TWEEN.Easing.Quadratic.Out).start();
+  }
 }
 
-// --- AI Panel (calls Worker) ---
-let currentArtData = null;
-let currentPersona = "docent";
-let chatHistory = []; // {role, text}
-let collectedInterests = [];
-let userProfile = { age: "Adult", goal: "Learn Art" };
-
-function addMsg(role, txt) {
-  const id = Date.now().toString() + Math.random().toString(16).slice(2);
-  const d = document.createElement("div");
-  d.className = `msg msg-${role}`;
-  d.id = `msg-${id}`;
-  d.innerText = txt;
-  const s = document.getElementById("chat-stream");
-  s.appendChild(d);
-  s.scrollTop = s.scrollHeight;
-  return id;
-}
-
-async function callAI(payload) {
-  const r = await fetch(AI_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  const text = await r.text();
-  try { return JSON.parse(text); }
-  catch { return { reply: "AI returned an invalid response.", save: false, tag: "Concept" }; }
-}
-
-function startAI(data) {
-  currentArtData = data;
-  chatHistory = [];
-
-  document.getElementById("ai-img").src = data.img || "";
-  document.getElementById("ai-title").innerText = data.title || "Untitled";
-  document.getElementById("ai-meta").innerText = `${data.artist || "Unknown"}, ${data.year || "202X"}`;
-
-  document.getElementById("chat-stream").innerHTML = "";
+// AI Chat
+function openAI(data) {
   document.getElementById("ai-panel").classList.add("active");
-
-  addMsg("ai", "Welcome. What strikes you first about this piece?");
+  document.getElementById("ai-img").src = data.img;
+  document.getElementById("ai-title").innerText = data.title;
+  document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
+  
+  chatHistory = [];
+  document.getElementById("chat-stream").innerHTML = "";
+  addChatMsg("ai", "Hello. What catches your eye about this piece?");
 }
 
-async function sendText(txt) {
-  addMsg("user", txt);
-  chatHistory.push({ role: "user", text: txt });
-
-  const loadingId = addMsg("ai", "…");
-  document.getElementById("send-btn").disabled = true;
-
-  const payload = {
-    persona: currentPersona,
-    art: {
-      title: currentArtData?.title,
-      artist: currentArtData?.artist,
-      year: currentArtData?.year
-    },
-    userProfile,
-    history: chatHistory.slice(-12)
-  };
-
-  let res = null;
-  try {
-    res = await callAI(payload);
-  } catch {
-    res = { reply: "AI gateway error. Please try again.", save: false, tag: "Concept" };
-  }
-
-  const loadingEl = document.getElementById(`msg-${loadingId}`);
-  if (loadingEl) loadingEl.remove();
-
-  addMsg("ai", res.reply || "No reply.");
-  chatHistory.push({ role: "model", text: res.reply || "" });
-
-  document.getElementById("send-btn").disabled = false;
-
-  // Save insight (local)
-  if (res.save) {
-    collectedInterests.push({ art: currentArtData?.title || "Untitled", tag: res.tag || "Concept" });
-    document.getElementById("journey-count").innerText = collectedInterests.length;
-  }
-}
-
-// Buttons
-document.getElementById("back-btn").onclick = exitFocus;
-document.getElementById("panel-close").onclick = exitFocus;
-document.getElementById("btn-docent").onclick = () => {
-  currentPersona = "docent";
-  document.getElementById("btn-docent").classList.add("active");
-  document.getElementById("btn-curator").classList.remove("active");
-};
-document.getElementById("btn-curator").onclick = () => {
-  currentPersona = "curator";
-  document.getElementById("btn-curator").classList.add("active");
-  document.getElementById("btn-docent").classList.remove("active");
-};
-document.getElementById("send-btn").onclick = () => {
+async function sendChat() {
   const input = document.getElementById("user-input");
   const txt = input.value.trim();
-  if (!txt) return;
+  if(!txt) return;
+  
+  addChatMsg("user", txt);
   input.value = "";
-  sendText(txt);
-};
-document.getElementById("user-input").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") document.getElementById("send-btn").click();
-});
 
-// Floor navigation
-function goToLevel(lvl) {
-  exitFocus();
-  buildLevel(lvl);
-  updateElevator(lvl);
-  moveCamera(0, (lvl * floorHeight) + 5, 30);
+  const payload = {
+    message: txt,
+    history: chatHistory,
+    art: {
+      title: document.getElementById("ai-title").innerText,
+      artist: document.getElementById("ai-meta").innerText
+    },
+    userProfile: { age: "Adult", goal: "Learn" } 
+  };
+
+  try {
+    const res = await fetch(AI_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    
+    addChatMsg("ai", data.reply);
+    chatHistory.push({ role: "user", parts: [{ text: txt }] });
+    chatHistory.push({ role: "model", parts: [{ text: data.reply }] });
+
+    if(data.save) {
+      collectedInterests.push(data.tag || "Art Interest");
+      document.getElementById("journey-count").innerText = collectedInterests.length;
+    }
+
+  } catch(e) {
+    addChatMsg("ai", "I'm having trouble connecting to the archive.");
+  }
 }
 
-// --- Init: load artworks.json if present ---
-fetch("./artworks.json")
-  .then(r => r.ok ? r.json() : Promise.reject())
-  .then(data => { IMPORTED_ART_DATA.push(...data); })
-  .catch(() => {})
-  .finally(() => {
-    buildLevel(0);
-    buildLevel(1);
-    buildElevator();
-    document.getElementById("load-fill").style.width = "100%";
-    setTimeout(() => { document.getElementById("loader").style.opacity = 0; }, 400);
-    setTimeout(() => { document.getElementById("loader").style.display = "none"; }, 900);
-  });
+function addChatMsg(role, text) {
+  const div = document.createElement("div");
+  div.className = `msg msg-${role}`;
+  div.innerText = text;
+  document.getElementById("chat-stream").appendChild(div);
+}
 
-// --- Render loop ---
+// --- BLUEPRINT / CATALOG SYSTEM ---
+function startBlueprint() {
+  document.getElementById("blueprint").classList.add("active");
+  const container = document.getElementById("bp-products");
+  container.innerHTML = "<h3>Loading Recommendations...</h3>";
+  
+  // Simulated AI Logic for now
+  const interests = collectedInterests.join(", ");
+  
+  setTimeout(() => {
+    const recs = [];
+    if (interests.toLowerCase().includes("paint")) recs.push("intro-painting");
+    else recs.push("art-history-101"); 
+    recs.push("vr-sculpting-advanced"); 
+
+    let html = "";
+    recs.forEach(id => {
+      const product = CATALOG.products.find(p => p.id === id);
+      if (product) {
+        html += `
+        <div class="plan-card">
+          <span class="plan-tag">Available Now</span>
+          <h3>${product.title}</h3>
+          <p>${product.price}</p>
+          <button class="plan-btn" onclick="window.open('${product.url}','_blank')">Enroll Now</button>
+        </div>`;
+      } else {
+        html += `
+        <div class="plan-card">
+          <span class="plan-tag" style="color:var(--gray)">Coming Soon</span>
+          <h3>Advanced VR Sculpting</h3>
+          <p>Interest detected. Join waitlist.</p>
+          <button class="plan-btn waitlist-btn" onclick="window.location.href='mailto:you@email.com'">Request Class</button>
+        </div>`;
+      }
+    });
+
+    container.innerHTML = html;
+    document.getElementById("bp-steps").innerHTML = "<p>Based on your interests: <strong>" + (interests || "General Art") + "</strong></p>";
+  }, 1000);
+}
+function closeBlueprint() { document.getElementById("blueprint").classList.remove("active"); }
+
+// --- MAIN LOOP ---
 function animate() {
   requestAnimationFrame(animate);
   TWEEN.update();
-
-  if (lookTarget) camera.lookAt(lookTarget);
-  else {
-    const phi = THREE.MathUtils.degToRad(90 - lat);
-    const theta = THREE.MathUtils.degToRad(lon);
-    const v = new THREE.Vector3(
-      500 * Math.sin(phi) * Math.cos(theta),
-      500 * Math.cos(phi),
-      500 * Math.sin(phi) * Math.sin(theta)
-    );
-    camera.lookAt(camera.position.clone().add(v));
-  }
-
+  updatePhysics();
   renderer.render(scene, camera);
 }
 animate();
 
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+// --- CLICK HANDLER ---
+const clickRaycaster = new THREE.Raycaster();
+const clickMouse = new THREE.Vector2();
+document.addEventListener('pointerup', (event) => {
+  if (isDragging) return; 
+  clickMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  clickMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  clickRaycaster.setFromCamera(clickMouse, camera);
+  const intersects = clickRaycaster.intersectObjects(interactables);
+  if (intersects.length > 0) {
+    const obj = intersects[0].object;
+    if (obj.userData.type === "art") focusArt(obj.userData);
+  }
 });
+
+// --- LOAD DATA ---
+fetch('artworks.json').then(r => r.json()).then(data => {
+  if(data.floors) {
+    Object.values(data.floors).forEach(f => {
+      f.items.forEach(item => ART_DATA.push(item));
+    });
+  } else {
+    ART_DATA = data;
+  }
+  buildGallery();
+}).catch(e => console.log("No artworks.json, using defaults"));
+
+fetch('catalog.json').then(r => r.json()).then(data => {
+  CATALOG = data;
+});
+
+// Bind UI
+document.getElementById("send-btn").onclick = sendChat;
+document.getElementById("user-input").onkeypress = (e) => { if(e.key === "Enter") sendChat(); };
+window.startBlueprint = startBlueprint;
+window.closeBlueprint = closeBlueprint;
+window.exitFocus = exitFocus;
+window.goToFloor = goToFloor;
