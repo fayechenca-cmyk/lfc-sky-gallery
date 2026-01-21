@@ -1,20 +1,20 @@
 // ==========================================
 // 1. CONFIGURATION
 // ==========================================
-// ✅ YOUR URL
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; 
 
 let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 
 const ATRIUM_CONFIG = {
   videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
+  // ✅ FIX: Using high-res thumbnail for Atrium Wall
   videoThumb: "https://img.youtube.com/vi/ooi2V2Fp2-k/hqdefault.jpg",
   title: "LFC Sky Artspace", subtitle: "Learning From Collections", tagline: "From Viewing to Knowing.",
   desc: "LFC Sky Artspace is a collection-led art education system.",
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
-// ✅ RESTORED: Full 12 Floors with Types
+// ✅ FULL 12 FLOORS with Types RESTORED
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
@@ -31,7 +31,11 @@ const FLOORS = [
   { id: 12, name: "Contemporary Lens", type: "standard" },
 ];
 
-let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterests = []; let currentOpenArt = null; const interactables = []; 
+let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterests = []; 
+let currentOpenArt = null; 
+const interactables = []; 
+// ✅ NEW FLAG: Prevents movement when AI is open
+let isInputLocked = false; 
 
 // ==========================================
 // 2. REGISTRATION & ENTRANCE
@@ -55,10 +59,11 @@ function toggleOption(category, btn) {
 function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
+  // ✅ FIX: FORCE HIDE LAYERS so they can't block clicks
   setTimeout(() => {
     document.getElementById('entrance-layer').style.display = 'none';
     document.getElementById('reg-panel').style.display = 'none';
-  }, 2000);
+  }, 1000);
 }
 
 // ==========================================
@@ -190,6 +195,7 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
       canvas.material = new THREE.MeshBasicMaterial({ map: tex });
       canvas.material.needsUpdate = true;
     }, undefined, () => { 
+      // If load fails (CORS), use fallback
       canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) });
     });
   } else {
@@ -202,30 +208,74 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
 }
 
 // ==========================================
-// 5. PHYSICS NAVIGATION
+// 5. PHYSICS NAVIGATION (With Lock)
 // ==========================================
-const velocity = new THREE.Vector3(); const speed = 1.8; const friction = 0.85; const lookSpeed = 0.002;
+const velocity = new THREE.Vector3(); const speed = 1.8; const friction = 0.8; const lookSpeed = 0.002;
 let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
 document.addEventListener('keydown', (e) => { if(e.code==='ArrowUp'||e.code==='KeyW') moveForward=true; if(e.code==='ArrowLeft'||e.code==='KeyA') moveLeft=true; if(e.code==='ArrowDown'||e.code==='KeyS') moveBackward=true; if(e.code==='ArrowRight'||e.code==='KeyD') moveRight=true; });
 document.addEventListener('keyup', (e) => { if(e.code==='ArrowUp'||e.code==='KeyW') moveForward=false; if(e.code==='ArrowLeft'||e.code==='KeyA') moveLeft=false; if(e.code==='ArrowDown'||e.code==='KeyS') moveBackward=false; if(e.code==='ArrowRight'||e.code==='KeyD') moveRight=false; });
-function updatePhysics() { if (document.body.classList.contains("ai-open")) return; velocity.x *= friction; velocity.z *= friction; const forward = getForwardVector(); const right = getRightVector(); if(moveForward) velocity.addScaledVector(forward, speed); if(moveBackward) velocity.addScaledVector(forward, -speed); if(moveLeft) velocity.addScaledVector(right, -speed); if(moveRight) velocity.addScaledVector(right, speed); camera.position.x += velocity.x * 0.015; camera.position.z += velocity.z * 0.015; camera.position.x = Math.max(-18, Math.min(18, camera.position.x)); camera.position.z = Math.max(-100, Math.min(100, camera.position.z)); }
+
+function updatePhysics() { 
+  // ✅ FIX: Don't move if locked (looking at art or elevator)
+  if (isInputLocked) return; 
+  
+  velocity.x *= friction; velocity.z *= friction; 
+  const forward = getForwardVector(); const right = getRightVector(); 
+  if(moveForward) velocity.addScaledVector(forward, speed); if(moveBackward) velocity.addScaledVector(forward, -speed); 
+  if(moveLeft) velocity.addScaledVector(right, -speed); if(moveRight) velocity.addScaledVector(right, speed); 
+  camera.position.x += velocity.x * 0.015; camera.position.z += velocity.z * 0.015; 
+  camera.position.x = Math.max(-18, Math.min(18, camera.position.x)); camera.position.z = Math.max(-100, Math.min(100, camera.position.z)); 
+}
 function getForwardVector() { const d=new THREE.Vector3(); camera.getWorldDirection(d); d.y=0; d.normalize(); return d; }
 function getRightVector() { const f=getForwardVector(); return new THREE.Vector3().crossVectors(f, new THREE.Vector3(0,1,0)).normalize(); }
 let isDragging=false, prevMouse={x:0,y:0};
 document.addEventListener('pointerdown', (e)=>{ if(!e.target.closest('button') && !e.target.closest('#ai-panel') && !e.target.closest('#entrance-layer')) { isDragging=true; prevMouse={x:e.clientX,y:e.clientY}; }});
 document.addEventListener('pointerup', ()=>{isDragging=false;});
-document.addEventListener('pointermove', (e)=>{ if(!isDragging || document.body.classList.contains("ai-open")) return; const dx=e.clientX-prevMouse.x, dy=e.clientY-prevMouse.y; const euler=new THREE.Euler(0,0,0,'YXZ'); euler.setFromQuaternion(camera.quaternion); euler.y-=dx*lookSpeed; euler.x-=dy*lookSpeed; euler.x=Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, euler.x)); camera.quaternion.setFromEuler(euler); prevMouse={x:e.clientX,y:e.clientY}; });
+document.addEventListener('pointermove', (e)=>{ if(!isDragging || isInputLocked) return; const dx=e.clientX-prevMouse.x, dy=e.clientY-prevMouse.y; const euler=new THREE.Euler(0,0,0,'YXZ'); euler.setFromQuaternion(camera.quaternion); euler.y-=dx*lookSpeed; euler.x-=dy*lookSpeed; euler.x=Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, euler.x)); camera.quaternion.setFromEuler(euler); prevMouse={x:e.clientX,y:e.clientY}; });
 window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;if(d==='l')moveLeft=true;if(d==='r')moveRight=true;}; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
 // ==========================================
 // 6. INTERACTION & AI
 // ==========================================
-function goToFloor(id) { closeBlueprint(); exitFocus(); new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2500).easing(TWEEN.Easing.Quadratic.InOut).start(); }
+function goToFloor(id) { 
+  closeBlueprint(); exitFocus(); 
+  isInputLocked = true; // Lock physics while elevator moves
+  new TWEEN.Tween(camera.position)
+    .to({ y: (id * floorHeight) + 5 }, 2000)
+    .easing(TWEEN.Easing.Quadratic.InOut)
+    .onComplete(() => { isInputLocked = false; }) // Unlock when done
+    .start(); 
+}
+
 function focusArt(userData) {
   if (userData.data.isExternal && userData.data.link) { window.open(userData.data.link, "_blank"); return; }
-  currentOpenArt = userData.data; document.body.classList.add("ai-open"); camera.userData.returnPos = camera.position.clone(); camera.userData.returnQuat = camera.quaternion.clone(); const t = userData.viewPos; new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
+  
+  currentOpenArt = userData.data; 
+  isInputLocked = true; // Lock physics so you don't drift away
+  document.body.classList.add("ai-open"); 
+  
+  camera.userData.returnPos = camera.position.clone(); 
+  camera.userData.returnQuat = camera.quaternion.clone(); 
+  const t = userData.viewPos; 
+  
+  new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); 
+  const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); 
+  new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
 }
-function exitFocus() { document.body.classList.remove("ai-open"); document.getElementById("ai-panel").classList.remove("active"); document.getElementById("back-btn").classList.remove("visible"); currentOpenArt = null; if(camera.userData.returnPos) { new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); } }
+
+function exitFocus() { 
+  document.body.classList.remove("ai-open"); 
+  document.getElementById("ai-panel").classList.remove("active"); 
+  document.getElementById("back-btn").classList.remove("visible"); 
+  currentOpenArt = null; 
+  
+  if(camera.userData.returnPos) { 
+    new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).onComplete(() => { isInputLocked = false; }).start(); // Unlock after returning
+    new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); 
+  } else {
+    isInputLocked = false;
+  }
+}
 
 function openAI(data) {
   document.getElementById("ai-panel").classList.add("active");
@@ -242,7 +292,7 @@ async function sendChat() {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
     const res = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
       message:txt, history:chatHistory, art: artPayload, 
-      userProfile: userProfile // Send array of roles/goals
+      userProfile: userProfile 
     })});
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
