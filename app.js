@@ -38,6 +38,9 @@ let currentOpenArt = null;
 const interactables = [];
 let isInputLocked = false;
 
+// Prevent double-send (helps 429)
+let isSending = false;
+
 // ==========================================
 // 2. REGISTRATION & ENTRANCE
 // ==========================================
@@ -110,7 +113,8 @@ function createTextTexture(cfg) {
   ctx.fillStyle = '#444'; ctx.font = '28px Arial';
   const words = cfg.desc.split(' '); let line = ''; let y = 300;
   for(let n = 0; n < words.length; n++) { const testLine = line + words[n] + ' '; if (ctx.measureText(testLine).width > 900 && n > 0) { ctx.fillText(line, 60, y); line = words[n] + ' '; y += 40; } else { line = testLine; } }
-  ctx.fillText(line, 60, y); y += 80; ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 32px Arial'; ctx.fillText(cfg.method, 60, y); y += 50; ctx.fillStyle = '#666'; ctx.font = '28px Arial'; ctx.fillText(cfg.steps, 60, y);
+  ctx.fillText(line, 60, y); y +=
+    += 80; ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 32px Arial'; ctx.fillText(cfg.method, 60, y); y += 50; ctx.fillStyle = '#666'; ctx.font = '28px Arial'; ctx.fillText(cfg.steps, 60, y);
   return new THREE.CanvasTexture(canvas);
 }
 
@@ -216,64 +220,93 @@ function exitFocus() {
 
 function openAI(data) {
   document.getElementById("ai-panel").classList.add("active");
-  if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = data.img;
+  if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = (data.img || "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Artwork");
   document.getElementById("ai-title").innerText = data.title; document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
-  chatHistory = []; document.getElementById("chat-stream").innerHTML = "";
-  addChatMsg("ai", "I am observing this piece with you. What do you see?");
+
+  chatHistory = [];
+  document.getElementById("chat-stream").innerHTML = "";
+
+  const starter = "I am observing this piece with you. What do you see?";
+  addChatMsg("ai", starter);
+  // Keep the opening AI message in history (better continuity)
+  chatHistory.push({ role: "model", parts: [{ text: starter }] });
 }
 
 async function sendChat() {
-  const i=document.getElementById("user-input"), txt=i.value.trim(); if(!txt)return;
-  addChatMsg("user",txt); i.value="";
+  if (isSending) return;
 
-  // ✅ FIX: MEMORY (Push User Msg)
-  chatHistory.push({ role: "user", parts: [{ text: txt }] });
+  const i = document.getElementById("user-input");
+  const txt = i.value.trim();
+  if (!txt) return;
+
+  isSending = true;
+  const sendBtn = document.getElementById("send-btn");
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = "0.7"; }
+
+  addChatMsg("user", txt);
+  i.value = "";
+
+  // IMPORTANT: Do NOT push the user msg to chatHistory BEFORE sending,
+  // because the Worker already appends `message` → otherwise it duplicates and burns quota.
+  const userTurn = { role: "user", parts: [{ text: txt }] };
 
   try {
-    const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
+    const artPayload = currentOpenArt
+      ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" }
+      : { title: "Unknown" };
 
     const res = await fetch(AI_ENDPOINT, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        message:txt, history:chatHistory, art: artPayload, userProfile: userProfile
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        message: txt,
+        history: chatHistory,
+        art: artPayload,
+        userProfile: userProfile
       })
     });
 
-    if(!res.ok) {
-      const errText = await res.text().catch(()=> "");
-      throw new Error(`HTTP ${res.status} ${errText}`);
-    }
-
-    // ✅ Robust parse: if Worker returns text for any reason, still won’t become "undefined"
+    // Always parse safely
     const raw = await res.text();
     let d = null;
-    try { d = JSON.parse(raw); } catch(e) { d = { reply: raw }; }
+    try { d = JSON.parse(raw); } catch (e) { d = { reply: raw }; }
 
-    // ✅ FIX: SCRUBBER (Clean JSON)
-    let cleanReply = d?.reply;
-    if (typeof cleanReply === 'string') {
-      cleanReply = cleanReply.replace(/```json/g, '').replace(/```/g, '').trim();
-      if(cleanReply.startsWith('{')) { try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){} }
+    let cleanReply = d && typeof d.reply === "string" ? d.reply : (raw || "");
+    if (typeof cleanReply === "string") {
+      cleanReply = cleanReply.replace(/```json/gi, "").replace(/```/g, "").trim();
+      if (cleanReply.startsWith("{")) {
+        try {
+          const p = JSON.parse(cleanReply);
+          if (p && typeof p.reply === "string") cleanReply = p.reply;
+        } catch (e) {}
+      }
     }
 
-    if (!cleanReply || typeof cleanReply !== "string") {
-      cleanReply = "I didn’t receive a clear response. Please try again.";
-    }
+    if (!cleanReply) cleanReply = "I didn’t receive a clear response. Please try again.";
 
     addChatMsg("ai", cleanReply);
-    chatHistory.push({role:"model", parts:[{text:cleanReply}]});
 
-    // ✅ FIX: DATA COLLECTION
-    if(d && d.scores) {
-       intentScores.history += (d.scores.history || 0);
-       intentScores.technique += (d.scores.technique || 0);
-       intentScores.market += (d.scores.market || 0);
-       intentScores.theory += (d.scores.theory || 0);
+    // Update memory AFTER success (no duplication)
+    chatHistory.push(userTurn);
+    chatHistory.push({ role: "model", parts: [{ text: cleanReply }] });
+
+    // Collect scores safely
+    if (d && d.scores) {
+      intentScores.history += (d.scores.history || 0);
+      intentScores.technique += (d.scores.technique || 0);
+      intentScores.market += (d.scores.market || 0);
+      intentScores.theory += (d.scores.theory || 0);
     }
 
-  } catch(e) { console.error(e); addChatMsg("ai", "⚠️ Connection Error."); }
+  } catch(e) {
+    console.error(e);
+    addChatMsg("ai", "⚠️ Connection Error.");
+  } finally {
+    isSending = false;
+    if (sendBtn) { sendBtn.disabled = false; sendBtn.style.opacity = "1"; }
+  }
 }
+
 function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
 
 // ✅ SMART CURRICULUM LOGIC
@@ -289,7 +322,7 @@ function startBlueprint() {
     let maxScore = 0;
     let interest = "General";
     for(const [key, val] of Object.entries(intentScores)) {
-        if(val > maxScore) { maxScore = val; interest = key; }
+      if(val > maxScore) { maxScore = val; interest = key; }
     }
 
     if (CATALOG.products) {
