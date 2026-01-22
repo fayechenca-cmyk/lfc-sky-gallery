@@ -1,407 +1,276 @@
 {
-  "generated_from": [
-    "https://www.feiteamart.com/gallery-painting-collection",
-    "https://www.feiteamart.com/painting-page-2"
-  ],
   "floors": {
     "1": {
       "name": "Painting",
       "items": [
         {
-          "id": "p1-852b60874f",
-          "floor": 1,
           "title": "Tregua",
           "artist": "Alejandro Campins Fleita",
           "year": "2014",
           "medium": "Oil on linen canvas",
-          "size": "160 × 230cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2c6cb5aeb2e8b78c9_WechatIMG30.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-7f8b5dc12e",
-          "floor": 1,
           "title": "Aluminium Monochrome II (Yellow) 1/4",
           "artist": "Angela de la Cruz",
           "year": "2020",
           "medium": "Aluminium",
-          "size": "177 x 58 x 16cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd1a4ecd9797b3d1881_Angela%20de%20la%20Cruz%2C%20Aluminium%20Monochrome%20II%20(Yellow).jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-540e1bb60b",
-          "floor": 1,
           "title": "21–21 <Design Sight>",
           "artist": "Anzai Tadashi",
           "year": "2007",
           "medium": "Color pencils on Paper",
-          "size": "16.2 × 11.6cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc34ce422866384e86a_Tadao%20Ando%2C%20Design%20Sight.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-deb843fac4",
-          "floor": 1,
           "title": "Suntory Museum of Art",
           "artist": "Anzai Tadashi",
-          "year": null,
-          "medium": "Paper, woodblock, horsehair paper print",
-          "size": "17 × 49 cm",
+          "year": "Unknown",
+          "medium": "Paper, woodblock",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bca4aa93a52fbaafae5d7_Screenshot%202025-07-19%20at%209.39.30%E2%80%AFAM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-70f6c8f32c",
-          "floor": 1,
           "title": "Commander Standing on a Corner #5",
           "artist": "Benjamin Appel",
-          "year": null,
+          "year": "Unknown",
           "medium": "Oil on canvas",
-          "size": "60 × 50cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687f06e25b0a31c03d9494d5_7e172ad3744b3eea0f24753883f9cf43.JPG",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-c4e8ed36c0",
-          "floor": 1,
           "title": "Furniture and Space #114",
           "artist": "Benjamin Appel",
-          "year": null,
+          "year": "Unknown",
           "medium": "Oil on canvas",
-          "size": "50 × 60cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687f06e2dba4008f70e5d14a_8a80b9ec6fbce52ee53d5c30443a4738.JPG",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-3f4051deb0",
-          "floor": 1,
-          "title": "Watercolor on paper",
-          "artist": "Chu Yunlong",
-          "year": null,
-          "medium": "27.2 × 24.2cm",
-          "size": null,
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c43bfaceeb3578bdc7300_Screenshot%202025-07-19%20at%206.17.36%E2%80%AFPM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
-        },
-        {
-          "id": "p1-8fb98f5b2b",
-          "floor": 1,
           "title": "Unified City",
           "artist": "Daisuke Tajima",
           "year": "2017",
-          "medium": "Fountain pen, Canson paper",
-          "size": "80.1 × 53.3cm",
+          "medium": "Fountain pen on paper",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc264bdc2deec3285fe_Daisuke%20Tajima%2C%20.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-63d3348fb4",
-          "floor": 1,
           "title": "Chessboard Skull",
           "artist": "Devlin Shea",
           "year": "2017",
           "medium": "Oil on linen canvas",
-          "size": "107 ×138cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bca8bc9abe9cda06a6b1e_Screenshot%202025-07-19%20at%209.40.40%E2%80%AFAM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-78db4b1936",
-          "floor": 1,
           "title": "Trace of the Beast",
           "artist": "Devlin Shea",
           "year": "2017",
           "medium": "Oil on linen canvas",
-          "size": "170 × 200cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bca31f3f159047bb26db0_Screenshot%202025-07-19%20at%209.39.04%E2%80%AFAM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-30ddc96bfd",
-          "floor": 1,
           "title": "Clocks 3:00pm",
           "artist": "Emma Courtney Clarice Cook",
           "year": "2023",
-          "medium": "Oil paint, acrylic, upholstery fabric, walnut wood",
-          "size": "72.4 x 97.8 x 3.8cm",
+          "medium": "Oil paint, acrylic, walnut wood",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd1448f342e8b434b0e_Emma%20Courtney%20Clarice%20cook.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-da64428296",
-          "floor": 1,
-          "title": "The Patriot No. 2",
-          "artist": "Ge Hui",
-          "year": "2022",
-          "medium": "Oil on canvas",
-          "size": "32 × 28 cm",
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bf1e3174a15712474a117_254%E2%88%8F%EF%A3%BF%C2%AA%E2%80%98.jpg",
-          "source": "https://www.feiteamart.com/painting-page-2"
-        },
-        {
-          "id": "p1-73d719a6da",
-          "floor": 1,
           "title": "Shibuya Theatre, Tokyo",
           "artist": "Hiroshi Sugimoto",
           "year": "2015",
           "medium": "Gelatin silver print",
-          "size": "51 × 69cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2b0111adde65dce19_Hiroshi%20Sugimoto%2C%20Paramount%20Theatre%2C%20Newark.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-28d75d34f4",
-          "floor": 1,
           "title": "The Serene Guanyin",
           "artist": "Japanese TV Animation Studio",
-          "year": "circa 1979–1983",
-          "medium": "Mixed media: cel, watercolor, paper (background is hand-painted)",
-          "size": "23 × 26 cm, Framed: 33.5 × 43.5 cm",
+          "year": "1979",
+          "medium": "Cel and watercolor",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bebb805a03cfdb532d726_Screenshot%202025-07-19%20at%2012.02.09%E2%80%AFPM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-5d7251a08a",
-          "floor": 1,
           "title": "Yelvet",
           "artist": "José Lerma",
           "year": "2022",
-          "medium": "Acrylic on linen over canvas",
-          "size": "121.9 × 91.4 cm",
+          "medium": "Acrylic on linen",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bebcca22945ac81f676f2_Screenshot%202025-07-19%20at%2012.02.29%E2%80%AFPM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-b180f3e411",
-          "floor": 1,
-          "title": "Untitled",
-          "artist": "Kazue Yamamoto",
-          "year": "2011",
-          "medium": "Color on paper",
-          "size": "31.5×23cm",
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bcb3ccafddaf511b3c95f_Screenshot%202025-07-19%20at%209.43.36%E2%80%AFAM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
-        },
-        {
-          "id": "p1-41a027ac1c",
-          "floor": 1,
           "title": "Dot (Foxtrot)",
           "artist": "Kazuhiko Kashiwagi",
           "year": "2018",
-          "medium": "Monoprint, Calavera linen, Vinyl paint",
-          "size": "690 × 90cm",
+          "medium": "Monoprint",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bec92a22945ac81f69957_Carsten%20Ho%CC%88ller%2C%20Dot%20(Foxtrot).jpg",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-5ff5671cd2",
-          "floor": 1,
           "title": "Brigitte Bardot",
           "artist": "Keens van Dongen",
           "year": "1964",
           "medium": "Lithograph",
-          "size": "58 x 44 сm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2bbe0388b8a6cbab0_Keends%20van%20Dongen%2C%20Brigitte%20Bardot.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-54bfd18ec3",
-          "floor": 1,
           "title": "The Serene Guanyin",
           "artist": "Keiko Moriuchi",
           "year": "2013",
           "medium": "Oil on linen canvas",
-          "size": "27.5 × 22.5cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bcae10165590fefddece1_Screenshot%202025-07-19%20at%209.42.05%E2%80%AFAM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-0f652e3568",
-          "floor": 1,
           "title": "Winter landscape",
           "artist": "Li Jikai",
           "year": "2019",
           "medium": "Acrylic on canvas",
-          "size": "50 × 60cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bf197cb080c80225a2496_Screenshot%202025-07-19%20at%2012.27.15%E2%80%AFPM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-8bdd27f191",
-          "floor": 1,
-          "title": "Portrait of a Pope",
-          "artist": "Léonard Tsuguharu Foujita",
-          "year": "1966",
-          "medium": "Ink on paper",
-          "size": "27.2 × 24.2cm",
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bcb246ea5d6db74fe38fa_Screenshot%202025-07-19%20at%209.43.13%E2%80%AFAM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
-        },
-        {
-          "id": "p1-e59c60d051",
-          "floor": 1,
           "title": "St Jak 2",
           "artist": "Manuel Mathieu",
           "year": "2019",
           "medium": "Mixed media on canvas",
-          "size": "178 × 160cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc292953bb8b00b9e43_Manuel%20Mathieu%2C%20St%20Jak%202.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-b2eb8dbe84",
-          "floor": 1,
           "title": "The Knight",
           "artist": "Marc Brunier Mestas",
           "year": "2016",
-          "medium": "Lithograph from original woodblock",
-          "size": "26 × 26cm",
+          "medium": "Lithograph",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc22219a5da53515fcb_WechatIMG28.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-ad6a8dafd7",
-          "floor": 1,
           "title": "Charla de Seis",
           "artist": "Mercedes Lianos",
           "year": "2021",
-          "medium": "011 on Canvas",
-          "size": "183 x 213cm",
+          "medium": "Oil on Canvas",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd176bd9da194982c6e_Mercedes%2C%20Llanos%2C%20Charla%20de%20Seis.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-3a0c133e4f",
-          "floor": 1,
-          "title": "ECRITURE(描法) NO.060224, 8/150",
+          "title": "ECRITURE NO.060224",
           "artist": "Park Seo-bo",
           "year": "2015",
           "medium": "Pigment color print",
-          "size": "40.5 x 53cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687beba0689471ea9753bc91_Screenshot%202025-07-19%20at%2012.01.46%E2%80%AFPM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
+          "floor": 1
         },
         {
-          "id": "p1-7581841b83",
-          "floor": 1,
           "title": "Oculus III",
           "artist": "Renato Nicolodi",
           "year": "2022",
-          "medium": "Lithograph from original woodblock",
-          "size": "105 × 105cm",
+          "medium": "Lithograph",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd15daf006de6fe4c77_Renato%20Nicolodi%2C%20Oculus%20III.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-2162cf224e",
-          "floor": 1,
-          "title": "Untitled",
-          "artist": "Spencer Sweeney",
-          "year": "2013",
-          "medium": "Oil on linen canvas",
-          "size": "61 × 50.8cm",
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687beb43275632117dae74dd_Screenshot%202025-07-19%20at%2012.00.06%E2%80%AFPM.png",
-          "source": "https://www.feiteamart.com/painting-page-2"
-        },
-        {
-          "id": "p1-3fb786a290",
-          "floor": 1,
           "title": "Venus",
           "artist": "Takeru Amano",
           "year": "2016",
           "medium": "Serigraphy",
-          "size": "53 x 66 сm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc313db5127a75d6493_Takeru%20Amano%2C%20venus.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-f1bc93e638",
-          "floor": 1,
           "title": "Untitled",
           "artist": "Toshiyuki Konishi",
           "year": "2013",
-          "medium": "Watercolor and oil pastel on paperboard",
-          "size": "82 × 62cm",
+          "medium": "Watercolor and oil pastel",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc32d7c87c9edc5cb64_Toshiyuki%20Konishi%2C%20untitled.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
         },
         {
-          "id": "p1-b3ad6bace5",
-          "floor": 1,
-          "title": "Untitled (tok-15)",
-          "artist": "Toshiyuki Konishi",
-          "year": "2016",
-          "medium": "Oil on paper",
-          "size": "31.5 × 22cm",
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc3f3b36e7f531194fa_Toshiyuki%20Konishi%2Cuntitled%202.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
-        },
-        {
-          "id": "p1-e625437dc0",
-          "floor": 1,
-          "title": "Untitled 4/20",
-          "artist": "Unknown",
-          "year": null,
-          "medium": "Woodblock print",
-          "size": "Image: 20×15cmFrame: 31×21cm",
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc3dd7dd8df432bec0a_WechatIMG27.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
-        },
-        {
-          "id": "p1-44e004797a",
-          "floor": 1,
-          "title": "Chevy Chace",
-          "artist": "Untitled",
-          "year": "2022",
-          "medium": "Oil on Canvas",
-          "size": "215 x 245cm",
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68851c766476ace0ea97d5a6_Screenshot%202025-07-26%20at%2011.19.51%E2%80%AFAM.png",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
-        },
-        {
-          "id": "p1-9188692019",
-          "floor": 1,
-          "title": "Compound Game 03 (复合游戏03)",
-          "artist": "Ye zhichong",
-          "year": null,
-          "medium": null,
-          "size": null,
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bf1e3d02342b23d005b13_171%E2%80%9C%E2%88%82%C3%B7%C2%AC%C2%A5%C5%93.jpg",
-          "source": "https://www.feiteamart.com/painting-page-2"
-        },
-        {
-          "id": "p1-bc6586d9cc",
-          "floor": 1,
-          "title": "Floral Fusion",
-          "artist": "Zhang Hui",
-          "year": "2015. 05",
-          "medium": "Watercolour on Paper",
-          "size": "690 × 90cm",
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bf1e3db6148ebcc7a9ba7_214%E2%80%99%E2%89%88%C2%AA%E2%80%98.jpg",
-          "source": "https://www.feiteamart.com/painting-page-2"
-        },
-        {
-          "id": "p1-70db47ca3c",
-          "floor": 1,
           "title": "Commission artwork",
           "artist": "Zoe",
           "year": "2023",
           "medium": "Acrylic on canvas",
-          "size": "96 × 73cm",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd1403ef4a65e75854a_Zoe.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "floor": 1
+        }
+      ]
+    },
+    "9": {
+      "name": "Film / Video",
+      "items": [
+        {
+          "title": "Regna Transitus—Shifting Realms",
+          "artist": "Renato Nicolodi",
+          "year": "2024",
+          "medium": "Single-channel video",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68c091962125ff82f13b74b8_%E9%9B%B7%E7%BA%B3%E6%89%98.png",
+          "floor": 9
         },
         {
-          "id": "p1-4e2917c265",
-          "floor": 1,
-          "title": "Thriller",
-          "artist": "ホーリー",
-          "year": "2023",
-          "medium": "Acrylic on Canvas",
-          "size": "100 x 55cm",
-          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd118b1ad3911fe19e6_Hooly%2C%20Untitled.jpg",
-          "source": "https://www.feiteamart.com/gallery-painting-collection"
+          "title": "Liquid Landscape",
+          "artist": "Michael Najjar",
+          "year": "2022",
+          "medium": "4K Video",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68c091a6d80f60793fbaefe7_Screen%20Shot%202025-08-21%20at%2010.01.59%20AM.png",
+          "floor": 9
+        },
+        {
+          "title": "Hercules",
+          "artist": "Nils Hansen",
+          "year": "2022",
+          "medium": "MP4 Video",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68c091a06395bb48b2c3de08_Screen%20Shot%202025-08-21%20at%209.56.53%20AM.png",
+          "floor": 9
+        },
+        {
+          "title": "Dot Painting (Foxtrot)",
+          "artist": "Carsten Höller",
+          "year": "1998",
+          "medium": "Video",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68c091a3860f63b823c53756_Screen%20Shot%202025-08-21%20at%209.59.25%20AM.png",
+          "floor": 9
+        },
+        {
+          "title": "Dragonfly Eyes",
+          "artist": "Xu Bing",
+          "year": "2017",
+          "medium": "Feature-length video",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68cdad02039841b7a8995b80_Screenshot%202025-09-19%20at%2012.20.08%E2%80%AFPM.png",
+          "floor": 9
+        },
+        {
+          "title": "Delusional Mandala",
+          "artist": "Lu Yang",
+          "year": "2015",
+          "medium": "Digital Video",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68cdc24fb823b1ae9317e304_f1da85c6fa5cabae7142d4daa5ab3498d1f4bbaf0x6c7c87w9000.webp",
+          "floor": 9
+        },
+        {
+          "title": "The Levitating Perils",
+          "artist": "Wang Yefeng",
+          "year": "2022",
+          "medium": "3D Animation",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68cafd1c806a3842c70b6148_Screen%20Shot%202025-08-21%20at%2010.42.27%20AM.png",
+          "floor": 9
+        },
+        {
+          "title": "A Technological Woman",
+          "artist": "Wu Ziyang",
+          "year": "2019",
+          "medium": "AI Script / Animation",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68cb0062c7d1c5456882607a_0a2e6a5bdq8870d3f108a2867a6d78b5.jpg",
+          "floor": 9
         }
       ]
     }
