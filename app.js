@@ -1,11 +1,10 @@
 // ==========================================
 // 1. CONFIGURATION
 // ==========================================
-const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat"; 
+const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 
 let userProfile = { role: [], goal: [], ageGroup: "Adult" };
-
-// ✅ DEEP DATA: Tracks what the user learns during chat
+// ✅ DATA LISTENER: This collects the points for the curriculum
 let intentScores = { technique: 0, history: 0, market: 0, theory: 0 };
 
 const ATRIUM_CONFIG = {
@@ -16,7 +15,6 @@ const ATRIUM_CONFIG = {
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
-// FULL 12 FLOORS
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
@@ -42,7 +40,7 @@ let isInputLocked = false;
 let isSending = false;
 
 // ==========================================
-// 2. REGISTRATION & ENTRANCE
+// 2. REGISTRATION
 // ==========================================
 function showRegistration() {
   document.getElementById('entrance-content').style.opacity = '0';
@@ -54,7 +52,7 @@ function toggleOption(category, btn) {
   const txt = btn.innerText;
   const idx = userProfile[category].indexOf(txt);
   if(idx > -1) userProfile[category].splice(idx, 1); else userProfile[category].push(txt);
-  
+
   const enterBtn = document.getElementById('final-enter-btn');
   if(userProfile.role.length > 0 && userProfile.goal.length > 0) enterBtn.classList.add('ready');
   else enterBtn.classList.remove('ready');
@@ -70,7 +68,7 @@ function completeRegistration() {
 }
 
 // ==========================================
-// 3. THREE.JS SCENE SETUP
+// 3. THREE.JS SCENE
 // ==========================================
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
@@ -79,7 +77,7 @@ scene.background = skyColor;
 scene.fog = new THREE.Fog(skyColor, 15, 140);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(0, 5, 30); 
+camera.position.set(0, 5, 30);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -97,12 +95,12 @@ const matFrame = new THREE.MeshStandardMaterial({ color: 0x111111 });
 const matPlinth = new THREE.MeshStandardMaterial({ color: 0xeeeeee });
 
 const textureLoader = new THREE.TextureLoader();
-textureLoader.crossOrigin = "anonymous"; 
+textureLoader.crossOrigin = "anonymous";
 
 // ==========================================
-// 4. GALLERY BUILDER (Fixed Typo Here)
+// 4. GALLERY BUILDER
 // ==========================================
-const floorHeight = 40; 
+const floorHeight = 40;
 
 function createTextTexture(cfg) {
   const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
@@ -114,7 +112,7 @@ function createTextTexture(cfg) {
   const words = cfg.desc.split(' '); let line = ''; let y = 300;
   for(let n = 0; n < words.length; n++) { const testLine = line + words[n] + ' '; if (ctx.measureText(testLine).width > 900 && n > 0) { ctx.fillText(line, 60, y); line = words[n] + ' '; y += 40; } else { line = testLine; } }
   
-  // ✅ CRITICAL FIX: Removed the extra "+=" that was freezing the site
+  // ✅ FIX: Clean syntax (No freeze)
   ctx.fillText(line, 60, y); 
   y += 80; ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 32px Arial'; ctx.fillText(cfg.method, 60, y); 
   y += 50; ctx.fillStyle = '#666'; ctx.font = '28px Arial'; ctx.fillText(cfg.steps, 60, y);
@@ -126,17 +124,17 @@ function createFallbackTexture(text) {
   const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 640; const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, 512, 640);
   ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 30px Arial'; ctx.textAlign = 'center';
-  ctx.fillText("LFC COLLECTION", 256, 300); 
+  ctx.fillText("LFC COLLECTION", 256, 300);
   ctx.font = 'italic 18px Arial'; ctx.fillStyle = '#64748b'; ctx.fillText(text.substring(0,30), 256, 350);
   return new THREE.CanvasTexture(canvas);
 }
 
 function buildGallery() {
   FLOORS.forEach(f => {
-    const y = f.id * floorHeight; 
+    const y = f.id * floorHeight;
     const group = new THREE.Group();
-    
-    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; 
+
+    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor;
     let wMat = (f.type === "darkroom") ? matWallDark : matWall;
 
     const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), fMat); floor.position.set(0, y, 0); group.add(floor);
@@ -163,8 +161,10 @@ function buildGallery() {
       for(let i=0; i<6; i++) { const isRight = i % 2 === 0; createArtFrame(group, isRight?18.5:-18.5, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" }); }
     }
     scene.add(group);
-    
-    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
+
+    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; 
+    btn.onclick = () => goToFloor(f.id); 
+    document.getElementById("elevator").prepend(btn);
   });
 }
 
@@ -179,8 +179,8 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
   const frameGroup = new THREE.Group(); frameGroup.position.set(x, y, z); frameGroup.rotation.y = rot;
   const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.2, h+0.2, 0.2), matFrame); frameGroup.add(frame);
   const canvas = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xeeeeee })); canvas.position.z = 0.15; frameGroup.add(canvas);
-  if (data.texture) { canvas.material = new THREE.MeshBasicMaterial({ map: data.texture }); } 
-  else if (data.img) { textureLoader.load(data.img, (tex) => { canvas.material = new THREE.MeshBasicMaterial({ map: tex }); canvas.material.needsUpdate = true; }, undefined, () => { canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) }); }); } 
+  if (data.texture) { canvas.material = new THREE.MeshBasicMaterial({ map: data.texture }); }
+  else if (data.img) { textureLoader.load(data.img, (tex) => { canvas.material = new THREE.MeshBasicMaterial({ map: tex }); canvas.material.needsUpdate = true; }, undefined, () => { canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) }); }); }
   else { canvas.material = new THREE.MeshBasicMaterial({ map: createFallbackTexture(data.title) }); }
   const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
   hitbox.userData = { type: "art", data: data, viewPos: { x: x + Math.sin(rot)*10, y: y, z: z + Math.cos(rot)*10 } };
@@ -204,12 +204,12 @@ document.addEventListener('pointermove', (e)=>{ if(!isDragging || isInputLocked)
 window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;if(d==='l')moveLeft=true;if(d==='r')moveRight=true;}; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
 // ==========================================
-// 6. INTERACTION & AI (INTELLIGENCE FIX)
+// 6. INTERACTION & AI (FIXED)
 // ==========================================
-function goToFloor(id) { 
-  closeBlueprint(); exitFocus(); 
-  isInputLocked = true; 
-  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2000).easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => { isInputLocked = false; }).start(); 
+function goToFloor(id) {
+  closeBlueprint(); exitFocus();
+  isInputLocked = true;
+  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2000).easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => { isInputLocked = false; }).start();
 }
 
 function focusArt(userData) {
@@ -217,25 +217,29 @@ function focusArt(userData) {
   currentOpenArt = userData.data; isInputLocked = true; document.body.classList.add("ai-open"); camera.userData.returnPos = camera.position.clone(); camera.userData.returnQuat = camera.quaternion.clone(); const t = userData.viewPos; new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
 }
 
-function exitFocus() { 
-  document.body.classList.remove("ai-open"); document.getElementById("ai-panel").classList.remove("active"); document.getElementById("back-btn").classList.remove("visible"); currentOpenArt = null; 
+function exitFocus() {
+  document.body.classList.remove("ai-open"); document.getElementById("ai-panel").classList.remove("active"); document.getElementById("back-btn").classList.remove("visible"); currentOpenArt = null;
   if(camera.userData.returnPos) { new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).onComplete(() => { isInputLocked = false; }).start(); new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); } else { isInputLocked = false; }
 }
 
 function openAI(data) {
   document.getElementById("ai-panel").classList.add("active");
-  if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = (data.img || "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Artwork");
+  if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = data.img;
   document.getElementById("ai-title").innerText = data.title; document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
   chatHistory = []; document.getElementById("chat-stream").innerHTML = "";
   addChatMsg("ai", "I am observing this piece with you. What do you see?");
 }
 
 async function sendChat() {
+  if (isSending) return;
   const i=document.getElementById("user-input"), txt=i.value.trim(); if(!txt)return;
-  addChatMsg("user",txt); i.value="";
   
-  // ✅ FIX: Push User Msg to history so AI remembers it
-  chatHistory.push({ role: "user", parts: [{ text: txt }] });
+  isSending = true;
+  const sendBtn = document.getElementById("send-btn");
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = "0.7"; }
+
+  addChatMsg("user",txt); i.value="";
+  const userTurn = { role: "user", parts: [{ text: txt }] };
 
   try {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
@@ -250,10 +254,13 @@ async function sendChat() {
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
         cleanReply = cleanReply.replace(/```json/gi, "").replace(/```/g, "").trim();
-        if(cleanReply.startsWith('{')) { try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){} }
+        if (cleanReply.startsWith("{")) { try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){} }
     }
     
     addChatMsg("ai", cleanReply); 
+    
+    // ✅ FIX: Push BOTH messages to history (Fixes Amnesia)
+    chatHistory.push(userTurn);
     chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
     // ✅ FIX: Capture Scores for Curriculum
@@ -265,10 +272,11 @@ async function sendChat() {
     }
     
   } catch(e) { console.error(e); addChatMsg("ai", "⚠️ Connection Error."); }
+  finally { isSending = false; if(sendBtn){sendBtn.disabled=false; sendBtn.style.opacity="1";} }
 }
 function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
 
-// ✅ SMART CURRICULUM GENERATOR (Connected)
+// ✅ SMART CURRICULUM GENERATOR
 function startBlueprint() {
   document.getElementById("blueprint").classList.add("active");
   const container = document.getElementById("bp-products");
@@ -278,7 +286,6 @@ function startBlueprint() {
     let recs = [];
     let maxScore = 0; let interest = "General";
     
-    // Find highest score
     for(const [key, val] of Object.entries(intentScores)) {
         if(val > maxScore) { maxScore = val; interest = key; }
     }
