@@ -9,7 +9,7 @@ let userProfile = { role: [], goal: [], ageGroup: "Adult" };
 let intentScores = { technique: 0, history: 0, market: 0, theory: 0 };
 let questionCount = 0; 
 
-// ✅ CONTENT ENGINE: The "Two-Lane" Journey Data
+// ✅ CONTENT ENGINE: The "Two-Lane" Journey Data (Free Path)
 const LEARNING_PATHS = {
   technique: {
     title: "The Material Observer",
@@ -354,21 +354,30 @@ function sendDataBeacon() {
   console.log("📡 DATA BEACON SENT:", { session: "user_" + Date.now(), interests: intentScores, questions: questionCount });
 }
 
-// ✅ NEW TWO-LANE LAYOUT (LFC Discovery Method)
+// ✅ NEW TWO-LANE JOURNEY LAYOUT (Smart Recommendation)
 function startBlueprint() {
   document.getElementById("blueprint").classList.add("active");
   const container = document.getElementById("bp-products");
   container.innerHTML = "<h3 style='text-align:center; color:var(--blue);'>Curating your path...</h3>";
   
   setTimeout(() => {
-    // 1. Determine Free Path
+    // 1. Determine Winning Interest
     let maxScore = 0; let interest = "general";
     for(const [key, val] of Object.entries(intentScores)) {
         if(val > maxScore) { maxScore = val; interest = key; }
     }
     const pathData = LEARNING_PATHS[interest] || LEARNING_PATHS.general;
 
-    // 2. Generate Premium Options (from Catalog)
+    // 2. Find Best Matching Course (The Smart Recommendation)
+    let recommendedCourse = null;
+    if (CATALOG.products) {
+        // Try to find a course that matches their interest tag
+        recommendedCourse = CATALOG.products.find(p => p.type === "course" && p.tag === interest);
+        // Fallback to "Sketch A" if no exact match
+        if (!recommendedCourse) recommendedCourse = CATALOG.products.find(p => p.id === "class-sketch-a");
+    }
+
+    // 3. Get Premium Services
     let premiumHtml = "";
     if (CATALOG.products) {
         const premiums = CATALOG.products.filter(p => p.type === "premium");
@@ -377,12 +386,12 @@ function startBlueprint() {
             <div class="plan-card" style="padding:1rem; margin:0; border:1px solid #cbd5e1;">
               <strong style="color:var(--blue);">${p.title}</strong>
               <div style="font-size:11px; color:#64748b; margin:4px 0;">${p.desc}</div>
-              <button class="plan-btn" style="padding:8px; margin-top:8px; font-size:10px;" onclick="window.open('${p.url}', '_blank')">Book Session ($${p.price})</button>
+              <button class="plan-btn" style="padding:8px; margin-top:8px; font-size:10px; background:#fff; color:var(--blue); border:1px solid var(--blue);" onclick="window.open('${p.url}', '_blank')">Book Session ($${p.price})</button>
             </div>`;
         });
     }
 
-    // 3. Render Two-Lane Layout
+    // 4. Render Two-Lane Layout
     let html = `
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem; width:100%;">
         
@@ -404,19 +413,23 @@ function startBlueprint() {
             <strong style="font-size:11px; text-transform:uppercase; color:var(--blue);">2. Reflect</strong>
             <p style="font-size:13px; margin:5px 0;">${pathData.reflect}</p>
           </div>
-
-          <div style="margin-top:2rem; padding-top:1rem; border-top:1px solid #e2e8f0;">
-             <strong style="font-size:11px; text-transform:uppercase; color:var(--blue);">Next Step</strong>
-             <div style="font-size:13px; margin-top:5px;">Go to: <strong>${pathData.next}</strong></div>
-          </div>
         </div>
 
         <div style="background:#fff; padding:2rem; border-radius:16px; border:1px solid #e2e8f0; position:relative; overflow:hidden;">
           <div style="position:absolute; top:0; right:0; background:var(--blue); color:#fff; font-size:9px; padding:5px 10px; border-radius:0 0 0 8px; font-weight:700;">BACKSTAGE</div>
-          <h2 style="color:var(--blue); font-size:1.8rem; margin:0 0 1rem 0;">Ask an Expert</h2>
-          <p style="font-size:13px; line-height:1.6; color:#64748b; margin-bottom:2rem;">
-            The AI Docent is your guide. For professional critique, career advice, or valuation, connect with a human expert.
-          </p>
+          
+          <div style="margin-bottom:2rem; padding-bottom:1.5rem; border-bottom:1px solid #e2e8f0;">
+             <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">Recommended Class</div>
+             <div style="display:flex; align-items:center; gap:15px;">
+                <div style="flex:1;">
+                   <strong style="color:var(--blue); font-size:1.1rem;">${recommendedCourse ? recommendedCourse.title : 'Art Class'}</strong>
+                   <p style="font-size:11px; color:#64748b; margin:5px 0;">${recommendedCourse ? recommendedCourse.desc : 'Explore our catalog'}</p>
+                </div>
+                <button class="plan-btn" style="width:auto; padding:10px 20px; font-size:11px;" onclick="window.open('${recommendedCourse ? recommendedCourse.url : '#'}', '_blank')">View Class</button>
+             </div>
+          </div>
+
+          <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">Ask an Expert</div>
           <div style="display:flex; flex-direction:column; gap:10px;">
             ${premiumHtml}
           </div>
