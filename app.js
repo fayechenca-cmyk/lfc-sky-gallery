@@ -83,7 +83,7 @@ const FLOORS = [
   { id: 12, name: "Contemporary Lens", type: "standard" },
 ];
 
-let ART_DATA = []; let CATALOG = []; 
+let ART_DATA = []; let CATALOG = { products: [] }; 
 let chatHistory = []; 
 let currentOpenArt = null;
 const interactables = [];
@@ -244,7 +244,7 @@ document.addEventListener('pointermove', (e)=>{ if(!isDragging || isInputLocked)
 window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;if(d==='l')moveLeft=true;if(d==='r')moveRight=true;}; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
 // ==========================================
-// 6. INTERACTION & AI (WITH SIGNALS & NUDGE)
+// 6. INTERACTION & AI
 // ==========================================
 function goToFloor(id) { 
   closeBlueprint(); exitFocus(); 
@@ -267,11 +267,8 @@ function openAI(data) {
   if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = data.img;
   document.getElementById("ai-title").innerText = data.title; document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
   
-  // RESET CONVERSATION
   chatHistory = []; questionCount = 0;
   document.getElementById("chat-stream").innerHTML = "";
-  
-  // WELCOME (DOCENT)
   addChatMsg("ai", "I am observing this piece with you. What do you see?");
 }
 
@@ -291,7 +288,6 @@ async function sendChat() {
   try {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
     
-    // "Thinking" State
     const thinkId = addChatMsg("ai", "...");
     
     const res = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
@@ -301,7 +297,6 @@ async function sendChat() {
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
-    // Remove "Thinking"
     const thinkEl = document.getElementById(thinkId); if(thinkEl) thinkEl.remove();
 
     let cleanReply = d.reply;
@@ -313,29 +308,22 @@ async function sendChat() {
     addChatMsg("ai", cleanReply); 
     chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
-    // ✅ CAPTURE & SHOW "TRANSPARENT SIGNAL" (Visual Hint)
     if(d.scores) {
        intentScores.history += (d.scores.history || 0);
        intentScores.technique += (d.scores.technique || 0);
        intentScores.market += (d.scores.market || 0);
        intentScores.theory += (d.scores.theory || 0);
 
-       // Show Micro-Hint (Transparency for User)
        let signal = "";
        if(d.scores.technique > 0) signal = "Technique";
        else if(d.scores.history > 0) signal = "History";
        else if(d.scores.market > 0) signal = "Market";
        else if(d.scores.theory > 0) signal = "Theory";
 
-       if(signal) {
-         showSignalHint(signal);
-       }
-       
-       // ✅ DATA BEACON: Sends data to your backend even if they don't buy
+       if(signal) { showSignalHint(signal); }
        sendDataBeacon();
     }
 
-    // ✅ THE SMART NUDGE (Conversion Trigger)
     if(questionCount === 3) {
       setTimeout(() => {
         addChatMsg("ai", "I can generate a personal learning path based on what you asked so far. Want to open My Journey?");
@@ -362,45 +350,50 @@ function showSignalHint(type) {
   document.getElementById("chat-stream").appendChild(d);
 }
 
-// ✅ DATA BEACON (Sends data to Platform)
 function sendDataBeacon() {
-  // In a real app, this sends to your Analytics DB
-  // For now, it logs to console so you can verify it works
-  console.log("📡 DATA BEACON SENT:", {
-    session: "user_" + Date.now(),
-    interests: intentScores,
-    questions: questionCount
-  });
+  console.log("📡 DATA BEACON SENT:", { session: "user_" + Date.now(), interests: intentScores, questions: questionCount });
 }
 
-// ✅ NEW TWO-LANE JOURNEY LAYOUT (Core Value)
+// ✅ NEW TWO-LANE LAYOUT (LFC Discovery Method)
 function startBlueprint() {
   document.getElementById("blueprint").classList.add("active");
   const container = document.getElementById("bp-products");
-  container.innerHTML = "<h3 style='text-align:center; color:var(--blue);'>Generating your path...</h3>";
+  container.innerHTML = "<h3 style='text-align:center; color:var(--blue);'>Curating your path...</h3>";
   
   setTimeout(() => {
-    // 1. DETERMINE WINNER
+    // 1. Determine Free Path
     let maxScore = 0; let interest = "general";
     for(const [key, val] of Object.entries(intentScores)) {
         if(val > maxScore) { maxScore = val; interest = key; }
     }
-    
-    // Get Data
     const pathData = LEARNING_PATHS[interest] || LEARNING_PATHS.general;
 
-    // 2. BUILD SPLIT LAYOUT (LEFT = FREE, RIGHT = PREMIUM)
+    // 2. Generate Premium Options (from Catalog)
+    let premiumHtml = "";
+    if (CATALOG.products) {
+        const premiums = CATALOG.products.filter(p => p.type === "premium");
+        premiums.forEach(p => {
+            premiumHtml += `
+            <div class="plan-card" style="padding:1rem; margin:0; border:1px solid #cbd5e1;">
+              <strong style="color:var(--blue);">${p.title}</strong>
+              <div style="font-size:11px; color:#64748b; margin:4px 0;">${p.desc}</div>
+              <button class="plan-btn" style="padding:8px; margin-top:8px; font-size:10px;" onclick="window.open('${p.url}', '_blank')">Book Session ($${p.price})</button>
+            </div>`;
+        });
+    }
+
+    // 3. Render Two-Lane Layout
     let html = `
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem; width:100%;">
         
         <div style="background:#f8fafc; padding:2rem; border-radius:16px; border:1px solid #e2e8f0;">
-          <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">Your Free Learning Path</div>
-          <h2 style="color:var(--blue); font-size:1.8rem; margin:0 0 5px 0;">${pathData.title}</h2>
-          <div style="font-size:12px; color:var(--ok); font-weight:700; margin-bottom:1.5rem;">${pathData.focus}</div>
+          <h2 style="color:var(--blue); font-size:1.8rem; margin:0 0 5px 0;">LFC Discovery Method</h2>
+          <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--ok); font-weight:700; margin-bottom:1.5rem;">YOUR PERSONAL GUIDE</div>
           
-          <p style="font-size:13px; line-height:1.6; color:#475569; margin-bottom:1.5rem;">
-            ${pathData.reason} Based on our conversation, here is a self-guided plan.
-          </p>
+          <div style="margin-bottom:1rem;">
+            <strong style="font-size:12px; color:var(--blue);">Observation Focus: ${pathData.focus}</strong>
+            <p style="font-size:13px; margin:5px 0; color:#475569;">${pathData.reason}</p>
+          </div>
 
           <div style="margin-bottom:1rem;">
             <strong style="font-size:11px; text-transform:uppercase; color:var(--blue);">1. Practice</strong>
@@ -420,28 +413,13 @@ function startBlueprint() {
 
         <div style="background:#fff; padding:2rem; border-radius:16px; border:1px solid #e2e8f0; position:relative; overflow:hidden;">
           <div style="position:absolute; top:0; right:0; background:var(--blue); color:#fff; font-size:9px; padding:5px 10px; border-radius:0 0 0 8px; font-weight:700;">BACKSTAGE</div>
-          
-          <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">Go Deeper (Optional)</div>
           <h2 style="color:var(--blue); font-size:1.8rem; margin:0 0 1rem 0;">Ask an Expert</h2>
-          
           <p style="font-size:13px; line-height:1.6; color:#64748b; margin-bottom:2rem;">
             The AI Docent is your guide. For professional critique, career advice, or valuation, connect with a human expert.
           </p>
-
           <div style="display:flex; flex-direction:column; gap:10px;">
-            <div class="plan-card" style="padding:1rem; margin:0; border:1px solid #cbd5e1;">
-              <strong style="color:var(--blue);">Human Curator</strong>
-              <div style="font-size:11px; color:#64748b; margin:4px 0;">Exhibition logic & context.</div>
-              <button class="plan-btn" style="padding:8px; margin-top:8px; font-size:10px;">Book Session ($50)</button>
-            </div>
-
-            <div class="plan-card" style="padding:1rem; margin:0; border:1px solid #cbd5e1;">
-              <strong style="color:var(--blue);">Human Artist Mentor</strong>
-              <div style="font-size:11px; color:#64748b; margin:4px 0;">Technique & Portfolio review.</div>
-              <button class="plan-btn" style="padding:8px; margin-top:8px; font-size:10px;">Request Critique ($75)</button>
-            </div>
+            ${premiumHtml}
           </div>
-
         </div>
       </div>
     `;
