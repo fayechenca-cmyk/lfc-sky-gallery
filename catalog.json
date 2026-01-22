@@ -10,6 +10,15 @@
       "url": "https://www.feiteamart.com/leathercraft-for-beginners"
     },
     {
+      "id": "class-video-theory",
+      "title": "Unlocking Video Art",
+      "desc": "Read the deep structure of moving images.",
+      "price": 0,
+      "tag": "theory",
+      "type": "course",
+      "url": "https://www.feiteamart.com/unlocking-video-art-read-the-deep-structure"
+    },
+    {
       "id": "class-sketch-a",
       "title": "Foundation of Sketch A",
       "desc": "Form, Light & Perspective. (Ages 10+)",
