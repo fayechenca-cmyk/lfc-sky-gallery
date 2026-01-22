@@ -1,90 +1,112 @@
 {
-  "currency": "CAD",
-  "defaultFallbackUrl": "https://www.feiteamart.com/course-list",
-  "ownerNotify": {
-    "type": "mailto",
-    "email": "YOUR_EMAIL_HERE"
-  },
   "products": [
     {
-      "id": "leathercraft_foundations",
-      "title": "Leathercraft Foundations — Shape, Carve, Dye",
-      "price": 450,
-      "type": "live_or_pack",
-      "ageGroup": ["teen", "adult"],
-      "tags": ["craft", "material", "handmade"],
-      "buyUrl": "",
-      "detailsUrl": "https://www.feiteamart.com/course-list"
-    },
-    {
-      "id": "micro_brand_creator_apparel",
-      "title": "Micro Brand Creator — Create Your Own Brand (Apparel)",
-      "price": 120,
-      "type": "self_paced_or_pack",
-      "ageGroup": ["teen", "adult"],
-      "tags": ["design", "branding", "fashion"],
-      "buyUrl": "",
-      "detailsUrl": "https://www.feiteamart.com/course-list"
-    },
-    {
-      "id": "lfc_001_intro_sketch_basic",
-      "title": "LFC 001 — Intro Sketch (Basic)",
+      "id": "class-leather",
+      "title": "Leathercraft Foundations",
+      "desc": "Shape, carve & dye leather. (Ages 12+)",
       "price": 0,
-      "type": "class",
-      "ageGroup": ["teen", "adult"],
-      "tags": ["drawing", "foundation"],
-      "buyUrl": "",
-      "detailsUrl": "https://www.feiteamart.com/course-list"
+      "tag": "technique",
+      "type": "course",
+      "url": "https://www.feiteamart.com/leathercraft-for-beginners"
     },
     {
-      "id": "lfc_002_shading",
-      "title": "LFC 002 — Shading",
+      "id": "class-sketch-a",
+      "title": "Foundation of Sketch A",
+      "desc": "Form, Light & Perspective. (Ages 10+)",
       "price": 0,
-      "type": "class",
-      "ageGroup": ["teen", "adult"],
-      "tags": ["drawing", "value"],
-      "buyUrl": "",
-      "detailsUrl": "https://www.feiteamart.com/course-list"
+      "tag": "technique",
+      "type": "course",
+      "url": "https://www.feiteamart.com/class-1--intro-sketch-basic"
     },
     {
-      "id": "lfc_003_color_theory",
-      "title": "LFC 003 — Color Theory",
+      "id": "class-fashion",
+      "title": "Fashion Drawing Basics",
+      "desc": "Proportion, perspective & color. (Ages 10+)",
       "price": 0,
-      "type": "class",
-      "ageGroup": ["teen", "adult"],
-      "tags": ["color", "painting"],
-      "buyUrl": "",
-      "detailsUrl": "https://www.feiteamart.com/course-list"
+      "tag": "technique",
+      "type": "course",
+      "url": "https://www.feiteamart.com/fashion-design-class"
     },
     {
-      "id": "lfc_004_architecture_drawing_basic",
-      "title": "LFC 004 — Architecture Drawing (Basic)",
+      "id": "class-ai-video",
+      "title": "AI Short-Video Workshop",
+      "desc": "Craft prompts, remix footage & design audio. (Ages 12+)",
       "price": 0,
-      "type": "class",
-      "ageGroup": ["teen", "adult"],
-      "tags": ["perspective", "design"],
-      "buyUrl": "",
-      "detailsUrl": "https://www.feiteamart.com/course-list"
+      "tag": "technique",
+      "type": "course",
+      "url": "https://www.feiteamart.com/ai-short-video-workshop"
     },
     {
-      "id": "lfc_005_character_anatomy_foundation",
-      "title": "LFC 005 — Character Design (Anatomy Foundations)",
+      "id": "class-sketch-c",
+      "title": "Foundation of Sketch C",
+      "desc": "Figure drawing: Anatomy & Movement. (Ages 12+)",
       "price": 0,
-      "type": "class",
-      "ageGroup": ["teen", "adult"],
-      "tags": ["character", "anatomy"],
-      "buyUrl": "",
-      "detailsUrl": "https://www.feiteamart.com/course-list"
+      "tag": "technique",
+      "type": "course",
+      "url": "https://www.feiteamart.com/figure-sketch-practice"
     },
     {
-      "id": "lfc_006_draw_with_me_13_18",
-      "title": "LFC 006 — Draw a Character With Me (13–18)",
+      "id": "class-interior",
+      "title": "Interior Design Basic",
+      "desc": "Spatial planning and design solutions. (Ages 7+)",
       "price": 0,
-      "type": "class",
-      "ageGroup": ["teen"],
-      "tags": ["sketch", "confidence"],
-      "buyUrl": "",
-      "detailsUrl": "https://www.feiteamart.com/course-list"
+      "tag": "design",
+      "type": "course",
+      "url": "https://www.feiteamart.com/class-6-interior-design-basic"
+    },
+    {
+      "id": "class-aesthetics",
+      "title": "Art Aesthetics & Contemporary Art",
+      "desc": "Why it matters & how to appreciate it. (Ages 13+)",
+      "price": 0,
+      "tag": "theory",
+      "type": "course",
+      "url": "https://www.feiteamart.com/class-7-art-aesthetics-contemporary-art"
+    },
+    {
+      "id": "class-popup",
+      "title": "Masterpiece Pop-Ups",
+      "desc": "3D Pop-up books (Kusama, Van Gogh). (Ages 6+)",
+      "price": 0,
+      "tag": "general",
+      "type": "course",
+      "url": "https://www.feiteamart.com/pop-up-art-adventure"
+    },
+    {
+      "id": "class-sketch-b",
+      "title": "Foundation of Sketch B",
+      "desc": "Still Life: Materials & Textures. (Ages 12+)",
+      "price": 0,
+      "tag": "technique",
+      "type": "course",
+      "url": "https://www.feiteamart.com/class-10-foundation-of-sketch-b-still-life--materials-textures"
+    },
+    {
+      "id": "class-early",
+      "title": "Early Art Exploration",
+      "desc": "Creative exploration for young learners. (Ages 4-10)",
+      "price": 0,
+      "tag": "general",
+      "type": "course",
+      "url": "https://www.feiteamart.com/early-art-exploration-ages-4-10-you-ling-qi-meng-yi-shu-ke-cheng-fei-teamart"
+    },
+    {
+      "id": "service-curator",
+      "title": "Human Curator",
+      "desc": "Exhibition logic, historical context & references.",
+      "price": 50,
+      "tag": "history",
+      "type": "premium",
+      "url": "https://www.feiteamart.com/contact"
+    },
+    {
+      "id": "service-mentor",
+      "title": "Artist Mentor",
+      "desc": "Technique direction & portfolio critique.",
+      "price": 75,
+      "tag": "technique",
+      "type": "premium",
+      "url": "https://www.feiteamart.com/contact"
     }
   ]
 }
