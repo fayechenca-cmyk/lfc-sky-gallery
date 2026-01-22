@@ -205,6 +205,155 @@
         }
       ]
     },
+    "4": {
+      "name": "Sculpture",
+      "items": [
+        {
+          "title": "Cat",
+          "artist": "Yang Song",
+          "year": "2013",
+          "medium": "Sculpture (Ed. 20/30)",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688bab281cecc68707c23409_Screenshot%202025-07-31%20at%2010.42.50%E2%80%AFAM.png",
+          "floor": 4
+        },
+        {
+          "title": "You Are the Future",
+          "artist": "Xue Yang",
+          "year": "2017",
+          "medium": "Fiberglass with Acrylic",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba9b7b5dda2125a26141c_42..jpg",
+          "floor": 4
+        },
+        {
+          "title": "Two Figures and a Horse No. 1-1",
+          "artist": "Wang Qingli",
+          "year": "2017",
+          "medium": "Fiberglass",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba9ab65f51cfc4a0762e4_39..jpg",
+          "floor": 4
+        },
+        {
+          "title": "Notre Dame de Paris Architectural Model",
+          "artist": "Shen Lieyi",
+          "year": "2020",
+          "medium": "Architectural Model",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba97f321d0ef967186527_35..png",
+          "floor": 4
+        },
+        {
+          "title": "The Robe",
+          "artist": "Sui Jianguo",
+          "year": "1998",
+          "medium": "Ceramic",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba97fcde1a5933c0b6abe_33..png",
+          "floor": 4
+        },
+        {
+          "title": "Revolutionary Figurine (Bronze)",
+          "artist": "Liu Ruowang",
+          "year": "2000",
+          "medium": "Bronze",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba975ae94eb87db1217b7_22..png",
+          "floor": 4
+        },
+        {
+          "title": "Revolutionary Figurine (Steel)",
+          "artist": "Liu Ruowang",
+          "year": "2007",
+          "medium": "Polychrome Stainless Steel",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba97562a9f0db076792a7_23..png",
+          "floor": 4
+        },
+        {
+          "title": "Urban Farmer",
+          "artist": "Liang Shuo",
+          "year": "2000",
+          "medium": "Bronze",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba96d9885ba0cb1d05733_Screenshot%202025-07-31%20at%2010.35.32%E2%80%AFAM.png",
+          "floor": 4
+        },
+        {
+          "title": "Ancient Greek Parthenon",
+          "artist": "Dai Yun",
+          "year": "2015",
+          "medium": "Red Brick / Cement",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba8eaedbeb694e650e7de_9..png",
+          "floor": 4
+        },
+        {
+          "title": "Pace",
+          "artist": "Chen Wenling",
+          "year": "2017",
+          "medium": "Patinated Bronze (Ed. 7/8)",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba8db8ac90b56dd863ef6_1..jpg",
+          "floor": 4
+        },
+        {
+          "title": "Shy Boy",
+          "artist": "Chen Wenling",
+          "year": "2013",
+          "medium": "Bronze with Lacquer",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba8dbf0c9b30454f876cb_2.jpg",
+          "floor": 4
+        },
+        {
+          "title": "Mongolian Girl",
+          "artist": "Yang Song",
+          "year": "2014",
+          "medium": "Grey tiles, black grout (Ed. 1/3)",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688baafe88fe7bee98667345_46..jpg",
+          "floor": 4
+        },
+        {
+          "title": "One from the 'We' Series",
+          "artist": "Cai Lei",
+          "year": "2009",
+          "medium": "Resin, Leather",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba8db338dd8577f7f5c5e_5..jpg",
+          "floor": 4
+        },
+        {
+          "title": "Le cabinet anthropomorphique",
+          "artist": "Unknown Artist",
+          "year": "1982",
+          "medium": "Bronze, Marble",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9c7d9b365be36ed8d2e3_21..jpg",
+          "floor": 4
+        },
+        {
+          "title": "Homeland · Wind 2",
+          "artist": "Cai Zhizong",
+          "year": "2003",
+          "medium": "Aluminum, Resin, Steel",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba8db25219da527c7c6a7_6..jpg",
+          "floor": 4
+        },
+        {
+          "title": "Jiao Yulu",
+          "artist": "Ke Ming",
+          "year": "2020",
+          "medium": "Sculpture",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba5439ae80e4a3b3afb15_92..jpg",
+          "floor": 4
+        },
+        {
+          "title": "Gandhi",
+          "artist": "Drago Marin Cherina",
+          "year": "1976",
+          "medium": "Cast Bronze",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9c7c6925726e33b4ad91_20.Drago%20Marin%20Cherina.jpg",
+          "floor": 4
+        },
+        {
+          "title": "Me – Home",
+          "artist": "Fabrizio Pozzoli",
+          "year": "2025",
+          "medium": "Galvanized iron wire",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/6892b219aa7ce6b0ef6767d2_ccf7413cde4f4cb3db1bdecefb34d58e.jpg",
+          "floor": 4
+        }
+      ]
+    },
     "9": {
       "name": "Film / Video",
       "items": [
