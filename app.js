@@ -1,11 +1,62 @@
 // ==========================================
-// 1. CONFIGURATION
+// 1. CONFIGURATION & DATA STRUCTURE
 // ==========================================
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 
 let userProfile = { role: [], goal: [], ageGroup: "Adult" };
-// ✅ DATA LISTENER: This collects the points for the curriculum
+
+// ✅ DATA ENGINE: Tracks the 4 Pillars
 let intentScores = { technique: 0, history: 0, market: 0, theory: 0 };
+let questionCount = 0; 
+
+// ✅ CONTENT ENGINE: The "Two-Lane" Journey Data
+const LEARNING_PATHS = {
+  technique: {
+    title: "The Material Observer",
+    focus: "Technique & Process",
+    reason: "You asked deeply about how the artwork was constructed.",
+    learn: ["Impasto & Texture Guide", "The Chemistry of Pigments", "Brushwork Analysis"],
+    practice: "Zoom in on one brushstroke. Sketch its direction on paper.",
+    reflect: "How does the material change the feeling of the work?",
+    next: "Sculpture Floor (Floor 4)"
+  },
+  history: {
+    title: "The Contextual Historian",
+    focus: "Time & Context",
+    reason: "You focused on the era and the artist's background.",
+    learn: ["Timeline of this Era", "Artist Biography", "The World in 2025"],
+    practice: "Find one other artist from this same year in the gallery.",
+    reflect: "Why did the artist make this *then* and not now?",
+    next: "Contemporary Lens (Floor 12)"
+  },
+  market: {
+    title: "The Strategic Collector",
+    focus: "Value & Provenance",
+    reason: "You inquired about value, collecting, and ownership.",
+    learn: ["Auction Results 2024", "How to Value Emerging Art", "Edition Strategy"],
+    practice: "Estimate the primary market price vs. secondary market.",
+    reflect: "What drives the value of this specific piece?",
+    next: "The Atrium (Manifesto)"
+  },
+  theory: {
+    title: "The Critical Thinker",
+    focus: "Meaning & Philosophy",
+    reason: "You searched for the deeper meaning and concepts.",
+    learn: ["Semiotics in Art", "Conceptual Art Manifesto", "Visual Philosophy"],
+    practice: "Write one sentence that explains the 'Invisible Meaning' here.",
+    reflect: "Is the idea more important than the visual?",
+    next: "Installation Floor (Floor 5)"
+  },
+  general: { 
+    title: "The Open Observer",
+    focus: "General Appreciation",
+    reason: "You are exploring broadly.",
+    learn: ["How to Look at Art", "Slow Looking Guide"],
+    practice: "Spend 3 minutes looking at one corner of the piece.",
+    reflect: "What stands out the most?",
+    next: "Painting Floor (Floor 1)"
+  }
+};
 
 const ATRIUM_CONFIG = {
   videoLink: "https://www.youtube.com/watch?v=ooi2V2Fp2-k",
@@ -15,6 +66,7 @@ const ATRIUM_CONFIG = {
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
+// 12 FLOORS (DESIGN PRESERVED)
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
@@ -33,7 +85,6 @@ const FLOORS = [
 
 let ART_DATA = []; let CATALOG = []; 
 let chatHistory = []; 
-let collectedInterests = [];
 let currentOpenArt = null;
 const interactables = [];
 let isInputLocked = false;
@@ -68,7 +119,7 @@ function completeRegistration() {
 }
 
 // ==========================================
-// 3. THREE.JS SCENE
+// 3. THREE.JS SCENE (DESIGN PRESERVED)
 // ==========================================
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
@@ -111,12 +162,9 @@ function createTextTexture(cfg) {
   ctx.fillStyle = '#444'; ctx.font = '28px Arial';
   const words = cfg.desc.split(' '); let line = ''; let y = 300;
   for(let n = 0; n < words.length; n++) { const testLine = line + words[n] + ' '; if (ctx.measureText(testLine).width > 900 && n > 0) { ctx.fillText(line, 60, y); line = words[n] + ' '; y += 40; } else { line = testLine; } }
-  
-  // ✅ FIX: Clean syntax (No freeze)
   ctx.fillText(line, 60, y); 
   y += 80; ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 32px Arial'; ctx.fillText(cfg.method, 60, y); 
   y += 50; ctx.fillStyle = '#666'; ctx.font = '28px Arial'; ctx.fillText(cfg.steps, 60, y);
-  
   return new THREE.CanvasTexture(canvas);
 }
 
@@ -131,12 +179,8 @@ function createFallbackTexture(text) {
 
 function buildGallery() {
   FLOORS.forEach(f => {
-    const y = f.id * floorHeight;
-    const group = new THREE.Group();
-
-    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor;
-    let wMat = (f.type === "darkroom") ? matWallDark : matWall;
-
+    const y = f.id * floorHeight; const group = new THREE.Group();
+    let fMat = (f.type === "darkroom") ? matFloorDark : matFloor; let wMat = (f.type === "darkroom") ? matWallDark : matWall;
     const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), fMat); floor.position.set(0, y, 0); group.add(floor);
     const ceil = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 120), wMat); ceil.position.set(0, y+16, 0); group.add(ceil);
     const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 16, 120), wMat); w1.position.set(19.5, y+8, 0); group.add(w1);
@@ -147,7 +191,6 @@ function buildGallery() {
       createArtFrame(group, 18.5, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
       createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
     }
-
     if (f.type === "installation") createPlinths(group, y);
 
     const arts = ART_DATA.filter(a => Number(a.floor) === f.id);
@@ -161,10 +204,7 @@ function buildGallery() {
       for(let i=0; i<6; i++) { const isRight = i % 2 === 0; createArtFrame(group, isRight?18.5:-18.5, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" }); }
     }
     scene.add(group);
-
-    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; 
-    btn.onclick = () => goToFloor(f.id); 
-    document.getElementById("elevator").prepend(btn);
+    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
   });
 }
 
@@ -204,12 +244,12 @@ document.addEventListener('pointermove', (e)=>{ if(!isDragging || isInputLocked)
 window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;if(d==='l')moveLeft=true;if(d==='r')moveRight=true;}; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
 // ==========================================
-// 6. INTERACTION & AI (FIXED)
+// 6. INTERACTION & AI (WITH SIGNALS & NUDGE)
 // ==========================================
-function goToFloor(id) {
-  closeBlueprint(); exitFocus();
-  isInputLocked = true;
-  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2000).easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => { isInputLocked = false; }).start();
+function goToFloor(id) { 
+  closeBlueprint(); exitFocus(); 
+  isInputLocked = true; 
+  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2000).easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => { isInputLocked = false; }).start(); 
 }
 
 function focusArt(userData) {
@@ -217,8 +257,8 @@ function focusArt(userData) {
   currentOpenArt = userData.data; isInputLocked = true; document.body.classList.add("ai-open"); camera.userData.returnPos = camera.position.clone(); camera.userData.returnQuat = camera.quaternion.clone(); const t = userData.viewPos; new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
 }
 
-function exitFocus() {
-  document.body.classList.remove("ai-open"); document.getElementById("ai-panel").classList.remove("active"); document.getElementById("back-btn").classList.remove("visible"); currentOpenArt = null;
+function exitFocus() { 
+  document.body.classList.remove("ai-open"); document.getElementById("ai-panel").classList.remove("active"); document.getElementById("back-btn").classList.remove("visible"); currentOpenArt = null; 
   if(camera.userData.returnPos) { new TWEEN.Tween(camera.position).to(camera.userData.returnPos, 1200).easing(TWEEN.Easing.Quadratic.Out).onComplete(() => { isInputLocked = false; }).start(); new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start(); } else { isInputLocked = false; }
 }
 
@@ -226,7 +266,12 @@ function openAI(data) {
   document.getElementById("ai-panel").classList.add("active");
   if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = data.img;
   document.getElementById("ai-title").innerText = data.title; document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
-  chatHistory = []; document.getElementById("chat-stream").innerHTML = "";
+  
+  // RESET CONVERSATION
+  chatHistory = []; questionCount = 0;
+  document.getElementById("chat-stream").innerHTML = "";
+  
+  // WELCOME (DOCENT)
   addChatMsg("ai", "I am observing this piece with you. What do you see?");
 }
 
@@ -239,10 +284,16 @@ async function sendChat() {
   if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = "0.7"; }
 
   addChatMsg("user",txt); i.value="";
-  const userTurn = { role: "user", parts: [{ text: txt }] };
+  
+  questionCount++;
+  chatHistory.push({ role: "user", parts: [{ text: txt }] });
 
   try {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
+    
+    // "Thinking" State
+    const thinkId = addChatMsg("ai", "...");
+    
     const res = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
       message:txt, history:chatHistory, art: artPayload, userProfile: userProfile 
     })});
@@ -250,7 +301,9 @@ async function sendChat() {
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
-    // ✅ FIX: Clean the response
+    // Remove "Thinking"
+    const thinkEl = document.getElementById(thinkId); if(thinkEl) thinkEl.remove();
+
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
         cleanReply = cleanReply.replace(/```json/gi, "").replace(/```/g, "").trim();
@@ -258,60 +311,144 @@ async function sendChat() {
     }
     
     addChatMsg("ai", cleanReply); 
-    
-    // ✅ FIX: Push BOTH messages to history (Fixes Amnesia)
-    chatHistory.push(userTurn);
     chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
-    // ✅ FIX: Capture Scores for Curriculum
+    // ✅ CAPTURE & SHOW "TRANSPARENT SIGNAL" (Visual Hint)
     if(d.scores) {
        intentScores.history += (d.scores.history || 0);
        intentScores.technique += (d.scores.technique || 0);
        intentScores.market += (d.scores.market || 0);
        intentScores.theory += (d.scores.theory || 0);
+
+       // Show Micro-Hint (Transparency for User)
+       let signal = "";
+       if(d.scores.technique > 0) signal = "Technique";
+       else if(d.scores.history > 0) signal = "History";
+       else if(d.scores.market > 0) signal = "Market";
+       else if(d.scores.theory > 0) signal = "Theory";
+
+       if(signal) {
+         showSignalHint(signal);
+       }
+       
+       // ✅ DATA BEACON: Sends data to your backend even if they don't buy
+       sendDataBeacon();
+    }
+
+    // ✅ THE SMART NUDGE (Conversion Trigger)
+    if(questionCount === 3) {
+      setTimeout(() => {
+        addChatMsg("ai", "I can generate a personal learning path based on what you asked so far. Want to open My Journey?");
+        document.getElementById("journey-btn").style.transform = "scale(1.1)";
+        setTimeout(()=>document.getElementById("journey-btn").style.transform="scale(1)", 500);
+      }, 1500);
     }
     
   } catch(e) { console.error(e); addChatMsg("ai", "⚠️ Connection Error."); }
   finally { isSending = false; if(sendBtn){sendBtn.disabled=false; sendBtn.style.opacity="1";} }
 }
-function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
 
-// ✅ SMART CURRICULUM GENERATOR
+function addChatMsg(r,t) { 
+  const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; 
+  d.id = "msg-" + Date.now();
+  document.getElementById("chat-stream").appendChild(d); 
+  return d.id;
+}
+
+function showSignalHint(type) {
+  const d = document.createElement("div");
+  d.style.cssText = "font-size:10px; color:#64748b; text-align:center; margin:5px 0; text-transform:uppercase; letter-spacing:1px; opacity:0.8;";
+  d.innerHTML = `✦ Noted: Focus on <strong>${type}</strong>`;
+  document.getElementById("chat-stream").appendChild(d);
+}
+
+// ✅ DATA BEACON (Sends data to Platform)
+function sendDataBeacon() {
+  // In a real app, this sends to your Analytics DB
+  // For now, it logs to console so you can verify it works
+  console.log("📡 DATA BEACON SENT:", {
+    session: "user_" + Date.now(),
+    interests: intentScores,
+    questions: questionCount
+  });
+}
+
+// ✅ NEW TWO-LANE JOURNEY LAYOUT (Core Value)
 function startBlueprint() {
   document.getElementById("blueprint").classList.add("active");
   const container = document.getElementById("bp-products");
-  container.innerHTML = "<h3>Analyzing Conversation...</h3>";
+  container.innerHTML = "<h3 style='text-align:center; color:var(--blue);'>Generating your path...</h3>";
   
   setTimeout(() => {
-    let recs = [];
-    let maxScore = 0; let interest = "General";
-    
+    // 1. DETERMINE WINNER
+    let maxScore = 0; let interest = "general";
     for(const [key, val] of Object.entries(intentScores)) {
         if(val > maxScore) { maxScore = val; interest = key; }
     }
+    
+    // Get Data
+    const pathData = LEARNING_PATHS[interest] || LEARNING_PATHS.general;
 
-    if (CATALOG.products) {
-      if (interest === "technique" || userProfile.goal.includes("Learn Techniques")) {
-        recs.push(CATALOG.products.find(p => p.id.includes("001")));
-        recs.push(CATALOG.products.find(p => p.id.includes("003")));
-      }
-      else if (interest === "market" || userProfile.role.includes("Collector")) {
-        recs.push(CATALOG.products.find(p => p.id.includes("brand")));
-      }
-      else {
-        recs.push(CATALOG.products[0]);
-      }
-    }
+    // 2. BUILD SPLIT LAYOUT (LEFT = FREE, RIGHT = PREMIUM)
+    let html = `
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem; width:100%;">
+        
+        <div style="background:#f8fafc; padding:2rem; border-radius:16px; border:1px solid #e2e8f0;">
+          <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">Your Free Learning Path</div>
+          <h2 style="color:var(--blue); font-size:1.8rem; margin:0 0 5px 0;">${pathData.title}</h2>
+          <div style="font-size:12px; color:var(--ok); font-weight:700; margin-bottom:1.5rem;">${pathData.focus}</div>
+          
+          <p style="font-size:13px; line-height:1.6; color:#475569; margin-bottom:1.5rem;">
+            ${pathData.reason} Based on our conversation, here is a self-guided plan.
+          </p>
 
-    let html = "";
-    recs.forEach(p => {
-      if(p) {
-        html += `<div class="plan-card"><span class="plan-tag">Recommended</span><h3>${p.title}</h3><p>${p.price > 0 ? "$"+p.price : "Free"}</p><button class="plan-btn" onclick="window.open('${p.buyUrl||p.detailsUrl}', '_blank')">${p.buyUrl ? "Enroll Now" : "Join Waitlist"}</button></div>`;
-      }
-    });
+          <div style="margin-bottom:1rem;">
+            <strong style="font-size:11px; text-transform:uppercase; color:var(--blue);">1. Practice</strong>
+            <p style="font-size:13px; margin:5px 0;">${pathData.practice}</p>
+          </div>
+
+          <div style="margin-bottom:1rem;">
+            <strong style="font-size:11px; text-transform:uppercase; color:var(--blue);">2. Reflect</strong>
+            <p style="font-size:13px; margin:5px 0;">${pathData.reflect}</p>
+          </div>
+
+          <div style="margin-top:2rem; padding-top:1rem; border-top:1px solid #e2e8f0;">
+             <strong style="font-size:11px; text-transform:uppercase; color:var(--blue);">Next Step</strong>
+             <div style="font-size:13px; margin-top:5px;">Go to: <strong>${pathData.next}</strong></div>
+          </div>
+        </div>
+
+        <div style="background:#fff; padding:2rem; border-radius:16px; border:1px solid #e2e8f0; position:relative; overflow:hidden;">
+          <div style="position:absolute; top:0; right:0; background:var(--blue); color:#fff; font-size:9px; padding:5px 10px; border-radius:0 0 0 8px; font-weight:700;">BACKSTAGE</div>
+          
+          <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">Go Deeper (Optional)</div>
+          <h2 style="color:var(--blue); font-size:1.8rem; margin:0 0 1rem 0;">Ask an Expert</h2>
+          
+          <p style="font-size:13px; line-height:1.6; color:#64748b; margin-bottom:2rem;">
+            The AI Docent is your guide. For professional critique, career advice, or valuation, connect with a human expert.
+          </p>
+
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div class="plan-card" style="padding:1rem; margin:0; border:1px solid #cbd5e1;">
+              <strong style="color:var(--blue);">Human Curator</strong>
+              <div style="font-size:11px; color:#64748b; margin:4px 0;">Exhibition logic & context.</div>
+              <button class="plan-btn" style="padding:8px; margin-top:8px; font-size:10px;">Book Session ($50)</button>
+            </div>
+
+            <div class="plan-card" style="padding:1rem; margin:0; border:1px solid #cbd5e1;">
+              <strong style="color:var(--blue);">Human Artist Mentor</strong>
+              <div style="font-size:11px; color:#64748b; margin:4px 0;">Technique & Portfolio review.</div>
+              <button class="plan-btn" style="padding:8px; margin-top:8px; font-size:10px;">Request Critique ($75)</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    `;
+
     container.innerHTML = html;
-    document.getElementById("bp-desc").innerHTML = `Based on your questions about <strong>${interest}</strong>, we built this path.`;
-    document.getElementById("bp-steps").innerHTML = `<div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--blue);"><strong>Focus: ${interest.toUpperCase()}</strong><br>We detected high engagement with ${interest} topics.</div>`;
+    document.getElementById("bp-desc").innerHTML = ""; 
+    document.getElementById("bp-steps").innerHTML = ""; 
   }, 1000);
 }
 
