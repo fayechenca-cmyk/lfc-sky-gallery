@@ -16,7 +16,7 @@ const ATRIUM_CONFIG = {
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
-// FULL 12 FLOORS (Design Locked)
+// FULL 12 FLOORS
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
@@ -100,7 +100,7 @@ const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = "anonymous"; 
 
 // ==========================================
-// 4. GALLERY BUILDER (Design Locked)
+// 4. GALLERY BUILDER (Fixed Typo Here)
 // ==========================================
 const floorHeight = 40; 
 
@@ -114,7 +114,7 @@ function createTextTexture(cfg) {
   const words = cfg.desc.split(' '); let line = ''; let y = 300;
   for(let n = 0; n < words.length; n++) { const testLine = line + words[n] + ' '; if (ctx.measureText(testLine).width > 900 && n > 0) { ctx.fillText(line, 60, y); line = words[n] + ' '; y += 40; } else { line = testLine; } }
   
-  // ✅ FIX: Removed the "y += += 80" syntax error that was freezing the site
+  // ✅ CRITICAL FIX: Removed the extra "+=" that was freezing the site
   ctx.fillText(line, 60, y); 
   y += 80; ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 32px Arial'; ctx.fillText(cfg.method, 60, y); 
   y += 50; ctx.fillStyle = '#666'; ctx.font = '28px Arial'; ctx.fillText(cfg.steps, 60, y);
@@ -227,22 +227,15 @@ function openAI(data) {
   if (data.texture) document.getElementById("ai-img").src = "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Info"; else document.getElementById("ai-img").src = (data.img || "https://placehold.co/800x600/1e3a8a/ffffff?text=LFC+Artwork");
   document.getElementById("ai-title").innerText = data.title; document.getElementById("ai-meta").innerText = (data.artist || "Unknown") + " • " + (data.year || "—");
   chatHistory = []; document.getElementById("chat-stream").innerHTML = "";
-  const starter = "I am observing this piece with you. What do you see?";
-  addChatMsg("ai", starter);
-  chatHistory.push({ role: "model", parts: [{ text: starter }] });
+  addChatMsg("ai", "I am observing this piece with you. What do you see?");
 }
 
 async function sendChat() {
-  if (isSending) return;
-  const i=document.getElementById("user-input"), txt=i.value.trim(); 
-  if(!txt) return;
-
-  isSending = true;
-  const sendBtn = document.getElementById("send-btn");
-  if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = "0.7"; }
-
+  const i=document.getElementById("user-input"), txt=i.value.trim(); if(!txt)return;
   addChatMsg("user",txt); i.value="";
-  const userTurn = { role: "user", parts: [{ text: txt }] };
+  
+  // ✅ FIX: Push User Msg to history so AI remembers it
+  chatHistory.push({ role: "user", parts: [{ text: txt }] });
 
   try {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
@@ -253,21 +246,17 @@ async function sendChat() {
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
-    // ✅ FIX: Clean cleaner
+    // ✅ FIX: Clean the response
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
         cleanReply = cleanReply.replace(/```json/gi, "").replace(/```/g, "").trim();
-        if (cleanReply.startsWith("{")) { try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){} }
+        if(cleanReply.startsWith('{')) { try { const p = JSON.parse(cleanReply); if(p.reply) cleanReply = p.reply; } catch(e){} }
     }
     
-    if (!cleanReply) cleanReply = "I am listening...";
     addChatMsg("ai", cleanReply); 
-    
-    // ✅ FIX: Store Correct History
-    chatHistory.push(userTurn);
     chatHistory.push({role:"model", parts:[{text:cleanReply}]});
     
-    // ✅ FIX: Accumulate Scores
+    // ✅ FIX: Capture Scores for Curriculum
     if(d.scores) {
        intentScores.history += (d.scores.history || 0);
        intentScores.technique += (d.scores.technique || 0);
@@ -276,7 +265,6 @@ async function sendChat() {
     }
     
   } catch(e) { console.error(e); addChatMsg("ai", "⚠️ Connection Error."); }
-  finally { isSending = false; if(sendBtn){sendBtn.disabled=false; sendBtn.style.opacity="1";} }
 }
 function addChatMsg(r,t) { const d=document.createElement("div"); d.className=`msg msg-${r}`; d.innerText=t; document.getElementById("chat-stream").appendChild(d); }
 
@@ -289,6 +277,8 @@ function startBlueprint() {
   setTimeout(() => {
     let recs = [];
     let maxScore = 0; let interest = "General";
+    
+    // Find highest score
     for(const [key, val] of Object.entries(intentScores)) {
         if(val > maxScore) { maxScore = val; interest = key; }
     }
@@ -297,9 +287,11 @@ function startBlueprint() {
       if (interest === "technique" || userProfile.goal.includes("Learn Techniques")) {
         recs.push(CATALOG.products.find(p => p.id.includes("001")));
         recs.push(CATALOG.products.find(p => p.id.includes("003")));
-      } else if (interest === "market" || userProfile.role.includes("Collector")) {
+      }
+      else if (interest === "market" || userProfile.role.includes("Collector")) {
         recs.push(CATALOG.products.find(p => p.id.includes("brand")));
-      } else {
+      }
+      else {
         recs.push(CATALOG.products[0]);
       }
     }
