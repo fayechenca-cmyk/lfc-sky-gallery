@@ -205,6 +205,344 @@
         }
       ]
     },
+    "2": {
+      "name": "Print",
+      "items": [
+        {
+          "title": "The Tale of the Three Generations in Kamakura",
+          "artist": "Utagawa Kunisada",
+          "year": "1891",
+          "medium": "Original woodblock print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc316f6497acd59e028_WechatIMG41.jpg",
+          "floor": 2
+        },
+        {
+          "title": "Famous Places of Edo (Set)",
+          "artist": "Utagawa Hiroshige",
+          "year": "Unknown",
+          "medium": "Woodblock print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc3089332e17f05d471_WechatIMG40.jpg",
+          "floor": 2
+        },
+        {
+          "title": "Courtesan Beauty: Takigawa of Ogiya",
+          "artist": "Kitagawa Utamaro",
+          "year": "Unknown",
+          "medium": "Woodblock print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2c016b5e073a8a81c_Utamaro%2C%20.jpg",
+          "floor": 2
+        },
+        {
+          "title": "Poison",
+          "artist": "Léonard Tsuguharu Foujita",
+          "year": "1943",
+          "medium": "Lithograph",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc21c35a5e755c3f60b_Tsuguharu%20Foujita%2C%20The%20Pipe.jpg",
+          "floor": 2
+        },
+        {
+          "title": "Courtesan Beauty: Naniwa Okita",
+          "artist": "Kitagawa Utamaro",
+          "year": "Unknown",
+          "medium": "Woodblock print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc28caf7ec50c4e10fe_Utamaro%2C%20%20.jpg",
+          "floor": 2
+        },
+        {
+          "title": "Untitled (Hans Bellmer)",
+          "artist": "Hans Bellmer",
+          "year": "Unknown",
+          "medium": "Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687bec9226a01a43bc436f92_WechatIMG50.jpg",
+          "floor": 2
+        },
+        {
+          "title": "Untitled (Morandi 3)",
+          "artist": "Giorgio Morandi",
+          "year": "Unknown",
+          "medium": "Etching",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd18c0e440e2d416a57_Giorgio%20Morandi%203.jpg",
+          "floor": 2
+        },
+        {
+          "title": "Untitled (Morandi)",
+          "artist": "Giorgio Morandi",
+          "year": "Unknown",
+          "medium": "Etching",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dd14395204404f2bde9_Giorgio%20Morandi.jpg",
+          "floor": 2
+        },
+        {
+          "title": "Untitled (Morandi 2)",
+          "artist": "Giorgio Morandi",
+          "year": "Unknown",
+          "medium": "Etching",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc25daf006de6fe4820_Giorgio%20Morandi%202.jpg",
+          "floor": 2
+        },
+        {
+          "title": "The Finding of Moses",
+          "artist": "Unknown",
+          "year": "1875-1885",
+          "medium": "Etching",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc2d8f995d695ecb441_The%20finding%20of%20moses.jpg",
+          "floor": 2
+        },
+        {
+          "title": "Chevy Chace",
+          "artist": "Unknown",
+          "year": "1875",
+          "medium": "Etching",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc24b7b7ce577c15e09_Chevy%20Chace.jpg",
+          "floor": 2
+        }
+      ]
+    },
+    "3": {
+      "name": "Photography",
+      "items": [
+        {
+          "title": "I Dream of You (AP)",
+          "artist": "Orlan",
+          "year": "2017",
+          "medium": "Giclée print on cotton paper",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f49e4a5dc602105bec_18%C2%AB%C2%AB%C3%95%EF%AC%82%C6%92%C2%B7%C2%B0%C2%A7%E2%89%88%E2%88%91%E2%97%8A%C3%8A%C2%BF%E2%89%A0.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Lips and Lies",
+          "artist": "Kishin Shinoyama",
+          "year": "1960",
+          "medium": "Photography",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f46dc4114bb69a1b38_8%E2%88%AB%C2%B7%E2%80%93%C3%8E%E2%88%AB%C3%BF%CF%80%C2%B6%CF%80%E2%80%9A.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Eva Herzigova",
+          "artist": "Jens Goethel",
+          "year": "1995",
+          "medium": "Photograph",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f4cf02b40319e5904b_17%E2%80%94%E2%80%9D%C3%80%CF%80%C2%B0%C2%A7%E2%88%8F%C3%8B%C2%B5%C2%AC.jpg",
+          "floor": 3
+        },
+        {
+          "title": "AV Actress Saori Hara",
+          "artist": "Nobuyoshi Araki",
+          "year": "Unknown",
+          "medium": "Signed Unique Polaroid",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f37fe7cfee69654060_3%C2%AA%C6%92%C6%92%C3%A6%C3%A6%E2%89%A0%C5%92%C2%A9.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Karen Mulden",
+          "artist": "Jens Goethel",
+          "year": "1995",
+          "medium": "Photograph",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f3b0b91aa5837757a1_14%E2%80%94%E2%80%9D%C3%80%CF%80%C2%B0%C2%A7%E2%88%8F%C3%8B%C2%B5%C2%AC.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Emma, Stephanie",
+          "artist": "Jens Goethel",
+          "year": "1996",
+          "medium": "Photograph",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f36681071a445dfeee_15%E2%80%94%E2%80%9D%C3%80%CF%80%C2%B0%C2%A7%E2%88%8F%C3%8B%C2%B5%C2%AC.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Yamaguchi Child 2",
+          "artist": "Kishin Shinoyama",
+          "year": "1982",
+          "medium": "Photography",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f3f3194530ba335797_9%E2%88%AB%C2%B7%E2%80%93%C3%8E%E2%88%AB%C3%BF%CF%80%C2%B6%CF%80%E2%80%9A.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Collector’s House",
+          "artist": "Hans Op de Beeck",
+          "year": "Unknown",
+          "medium": "Photography",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f3174a157124845520_10%E2%88%AB%E2%88%AB%C3%80%CF%80%C2%B0%C2%A7%E2%89%88%E2%88%91%E2%88%86%E2%80%99%C2%B0%C2%A7%C2%B5%C2%AC%C2%B0%C2%A7%C2%B1%C2%A5%C3%B8%C3%80.png",
+          "floor": 3
+        },
+        {
+          "title": "Naomi Campbell",
+          "artist": "Jens Goethel",
+          "year": "1993",
+          "medium": "Photograph",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f390f266e61819b48d_16%E2%80%94%E2%80%9D%C3%80%CF%80%C2%B0%C2%A7%E2%88%8F%C3%8B%C2%B5%C2%AC.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Hana Kinbaku",
+          "artist": "Nobuyoshi Araki",
+          "year": "2008",
+          "medium": "Unique Color Photograph",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f20f2f3d00d87400a9_5%C2%AA%C6%92%C6%92%C3%A6%C3%A6%E2%89%A0%C5%92%C2%A9.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Karl, Utoquai 4",
+          "artist": "Wolfgang Tillmans",
+          "year": "2012",
+          "medium": "Inkjet print on paper",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f268d765a251d5c51b_12%C5%92%C3%B7%E2%88%82%CB%9A%E2%88%91%C3%9A%E2%88%8F%E2%80%98.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Love on the Left Eye",
+          "artist": "Nobuyoshi Araki",
+          "year": "2014",
+          "medium": "RP-Pro Crystal Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f2b0b91aa583775783_4%C2%AA%C6%92%C6%92%C3%A6%C3%A6%E2%89%A0%C5%92%C2%A9.png",
+          "floor": 3
+        },
+        {
+          "title": "CHOCOLATE GIRL",
+          "artist": "Viktoria Binschtok",
+          "year": "2019",
+          "medium": "Digital C-type Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f28862afe3910b11ed_20-21Viktoria%20Binschtok.png",
+          "floor": 3
+        },
+        {
+          "title": "09/04/2015 01:15",
+          "artist": "Gabriela Morawetz",
+          "year": "2015",
+          "medium": "Silver gelatin print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f2f9b458cb8d2c3c7f_24%C3%B8%C2%AE%C2%B1%EF%A3%BF%E2%80%9C%C3%86%C2%BF%E2%89%A0%C2%B0%C2%A7%C6%92%C2%B6%C2%BF%E2%89%A0%C5%92%C2%A8%C2%A5%C6%92.png",
+          "floor": 3
+        },
+        {
+          "title": "For Tenuta San Guido",
+          "artist": "Jannis Kounellis",
+          "year": "2015",
+          "medium": "Printed on paper",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f2a4adca986ba4618a_23%E2%80%94%E2%89%88%C6%92%C2%B7%C3%80%CF%80%C2%B0%C2%A7%C3%B8%E2%80%9A%C6%92%C5%92%C2%BF%C3%94%C3%80%CF%80.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Transient 1",
+          "artist": "Wolfgang Tillmans",
+          "year": "2015",
+          "medium": "Inkjet print on paper",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c6a78cf8f9e2fda1ada52_Screenshot%202025-07-19%20at%209.02.51%E2%80%AFPM.png",
+          "floor": 3
+        },
+        {
+          "title": "Boden Sea (UTTWIL)",
+          "artist": "Hiroshi Sugimoto",
+          "year": "1993",
+          "medium": "Photograph",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741dc26315eb43ff2b1f30_Hiroshi%20Sugimoto%2C%20boren%20Sea%20UTTWIL.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Flower of Love",
+          "artist": "Nobuyoshi Araki",
+          "year": "Unknown",
+          "medium": "Polaroid Color Photograph",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68741ac916f6497acd58d134_2%C2%AA%C6%92%C6%92%C3%A6%C3%A6%E2%89%A0%C5%92%C2%A9.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Transient 3",
+          "artist": "Wolfgang Tillmans",
+          "year": "2017",
+          "medium": "Inkjet print on paper",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c6a2d4b20f7b99b254009_Screenshot%202025-07-19%20at%208.35.36%E2%80%AFPM.png",
+          "floor": 3
+        },
+        {
+          "title": "Living on the Border",
+          "artist": "Fanny Gicquel",
+          "year": "2019",
+          "medium": "Archival giclée print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687c62f20aff38a7ebbf2c2d_19%E2%88%91%E2%88%82%C6%92%C2%B7%C2%B0%C2%A7%C2%BA%E2%84%A2%C3%B8%C2%B8%E2%88%82%CB%9A.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Love and Art",
+          "artist": "Tang Yi",
+          "year": "2019",
+          "medium": "Platinum print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d47170896230f3aff653d_44%C3%83%E2%88%86%E2%80%9C%E2%80%9C.png",
+          "floor": 3
+        },
+        {
+          "title": "Three Little Rogues",
+          "artist": "Liu Xiangcheng",
+          "year": "1980",
+          "medium": "B/W inkjet print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4717e85ded494e9324af_43%C2%A1%C4%B1%C5%93%E2%80%9E%E2%89%A5%E2%80%A6.png",
+          "floor": 3
+        },
+        {
+          "title": "Memory Loss",
+          "artist": "Tian Taiquan",
+          "year": "2017",
+          "medium": "Digtal photo",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4717d2fea60463d37754_14%C3%83%C3%94%C3%83%C2%B4%C2%BB%C2%AE.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Tribute to Gewu",
+          "artist": "Li Wu",
+          "year": "2012",
+          "medium": "Photograph",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4717e4870485f4e23506_38%C2%BF%C3%93%C3%80%C2%A5.png",
+          "floor": 3
+        },
+        {
+          "title": "《:)》",
+          "artist": "Lin Ke",
+          "year": "2016",
+          "medium": "Archival print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4717d39907571162a571_10%C2%A1%C3%B7%C3%B8%E2%88%86.jpg",
+          "floor": 3
+        },
+        {
+          "title": "Tian Jin 1",
+          "artist": "Tang Jing",
+          "year": "2015",
+          "medium": "Artistic inkjet",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4717e4c3db40fe34b499_32%C3%83%E2%88%86%C3%A6%C3%9F.png",
+          "floor": 3
+        },
+        {
+          "title": "Shanghai Ludian 4",
+          "artist": "Tang Jing",
+          "year": "2015",
+          "medium": "Artistic inkjet",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d47171d2ba69ecde56dee_21%C3%83%E2%88%86%C3%A6%C3%9F.png",
+          "floor": 3
+        },
+        {
+          "title": "Hui Zhou 2",
+          "artist": "Tang Jing",
+          "year": "2015",
+          "medium": "Artistic inkjet",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d47171f7cec6f362f7380_36%C3%83%E2%88%86%C3%A6%C3%9F.png",
+          "floor": 3
+        },
+        {
+          "title": "Tian Jin 2",
+          "artist": "Tang Jing",
+          "year": "2015",
+          "medium": "Artistic inkjet",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d47177f5a6d6d683775da_33%C3%83%E2%88%86%C3%A6%C3%9F.png",
+          "floor": 3
+        },
+        {
+          "title": "Hui Zhou 3",
+          "artist": "Tang Jing",
+          "year": "2015",
+          "medium": "Artistic inkjet",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d47179916140832c6b1c8_37%C3%83%E2%88%86%C3%A6%C3%9F.png",
+          "floor": 3
+        }
+      ]
+    },
     "4": {
       "name": "Sculpture",
       "items": [
@@ -354,6 +692,267 @@
         }
       ]
     },
+    "5": {
+      "name": "Installation",
+      "items": [
+        {
+          "title": "I.U.B.P",
+          "artist": "Arcangelo Sassolino",
+          "year": "2018",
+          "medium": "tire and steel",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688afc2898a83338f39ac21b_1.Arcangelo%20Sassolino.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Variation colour clock",
+          "artist": "Rebecca Baumann",
+          "year": "2017",
+          "medium": "Flip clock, memory card, battery, wood panel, copper pipe",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688afc2876d3a08dfd1a1f3a_4.Rebecca%20Baumann.jpg",
+          "floor": 5
+        },
+        {
+          "title": "FLOW-4",
+          "artist": "Tetsuo Kusama",
+          "year": "2015",
+          "medium": "Rayon, stainless steel, cotton cloth, plastic",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688afc280dacb2b7b300021a_5.Tetsuo%20Kusama.jpg",
+          "floor": 5
+        },
+        {
+          "title": "C. and W. District Hong Kong January",
+          "artist": "Ken’ichiro Taniguchi",
+          "year": "2019",
+          "medium": "Compressed PVC, brass, steel, magnets, rotating device",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688afc28e2496c5e3ffb9a09_6.Ken%E2%80%99ichiro%20Taniguchi.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Back of the Lantern",
+          "artist": "Kishio Suga",
+          "year": "2019",
+          "medium": "Bamboo Strips, Xuan Paper, Cotton Thread, Clay",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688afc49fcdc459590f9799f_8.Kishio%20Suga.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Micro Origami",
+          "artist": "Andy Dinan",
+          "year": "Unknown",
+          "medium": "Mixed Media",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688afc2876d3a08dfd1a1f66_3.%E5%AE%89%E8%BF%AA%C2%B7%E8%BF%AA%E5%8D%97.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Untitled",
+          "artist": "Kishio Suga",
+          "year": "1989",
+          "medium": "Mixed Media (wood, nail, paint)",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688afc4984c75ba4a142454a_9.Kishio%20Suga.jpg",
+          "floor": 5
+        },
+        {
+          "title": "One Minute of Silver",
+          "artist": "Hiroki Hirakawa",
+          "year": "2018",
+          "medium": "Silver extracted from a vintage film",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688afc4917c433d44b984a7c_13.%E5%B9%B3%E5%B7%9D%E7%A5%90%E6%A0%91.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Record",
+          "artist": "Jérémy Chevalier",
+          "year": "2014",
+          "medium": "Installation",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688afc4a702119f2ad6c664b_10.%E6%9D%B0%E9%87%8C%E7%B1%B3.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Memory_Pattern #150722",
+          "artist": "Kim Sang Cyun",
+          "year": "2015",
+          "medium": "Grout",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688afc92468c85a58711c42f_Screenshot%202025-07-30%20at%2010.18.06%E2%80%AFPM.png",
+          "floor": 5
+        },
+        {
+          "title": "Song / Frankie",
+          "artist": "Simon Mullan",
+          "year": "2017",
+          "medium": "Grey tiles, black grout, red grout",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9c7c9ad0184402ed0cbc_17-1Simon%20MULLAN.jpg",
+          "floor": 5
+        },
+        {
+          "title": "24V type31.zip",
+          "artist": "Three",
+          "year": "2018",
+          "medium": "Figure, wood, aluminum, PVC",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9cb41ffd4d9bf1fbceb1_Screenshot%202025-07-31%20at%209.41.04%E2%80%AFAM.png",
+          "floor": 5
+        },
+        {
+          "title": "Out of Disorder (bush)",
+          "artist": "Takahiro Iwasaki",
+          "year": "2012",
+          "medium": "Toothbrush",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9cda6f623c35671d370b_Screenshot%202025-07-31%20at%209.41.53%E2%80%AFAM.png",
+          "floor": 5
+        },
+        {
+          "title": "Towards a bad infinity",
+          "artist": "Rafael Domenech",
+          "year": "2019 - 2021",
+          "medium": "Sintra board, archival glue, book cloth, laser-print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9d9911d7b682ca2ccd81_24.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Bliss",
+          "artist": "Nik Kosmas",
+          "year": "2021",
+          "medium": "Steel, silk screen printing, lacquer",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9da2322cc77b23a18ba2_22.Nik%20Kosmas.png",
+          "floor": 5
+        },
+        {
+          "title": "Notations from elsewhere",
+          "artist": "Rafael Domenech",
+          "year": "2021",
+          "medium": "Big Bang 1974 edition, found concrete rock, plywood",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9dafcee45ceb0e58429d_23.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "There is no longer an elsewhere",
+          "artist": "Rafael Domenech",
+          "year": "2021",
+          "medium": "Plywood, wood, egg carton, plexiglass, laser-print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9e105a82c4f5e3b634f2_26.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Streams of neon on ketchup and plastic",
+          "artist": "Rafael Domenech",
+          "year": "2021",
+          "medium": "PVC, plexiglass, laser-print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9e10348cc9953c1538b3_27.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Things that amount to nothing",
+          "artist": "Rafael Domenech",
+          "year": "2018-2021",
+          "medium": "PVC, vinyl, book cloth, laser-print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9e10eb5f91a7a2724b37_25.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Residue of the implicated body",
+          "artist": "Rafael Domenech",
+          "year": "2021",
+          "medium": "Plywood, archival glue, laser-print, found concrete rock",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9e2b647ef9fde1f107c9_28.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "a. b.",
+          "artist": "Rafael Domenech",
+          "year": "2021",
+          "medium": "Organic glass, laser print, book cloth",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9e4c85c43f264c30ee5f_29.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "A Sign of the American Landscape",
+          "artist": "Rafael Domenech",
+          "year": "2020",
+          "medium": "Aluminum plate, laser print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9e4c17c433d44bd9cdbe_31.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "The Plastic River Has No Corners",
+          "artist": "Rafael Domenech",
+          "year": "2021",
+          "medium": "Plywood, plexiglass, laser print, wireboard",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9e4c79ee0b95c0efdb9b_32.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Fragments Through Space",
+          "artist": "Rafael Domenech",
+          "year": "2021",
+          "medium": "Plexiglass, egg carton, laser print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9e4c6f623c35671dc7a2_30.Rafael%20Domenech.png",
+          "floor": 5
+        },
+        {
+          "title": "The Will to See",
+          "artist": "Rafael Domenech",
+          "year": "2019–2020",
+          "medium": "Laser-cut paperboard, book cloth, laser print, vinyl record",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9e4fa12b76a2afe26376_34.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Biography of an Ordinary Person",
+          "artist": "Rafael Domenech",
+          "year": "2019",
+          "medium": "Book cloth, laser print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9f055a82c4f5e3b69da5_Screenshot%202025-07-31%20at%209.51.08%E2%80%AFAM.png",
+          "floor": 5
+        },
+        {
+          "title": "The Distance Between You, Me, and the Fence",
+          "artist": "Rafael Domenech",
+          "year": "2018–2019",
+          "medium": "Forgotten sponge, laser print, book board, book cloth",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9f30a43dc795f47af646_40.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Untitled (Charts, Maps, Images, Songs)",
+          "artist": "Rafael Domenech",
+          "year": "2019",
+          "medium": "Laser print, book board, book cloth, plastic fabric",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688b9f3048219ed53e4cb155_39.Rafael%20Domenech.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Young Chunk",
+          "artist": "Douglas Rieger",
+          "year": "2022",
+          "medium": "Wood, paint, iron, felt",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba114f7d78da650ae0b15_48.Douglas%20Rieger.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Vinyl – Flowing Streams",
+          "artist": "Lyota Yagi",
+          "year": "2019",
+          "medium": "Silicone Mold, Water, Vinyl Record Player",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba1143fc17d3e196d0855_49.%E5%85%AB%E6%9C%A8%E8%89%AF%E5%A4%AA.jpg",
+          "floor": 5
+        },
+        {
+          "title": "Fangs",
+          "artist": "Douglas Rieger",
+          "year": "2022",
+          "medium": "Wood, Paint, Upholstery Foam, Vinyl",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba114b4b92d4661014ddd_46.Douglas%20Rieger.jpg",
+          "floor": 5
+        },
+        {
+          "title": "At the Café",
+          "artist": "Camille Blatrix",
+          "year": "2021",
+          "medium": "Wood Marquetry",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/688ba114b9e387fb5893f569_43.Camille%20Blatrix.jpg",
+          "floor": 5
+        }
+      ]
+    },
     "9": {
       "name": "Film / Video",
       "items": [
@@ -420,6 +1019,91 @@
           "medium": "AI Script / Animation",
           "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/68cb0062c7d1c5456882607a_0a2e6a5bdq8870d3f108a2867a6d78b5.jpg",
           "floor": 9
+        }
+      ]
+    },
+    "10": {
+      "name": "Performance",
+      "items": [
+        {
+          "title": "To Add One Meter to An Anonymous Mountain",
+          "artist": "Cang Xin",
+          "year": "1995",
+          "medium": "Archival Pigment Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d46fe5c43a806fd504b7d_1%E2%89%A4%E2%80%98%CB%86%C5%92.jpg",
+          "floor": 10
+        },
+        {
+          "title": "Migration - 1",
+          "artist": "Liu Chengrui",
+          "year": "2007",
+          "medium": "Archival Pigment Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4e11857b59b7747450c3_Screenshot%202025-07-20%20at%201.11.40%E2%80%AFPM.png",
+          "floor": 10
+        },
+        {
+          "title": "Migration - 2",
+          "artist": "Liu Chengrui",
+          "year": "2007",
+          "medium": "Archival Pigment Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4e11faeb98df7022013a_Screenshot%202025-07-20%20at%201.11.59%E2%80%AFPM.png",
+          "floor": 10
+        },
+        {
+          "title": "Migration - 3",
+          "artist": "Liu Chengrui",
+          "year": "2008",
+          "medium": "Archival Pigment Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4e124a9e9f6f909bea07_Screenshot%202025-07-20%20at%201.11.24%E2%80%AFPM.png",
+          "floor": 10
+        },
+        {
+          "title": "Migration - 4",
+          "artist": "Liu Chengrui",
+          "year": "2008",
+          "medium": "Archival Pigment Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4e126ea5d6db743f8a24_Screenshot%202025-07-20%20at%201.12.18%E2%80%AFPM.png",
+          "floor": 10
+        },
+        {
+          "title": "Migration - 5",
+          "artist": "Liu Chengrui",
+          "year": "2008",
+          "medium": "Archival Pigment Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4e001a32420af5ec1b6c_Screenshot%202025-07-20%20at%201.12.33%E2%80%AFPM.png",
+          "floor": 10
+        },
+        {
+          "title": "Migration - 6",
+          "artist": "Liu Chengrui",
+          "year": "2010",
+          "medium": "Archival Pigment Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4e01c698a94826c8e645_Screenshot%202025-07-20%20at%201.12.50%E2%80%AFPM.png",
+          "floor": 10
+        },
+        {
+          "title": "Migration - 7",
+          "artist": "Liu Chengrui",
+          "year": "2010",
+          "medium": "Archival Pigment Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4e018f59e57c6a7b2e5e_Screenshot%202025-07-20%20at%201.13.07%E2%80%AFPM.png",
+          "floor": 10
+        },
+        {
+          "title": "Migration - 8",
+          "artist": "Liu Chengrui",
+          "year": "2013",
+          "medium": "Archival Pigment Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4e01ffa302046db79636_Screenshot%202025-07-20%20at%201.13.23%E2%80%AFPM.png",
+          "floor": 10
+        },
+        {
+          "title": "Migration - 9",
+          "artist": "Liu Chengrui",
+          "year": "2015",
+          "medium": "Archival Pigment Print",
+          "img": "https://cdn.prod.website-files.com/67b17a6580f358f0c7dd29f4/687d4e012c9e088fa6d344c7_Screenshot%202025-07-20%20at%201.13.39%E2%80%AFPM.png",
+          "floor": 10
         }
       ]
     }
