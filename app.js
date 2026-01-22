@@ -33,7 +33,9 @@ const FLOORS = [
   { id: 12, name: "Contemporary Lens", type: "standard" },
 ];
 
-let ART_DATA = []; let CATALOG = []; let chatHistory = []; let collectedInterests = [];
+let ART_DATA = []; let CATALOG = []; 
+let chatHistory = []; 
+let collectedInterests = [];
 let currentOpenArt = null;
 const interactables = [];
 let isInputLocked = false;
@@ -113,8 +115,14 @@ function createTextTexture(cfg) {
   ctx.fillStyle = '#444'; ctx.font = '28px Arial';
   const words = cfg.desc.split(' '); let line = ''; let y = 300;
   for(let n = 0; n < words.length; n++) { const testLine = line + words[n] + ' '; if (ctx.measureText(testLine).width > 900 && n > 0) { ctx.fillText(line, 60, y); line = words[n] + ' '; y += 40; } else { line = testLine; } }
-  ctx.fillText(line, 60, y); y +=
-    += 80; ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 32px Arial'; ctx.fillText(cfg.method, 60, y); y += 50; ctx.fillStyle = '#666'; ctx.font = '28px Arial'; ctx.fillText(cfg.steps, 60, y);
+  
+  // ✅ CRITICAL FIX: Removed the syntax error here
+  ctx.fillText(line, 60, y); 
+  y += 80; 
+  ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 32px Arial'; ctx.fillText(cfg.method, 60, y); 
+  y += 50; 
+  ctx.fillStyle = '#666'; ctx.font = '28px Arial'; ctx.fillText(cfg.steps, 60, y);
+  
   return new THREE.CanvasTexture(canvas);
 }
 
@@ -160,7 +168,9 @@ function buildGallery() {
     }
     scene.add(group);
 
-    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
+    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; 
+    btn.onclick = () => goToFloor(f.id); // Fixed interaction
+    document.getElementById("elevator").prepend(btn);
   });
 }
 
@@ -228,7 +238,6 @@ function openAI(data) {
 
   const starter = "I am observing this piece with you. What do you see?";
   addChatMsg("ai", starter);
-  // Keep the opening AI message in history (better continuity)
   chatHistory.push({ role: "model", parts: [{ text: starter }] });
 }
 
@@ -246,8 +255,6 @@ async function sendChat() {
   addChatMsg("user", txt);
   i.value = "";
 
-  // IMPORTANT: Do NOT push the user msg to chatHistory BEFORE sending,
-  // because the Worker already appends `message` → otherwise it duplicates and burns quota.
   const userTurn = { role: "user", parts: [{ text: txt }] };
 
   try {
@@ -266,7 +273,6 @@ async function sendChat() {
       })
     });
 
-    // Always parse safely
     const raw = await res.text();
     let d = null;
     try { d = JSON.parse(raw); } catch (e) { d = { reply: raw }; }
@@ -286,11 +292,9 @@ async function sendChat() {
 
     addChatMsg("ai", cleanReply);
 
-    // Update memory AFTER success (no duplication)
     chatHistory.push(userTurn);
     chatHistory.push({ role: "model", parts: [{ text: cleanReply }] });
 
-    // Collect scores safely
     if (d && d.scores) {
       intentScores.history += (d.scores.history || 0);
       intentScores.technique += (d.scores.technique || 0);
@@ -317,8 +321,6 @@ function startBlueprint() {
 
   setTimeout(() => {
     let recs = [];
-
-    // 1. Analyze Scores
     let maxScore = 0;
     let interest = "General";
     for(const [key, val] of Object.entries(intentScores)) {
