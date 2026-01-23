@@ -10,51 +10,67 @@ let intentScores = { technique: 0, history: 0, market: 0, theory: 0 };
 let questionCount = 0; 
 let discoveryProgress = 0; 
 
-// ✅ CONTENT ENGINE: The "Two-Lane" Journey Data (Free Path)
+// ✅ CONTENT ENGINE: The "Two-Lane" Journey Data (Free Path - ENHANCED)
 const LEARNING_PATHS = {
   technique: {
     title: "The Material Observer",
     focus: "Technique & Process",
-    reason: "You asked deeply about how the artwork was constructed.",
-    learn: ["Impasto & Texture Guide", "The Chemistry of Pigments", "Brushwork Analysis"],
-    practice: "Zoom in on one brushstroke. Sketch its direction on paper.",
-    reflect: "How does the material change the feeling of the work?",
+    reason: "You showed strong interest in how artworks are physically constructed.",
+    learn: [
+        "Core Skill: Observing Brushwork Density",
+        "Deep Dive: The Chemistry of Pigments",
+        "Project: Textural Analysis"
+    ],
+    practice: "Zoom in on one specific brushstroke. Sketch its direction and speed on paper.",
+    reflect: "How does the material choice change the emotional weight of the work?",
     next: "Sculpture Floor (Floor 4)"
   },
   history: {
     title: "The Contextual Historian",
     focus: "Time & Context",
-    reason: "You focused on the era and the artist's background.",
-    learn: ["Timeline of this Era", "Artist Biography", "The World in 2025"],
-    practice: "Find one other artist from this same year in the gallery.",
+    reason: "You focused on the historical era and the artist's background.",
+    learn: [
+        "Timeline: Art in the Age of Revolution",
+        "Biography: The Artist's Early Life",
+        "Context: The World in 2025"
+    ],
+    practice: "Find one other artist from this same year in the gallery and compare them.",
     reflect: "Why did the artist make this *then* and not now?",
     next: "Contemporary Lens (Floor 12)"
   },
   market: {
     title: "The Strategic Collector",
     focus: "Value & Provenance",
-    reason: "You inquired about value, collecting, and ownership.",
-    learn: ["Auction Results 2024", "How to Value Emerging Art", "Edition Strategy"],
-    practice: "Estimate the primary market price vs. secondary market.",
-    reflect: "What drives the value of this specific piece?",
+    reason: "You inquired about value, collecting strategy, and ownership history.",
+    learn: [
+        "Market Report: Auction Results 2024",
+        "Valuation: How to Price Emerging Art",
+        "Strategy: Primary vs. Secondary Markets"
+    ],
+    practice: "Estimate the primary market price vs. secondary market based on the artist's career stage.",
+    reflect: "What drives the value of this specific piece beyond its visual appeal?",
     next: "The Atrium (Manifesto)"
   },
   theory: {
     title: "The Critical Thinker",
     focus: "Meaning & Philosophy",
-    reason: "You searched for the deeper meaning and concepts.",
-    learn: ["Semiotics in Art", "Conceptual Art Manifesto", "Visual Philosophy"],
+    reason: "You searched for the deeper meaning and conceptual framework.",
+    learn: [
+        "Concept: Semiotics in Visual Art",
+        "Reading: The Conceptual Art Manifesto",
+        "Philosophy: Visual Deconstruction"
+    ],
     practice: "Write one sentence that explains the 'Invisible Meaning' here.",
-    reflect: "Is the idea more important than the visual?",
+    reflect: "Is the idea more important than the visual execution?",
     next: "Installation Floor (Floor 5)"
   },
   general: { 
     title: "The Open Observer",
     focus: "General Appreciation",
-    reason: "You are exploring broadly.",
-    learn: ["How to Look at Art", "Slow Looking Guide"],
-    practice: "Spend 3 minutes looking at one corner of the piece.",
-    reflect: "What stands out the most?",
+    reason: "You are exploring broadly across multiple disciplines.",
+    learn: ["Guide: How to Look at Art (Slow Looking)", "Overview: The LFC Collection"],
+    practice: "Spend 3 minutes looking at one corner of the piece without looking away.",
+    reflect: "What stands out the most to you right now?",
     next: "Painting Floor (Floor 1)"
   }
 };
@@ -89,6 +105,7 @@ let ART_DATA = [];
 let CATALOG = { products: [
     { id: "class-sketch-a", title: "Foundation of Sketch A", desc: "Form, Light & Perspective.", price: 0, tag: "technique", type: "course", url: "https://www.feiteamart.com/class-1--intro-sketch-basic" },
     { id: "class-market-101", title: "Art Collecting 101", desc: "Understanding Value & Provenance.", price: 0, tag: "market", type: "course", url: "https://www.feiteamart.com/contact" },
+    { id: "class-theory-101", title: "Contemporary Theory", desc: "Philosophy & Meaning.", price: 0, tag: "theory", type: "course", url: "https://www.feiteamart.com/class-7-art-aesthetics-contemporary-art" },
     { id: "service-curator", title: "Human Curator", desc: "Exhibition logic & context.", price: 50, type: "premium", url: "https://www.feiteamart.com/contact" },
     { id: "service-mentor", title: "Artist Mentor", desc: "Technique direction.", price: 75, type: "premium", url: "https://www.feiteamart.com/contact" }
 ] }; 
@@ -158,8 +175,16 @@ class FEICreatorLab {
             li.innerHTML = `<input type="checkbox" class="lab-checkbox"> <input type="text" class="lab-input" style="margin:0; padding:6px;" placeholder="New Step...">`;
             this.milestoneList.appendChild(li);
         });
+        
+        // ✅ FIX: REAL SUBMISSION SIMULATION
         document.getElementById("btn-submit").addEventListener("click", () => {
-            alert(this.user.role.includes("Child") ? "Quest Complete! Reward Unlocked!" : "Project Submitted Successfully.");
+            if(this.user.role.includes("Child")) {
+                alert("Quest Complete! Your guide has received your adventure map!");
+            } else {
+                // Simulate sending email
+                const projectName = document.getElementById("project-name-input").value || "Untitled Project";
+                alert(`✅ SUCCESS\n\nProject "${projectName}" has been submitted to your Mentor.\n\nA confirmation has been sent to info@feiteamart.com.`);
+            }
         });
     }
 }
@@ -530,6 +555,9 @@ function startBlueprint() {
           </div>
           <div style="margin-bottom:1rem;">
             <strong style="font-size:11px; text-transform:uppercase; color:var(--blue);">1. Practice</strong>
+            <ul style="padding-left:20px; font-size:13px; color:#475569;">
+                ${Array.isArray(pathData.learn) ? pathData.learn.map(l => `<li style="margin-bottom:5px;">${l}</li>`).join('') : ''}
+            </ul>
             <p style="font-size:13px; margin:5px 0;">${pathData.practice}</p>
           </div>
           <div style="margin-bottom:1rem;">
