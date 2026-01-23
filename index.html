@@ -95,9 +95,9 @@
     /* FIXED CLOSE BUTTON (Prevent Overlap) */
     .panel-close { position: absolute; top: 1rem; right: 1rem; font-size: 2rem; cursor: pointer; color: var(--blue); font-weight: 800; z-index: 600; padding: 10px; }
     
-    /* PIN BUTTON */
-    .pin-btn { background: var(--ok); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer; float: right; margin-top: 5px; margin-right: 40px; /* Space for Close Button */ }
-    .pin-btn:hover { background: #16a34a; }
+    /* ✅ FIX: BUTTON RENAMED & SIZED */
+    .pin-btn { background: var(--ok); color: #fff; border: none; padding: 8px 16px; border-radius: 50px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing:1px; cursor: pointer; float: right; margin-top: 5px; margin-right: 40px; box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3); }
+    .pin-btn:hover { background: #16a34a; transform:translateY(-1px); }
 
     .msg { padding: 14px 16px; border-radius: 14px; font-size: 14px; line-height: 1.55; max-width: 88%; animation: fadeUp 0.3s ease; white-space: pre-wrap; font-family: 'Montserrat', sans-serif; margin-bottom: 10px; }
     .msg-ai { background: #f1f5f9; color: #334155; align-self: flex-start; border-left: 3px solid var(--blue); }
@@ -264,7 +264,7 @@
         <div class="lab-section">
             <h3 id="label-refs">Reference Board</h3>
             <div id="lab-gallery-pins" class="lab-grid">
-                <div class="lab-empty-state" style="grid-column: span 2; font-size:11px; opacity:0.6;">No artworks pinned yet. Click "Save" in the gallery.</div>
+                <div class="lab-empty-state" style="grid-column: span 2; font-size:11px; opacity:0.6;">No artworks pinned yet. Click "Start LFC Project" in the chat.</div>
             </div>
         </div>
         <div class="lab-section">
@@ -301,7 +301,7 @@
     <div id="ai-panel">
       <div class="ai-header">
         <span class="panel-close" onclick="exitFocus()">×</span>
-        <button class="pin-btn" onclick="pinCurrentArt()">📌 Save</button>
+        <button class="pin-btn" onclick="pinCurrentArt()">📌 Start LFC Project</button>
         <img id="ai-img" class="ai-img-preview" src="" />
         <h2 style="font-weight:800; margin:0; color:var(--blue); font-size:1.4rem;" id="ai-title">Untitled</h2>
         <div style="font-size:11px; text-transform:uppercase; color:var(--gray); margin-top:5px; font-weight:600;" id="ai-meta">Artist • Year</div>
