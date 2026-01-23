@@ -3,11 +3,13 @@
 // ==========================================
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 
-let userProfile = { role: [], goal: [], ageGroup: "Adult" };
+// User Profile (Will be populated by Registration)
+let userProfile = { role: [], goal: [], ageGroup: "Adult", age: 25 }; 
 
 // ✅ DATA ENGINE: Tracks the 4 Pillars
 let intentScores = { technique: 0, history: 0, market: 0, theory: 0 };
 let questionCount = 0; 
+let discoveryProgress = 0; // Gamification
 
 // ✅ CONTENT ENGINE: The "Two-Lane" Journey Data (Free Path)
 const LEARNING_PATHS = {
@@ -66,14 +68,14 @@ const ATRIUM_CONFIG = {
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
-// 12 FLOORS (DESIGN PRESERVED)
+// 12 FLOORS
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
   { id: 2, name: "Print", type: "standard" },
   { id: 3, name: "Photography", type: "standard" },
-  { id: 4, name: "Sculpture", type: "standard" },
-  { id: 5, name: "Installation", type: "installation" },
+  { id: 4, name: "Sculpture", type: "sculpture" },
+  { id: 5, name: "Installation", type: "sculpture" },
   { id: 6, name: "Ceramics", type: "standard" },
   { id: 7, name: "Design", type: "standard" },
   { id: 8, name: "Animation", type: "standard" },
@@ -91,7 +93,72 @@ let isInputLocked = false;
 let isSending = false;
 
 // ==========================================
-// 2. REGISTRATION
+// 2. CREATOR LAB LOGIC (NEW)
+// ==========================================
+const LAB_TERMS = {
+    pro: { trigger: "Creator Lab", title: "Project Charter", name: "Project Title", goal: "Strategic Objective", refs: "Reference Board", steps: "Milestones", addStep: "+ Add Milestone", help: "Contact Mentor", submit: "Submit Proposal" },
+    explorer: { trigger: "My Backpack", title: "Mission Card", name: "Adventure Name", goal: "My Quest Goal", refs: "Collected Treasures", steps: "Adventure Map", addStep: "+ Next Step", help: "Ask Guide", submit: "Complete Quest" }
+};
+
+class FEICreatorLab {
+    constructor(userProfile) {
+        this.user = userProfile;
+        this.isOpen = false;
+        this.projectData = { name: "", goal: "", milestones: [], references: [] };
+        this.overlay = document.getElementById("creator-lab-overlay");
+        this.trigger = document.getElementById("lab-trigger");
+        this.refContainer = document.getElementById("lab-gallery-pins");
+        this.milestoneList = document.getElementById("lab-milestone-list");
+        this.init();
+    }
+    init() {
+        this.renderInterface();
+        this.setupEventListeners();
+    }
+    renderInterface() {
+        const isChild = this.user.role.includes("Child");
+        const mode = isChild ? "explorer" : "pro";
+        const terms = LAB_TERMS[mode];
+        document.body.classList.remove("theme-pro", "theme-explorer");
+        document.body.classList.add(isChild ? "theme-explorer" : "theme-pro");
+        document.getElementById("lab-trigger-text").innerText = terms.trigger;
+        document.getElementById("lab-title").innerText = terms.title;
+        document.getElementById("label-name").innerText = terms.name;
+        document.getElementById("label-goal").innerText = terms.goal;
+        document.getElementById("label-refs").innerText = terms.refs;
+        document.getElementById("label-steps").innerText = terms.steps;
+        document.getElementById("btn-add-step").innerText = terms.addStep;
+        document.getElementById("btn-help").innerText = terms.help;
+        document.getElementById("btn-submit").innerText = terms.submit;
+    }
+    toggle() {
+        this.isOpen = !this.isOpen;
+        if(this.isOpen) this.overlay.classList.add("lab-visible"); else this.overlay.classList.remove("lab-visible");
+    }
+    pinFromGallery(artData) {
+        if (!artData || this.projectData.references.find(r => r.title === artData.title)) return;
+        this.projectData.references.push(artData);
+        const pin = document.createElement("div"); pin.className = "lab-pin-card";
+        const imgUrl = artData.img || "https://placehold.co/100x100/1e3a8a/ffffff?text=ART";
+        pin.innerHTML = `<img src="${imgUrl}" class="lab-pin-img"><span>${artData.title}</span>`;
+        const emptyState = this.refContainer.querySelector(".lab-empty-state"); if(emptyState) emptyState.remove();
+        this.refContainer.appendChild(pin);
+        if(!this.isOpen) { const icon = document.getElementById("lab-trigger-icon"); icon.innerText = "✨"; setTimeout(() => icon.innerText = "⚡", 1000); }
+    }
+    setupEventListeners() {
+        document.getElementById("btn-add-step").addEventListener("click", () => {
+            const li = document.createElement("li"); li.className = "lab-milestone-item";
+            li.innerHTML = `<input type="checkbox" class="lab-checkbox"> <input type="text" class="lab-input" style="margin:0; padding:6px;" placeholder="New Step...">`;
+            this.milestoneList.appendChild(li);
+        });
+        document.getElementById("btn-submit").addEventListener("click", () => {
+            alert(this.user.role.includes("Child") ? "Quest Complete! Reward Unlocked!" : "Project Submitted Successfully.");
+        });
+    }
+}
+
+// ==========================================
+// 3. REGISTRATION & INIT
 // ==========================================
 function showRegistration() {
   document.getElementById('entrance-content').style.opacity = '0';
@@ -103,7 +170,7 @@ function toggleOption(category, btn) {
   const txt = btn.innerText;
   const idx = userProfile[category].indexOf(txt);
   if(idx > -1) userProfile[category].splice(idx, 1); else userProfile[category].push(txt);
-
+  
   const enterBtn = document.getElementById('final-enter-btn');
   if(userProfile.role.length > 0 && userProfile.goal.length > 0) enterBtn.classList.add('ready');
   else enterBtn.classList.remove('ready');
@@ -112,6 +179,15 @@ function toggleOption(category, btn) {
 function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
+  
+  // Initialize Lab based on User Profile
+  window.creatorLab = new FEICreatorLab(userProfile);
+  
+  // Onboarding
+  setTimeout(() => {
+    document.getElementById('onboarding-tip').classList.add('visible');
+    setTimeout(() => { document.getElementById('onboarding-tip').classList.remove('visible'); }, 5000);
+  }, 3000);
   setTimeout(() => {
     document.getElementById('entrance-layer').style.display = 'none';
     document.getElementById('reg-panel').style.display = 'none';
@@ -119,7 +195,7 @@ function completeRegistration() {
 }
 
 // ==========================================
-// 3. THREE.JS SCENE (DESIGN PRESERVED)
+// 4. THREE.JS SCENE
 // ==========================================
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
@@ -149,7 +225,7 @@ const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = "anonymous";
 
 // ==========================================
-// 4. GALLERY BUILDER
+// 5. GALLERY BUILDER
 // ==========================================
 const floorHeight = 40;
 
@@ -191,10 +267,36 @@ function buildGallery() {
       createArtFrame(group, 18.5, y+6, -10, -Math.PI/2, 10, 8, { title: "Manifesto", artist: "LFC System", texture: createTextTexture(ATRIUM_CONFIG) });
       createArtFrame(group, 0, y+7, -50, 0, 12, 6, { title: "LFC SYSTEM", artist: "FEI TeamArt", img: "https://placehold.co/1200x600/1e3a8a/ffffff?text=LFC+ART+SPACE" });
     }
-    if (f.type === "installation") createPlinths(group, y);
 
     const arts = ART_DATA.filter(a => Number(a.floor) === f.id);
-    if(arts.length > 0) {
+    
+    // SCULPTURE & INSTALLATION LOGIC (Floors 4, 5)
+    if (f.type === "sculpture") {
+        arts.forEach((data, idx) => {
+            const z = -40 + (idx * 15);
+            // Plinth
+            const plinth = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 3), matPlinth);
+            plinth.position.set(0, y + 0.75, z);
+            group.add(plinth);
+            // 2.5D Standee
+            const standeeGroup = new THREE.Group();
+            standeeGroup.position.set(0, y + 2.5, z);
+            const geom = new THREE.PlaneGeometry(3, 3);
+            const mat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+            if (data.img) textureLoader.load(data.img, (tex) => { mat.map = tex; mat.needsUpdate = true; });
+            const mesh = new THREE.Mesh(geom, mat);
+            standeeGroup.add(mesh);
+            standeeGroup.rotation.y = Math.random() * 0.5 - 0.25;
+            // Hitbox
+            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 4), new THREE.MeshBasicMaterial({ visible: false }));
+            hitbox.userData = { type: "art", data: data, viewPos: { x: 5, y: y + 4, z: z + 5 } };
+            interactables.push(hitbox);
+            standeeGroup.add(hitbox);
+            group.add(standeeGroup);
+        });
+    } 
+    // STANDARD WALL HANGING
+    else if (arts.length > 0) {
       const left = []; const right = []; arts.forEach((d, i) => { (i % 2 === 0) ? right.push(d) : left.push(d); });
       let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; }
       const zMin = -50, zMax = 50;
@@ -205,13 +307,6 @@ function buildGallery() {
     }
     scene.add(group);
     const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
-  });
-}
-
-function createPlinths(group, y) {
-  [0, -15, 15].forEach(z => {
-    const plinth = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), matPlinth); plinth.position.set(0, y + 0.6, z); group.add(plinth);
-    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 5), new THREE.MeshBasicMaterial({ visible:false })); hitbox.position.set(0, y+3, z); hitbox.userData = { type: "art", data: { title: "Installation View", artist: "3D Works", img: "" }, viewPos: { x: 8, y: y+5, z: z+8 } }; interactables.push(hitbox); group.add(hitbox);
   });
 }
 
@@ -228,7 +323,7 @@ function createArtFrame(group, x, y, z, rot, w, h, data) {
 }
 
 // ==========================================
-// 5. PHYSICS NAVIGATION
+// 6. PHYSICS NAVIGATION
 // ==========================================
 const velocity = new THREE.Vector3(); const speed = 1.8; const friction = 0.8; const lookSpeed = 0.002;
 let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
@@ -238,13 +333,13 @@ function updatePhysics() { if (isInputLocked) return; velocity.x *= friction; ve
 function getForwardVector() { const d=new THREE.Vector3(); camera.getWorldDirection(d); d.y=0; d.normalize(); return d; }
 function getRightVector() { const f=getForwardVector(); return new THREE.Vector3().crossVectors(f, new THREE.Vector3(0,1,0)).normalize(); }
 let isDragging=false, prevMouse={x:0,y:0};
-document.addEventListener('pointerdown', (e)=>{ if(!e.target.closest('button') && !e.target.closest('#ai-panel') && !e.target.closest('#entrance-layer') && !e.target.closest('.floor-item')) { isDragging=true; prevMouse={x:e.clientX,y:e.clientY}; }});
+document.addEventListener('pointerdown', (e)=>{ if(!e.target.closest('button') && !e.target.closest('#ai-panel') && !e.target.closest('#entrance-layer') && !e.target.closest('.floor-item') && !e.target.closest('#creator-lab-overlay')) { isDragging=true; prevMouse={x:e.clientX,y:e.clientY}; }});
 document.addEventListener('pointerup', ()=>{isDragging=false;});
 document.addEventListener('pointermove', (e)=>{ if(!isDragging || isInputLocked) return; const dx=e.clientX-prevMouse.x, dy=e.clientY-prevMouse.y; const euler=new THREE.Euler(0,0,0,'YXZ'); euler.setFromQuaternion(camera.quaternion); euler.y-=dx*lookSpeed; euler.x-=dy*lookSpeed; euler.x=Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, euler.x)); camera.quaternion.setFromEuler(euler); prevMouse={x:e.clientX,y:e.clientY}; });
 window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;if(d==='l')moveLeft=true;if(d==='r')moveRight=true;}; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
 // ==========================================
-// 6. INTERACTION & AI
+// 7. INTERACTION & AI
 // ==========================================
 function goToFloor(id) { 
   closeBlueprint(); exitFocus(); 
@@ -254,7 +349,15 @@ function goToFloor(id) {
 
 function focusArt(userData) {
   if (userData.data.isExternal && userData.data.link) { window.open(userData.data.link, "_blank"); return; }
-  currentOpenArt = userData.data; isInputLocked = true; document.body.classList.add("ai-open"); camera.userData.returnPos = camera.position.clone(); camera.userData.returnQuat = camera.quaternion.clone(); const t = userData.viewPos; new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
+  currentOpenArt = userData.data; 
+  isInputLocked = true; 
+  document.body.classList.add("ai-open"); 
+  camera.userData.returnPos = camera.position.clone(); 
+  camera.userData.returnQuat = camera.quaternion.clone(); 
+  const t = userData.viewPos; 
+  new TWEEN.Tween(camera.position).to({ x:t.x, y:t.y, z:t.z }, 1800).easing(TWEEN.Easing.Cubic.Out).onComplete(()=>{openAI(userData.data); document.getElementById("back-btn").classList.add("visible");}).start(); 
+  const dum = new THREE.Object3D(); dum.position.copy(t); dum.lookAt(userData.data.x||t.x, t.y, userData.data.z||t.z); 
+  new TWEEN.Tween(camera.quaternion).to({ x:dum.quaternion.x, y:dum.quaternion.y, z:dum.quaternion.z, w:dum.quaternion.w }, 1500).easing(TWEEN.Easing.Cubic.Out).start();
 }
 
 function exitFocus() { 
@@ -269,8 +372,22 @@ function openAI(data) {
   
   chatHistory = []; questionCount = 0;
   document.getElementById("chat-stream").innerHTML = "";
-  addChatMsg("ai", "I am observing this piece with you. What do you see?");
+  
+  // Adaptive Welcome
+  let welcomeMsg = "I am observing this piece with you. What do you see?";
+  if (userProfile.role.includes("Child")) welcomeMsg = "Hi! I'm your art buddy. Does this look like anything you've seen before?";
+  else if (userProfile.role.includes("Collector")) welcomeMsg = "Welcome. Shall we analyze the provenance and market value?";
+  
+  addChatMsg("ai", welcomeMsg);
 }
+
+// Global function for the Pin button in HTML
+window.pinCurrentArt = function() {
+    if(window.creatorLab && currentOpenArt) {
+        window.creatorLab.pinFromGallery(currentOpenArt);
+        window.creatorLab.toggle(); // Open lab to show the user
+    }
+};
 
 async function sendChat() {
   if (isSending) return;
@@ -283,15 +400,24 @@ async function sendChat() {
   addChatMsg("user",txt); i.value="";
   
   questionCount++;
+  // Update Discovery Progress Bar
+  discoveryProgress = Math.min(100, discoveryProgress + 15);
+  document.getElementById("discovery-fill").style.width = discoveryProgress + "%";
+
   chatHistory.push({ role: "user", parts: [{ text: txt }] });
 
   try {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
     
-    const thinkId = addChatMsg("ai", "...");
+    let systemInstruction = "You are a helpful art docent.";
+    if (userProfile.role.includes("Child")) systemInstruction = "You are a friendly, encouraging guide for a child. Use simple metaphors. Ask how it makes them feel.";
+    else if (userProfile.role.includes("Student")) systemInstruction = "You are a studio mentor. Focus on technique, process, and how they can create this.";
+    else if (userProfile.role.includes("Collector")) systemInstruction = "You are an art market analyst. Focus on value, history, and rarity.";
+
+    const thinkId = addChatMsg("ai", "..."); 
     
     const res = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
-      message:txt, history:chatHistory, art: artPayload, userProfile: userProfile 
+      message:txt, history:chatHistory, art: artPayload, userProfile: userProfile, systemInstruction: systemInstruction
     })});
     
     if(!res.ok) throw new Error(res.status);
@@ -354,30 +480,25 @@ function sendDataBeacon() {
   console.log("📡 DATA BEACON SENT:", { session: "user_" + Date.now(), interests: intentScores, questions: questionCount });
 }
 
-// ✅ NEW TWO-LANE JOURNEY LAYOUT (Smart Recommendation)
+// ✅ NEW TWO-LANE JOURNEY LAYOUT
 function startBlueprint() {
   document.getElementById("blueprint").classList.add("active");
   const container = document.getElementById("bp-products");
   container.innerHTML = "<h3 style='text-align:center; color:var(--blue);'>Curating your path...</h3>";
   
   setTimeout(() => {
-    // 1. Determine Winning Interest
     let maxScore = 0; let interest = "general";
     for(const [key, val] of Object.entries(intentScores)) {
         if(val > maxScore) { maxScore = val; interest = key; }
     }
     const pathData = LEARNING_PATHS[interest] || LEARNING_PATHS.general;
 
-    // 2. Find Best Matching Course (The Smart Recommendation)
     let recommendedCourse = null;
     if (CATALOG.products) {
-        // Try to find a course that matches their interest tag
         recommendedCourse = CATALOG.products.find(p => p.type === "course" && p.tag === interest);
-        // Fallback to "Sketch A" if no exact match
         if (!recommendedCourse) recommendedCourse = CATALOG.products.find(p => p.id === "class-sketch-a");
     }
 
-    // 3. Get Premium Services
     let premiumHtml = "";
     if (CATALOG.products) {
         const premiums = CATALOG.products.filter(p => p.type === "premium");
@@ -391,33 +512,26 @@ function startBlueprint() {
         });
     }
 
-    // 4. Render Two-Lane Layout
     let html = `
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem; width:100%;">
-        
         <div style="background:#f8fafc; padding:2rem; border-radius:16px; border:1px solid #e2e8f0;">
           <h2 style="color:var(--blue); font-size:1.8rem; margin:0 0 5px 0;">LFC Discovery Method</h2>
           <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--ok); font-weight:700; margin-bottom:1.5rem;">YOUR PERSONAL GUIDE</div>
-          
           <div style="margin-bottom:1rem;">
             <strong style="font-size:12px; color:var(--blue);">Observation Focus: ${pathData.focus}</strong>
             <p style="font-size:13px; margin:5px 0; color:#475569;">${pathData.reason}</p>
           </div>
-
           <div style="margin-bottom:1rem;">
             <strong style="font-size:11px; text-transform:uppercase; color:var(--blue);">1. Practice</strong>
             <p style="font-size:13px; margin:5px 0;">${pathData.practice}</p>
           </div>
-
           <div style="margin-bottom:1rem;">
             <strong style="font-size:11px; text-transform:uppercase; color:var(--blue);">2. Reflect</strong>
             <p style="font-size:13px; margin:5px 0;">${pathData.reflect}</p>
           </div>
         </div>
-
         <div style="background:#fff; padding:2rem; border-radius:16px; border:1px solid #e2e8f0; position:relative; overflow:hidden;">
           <div style="position:absolute; top:0; right:0; background:var(--blue); color:#fff; font-size:9px; padding:5px 10px; border-radius:0 0 0 8px; font-weight:700;">BACKSTAGE</div>
-          
           <div style="margin-bottom:2rem; padding-bottom:1.5rem; border-bottom:1px solid #e2e8f0;">
              <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">Recommended Class</div>
              <div style="display:flex; align-items:center; gap:15px;">
@@ -428,11 +542,8 @@ function startBlueprint() {
                 <button class="plan-btn" style="width:auto; padding:10px 20px; font-size:11px;" onclick="window.open('${recommendedCourse ? recommendedCourse.url : '#'}', '_blank')">View Class</button>
              </div>
           </div>
-
           <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">Ask an Expert</div>
-          <div style="display:flex; flex-direction:column; gap:10px;">
-            ${premiumHtml}
-          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">${premiumHtml}</div>
         </div>
       </div>
     `;
@@ -444,7 +555,7 @@ function startBlueprint() {
 }
 
 // ==========================================
-// 7. INIT
+// 8. INIT
 // ==========================================
 function animate(){ requestAnimationFrame(animate); TWEEN.update(); updatePhysics(); renderer.render(scene, camera); }
 animate();
