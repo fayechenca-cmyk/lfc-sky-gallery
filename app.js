@@ -10,7 +10,7 @@ let intentScores = { technique: 0, history: 0, market: 0, theory: 0 };
 let questionCount = 0; 
 let discoveryProgress = 0; 
 
-// ✅ CONTENT ENGINE: The "Two-Lane" Journey Data (Free Path - ENHANCED)
+// ✅ CONTENT ENGINE: Enhanced Descriptions
 const LEARNING_PATHS = {
   technique: {
     title: "The Material Observer",
@@ -83,7 +83,6 @@ const ATRIUM_CONFIG = {
   method: "Collection-to-Creation Framework", steps: "Visit → Analyze → Create"
 };
 
-// 12 FLOORS
 const FLOORS = [
   { id: 0, name: "The Atrium", type: "reception" },
   { id: 1, name: "Painting / Fine Art", type: "fineart" },
@@ -97,11 +96,11 @@ const FLOORS = [
   { id: 9, name: "Film / Video", type: "darkroom" },
   { id: 10, name: "Performance", type: "standard" },
   { id: 11, name: "Sketch", type: "standard" },
-  { id: 12, name: "Contemporary Lens", type: "standard" },
+  { id: 12, name: "Contemporary Lens", type: "standard" }
 ];
 
 let ART_DATA = []; 
-// ✅ FIXED CATALOG: Added "Market" tag to a course so recommendation works
+// ✅ CATALOG: Added "Market" tag so market questions get a match
 let CATALOG = { products: [
     { id: "class-sketch-a", title: "Foundation of Sketch A", desc: "Form, Light & Perspective.", price: 0, tag: "technique", type: "course", url: "https://www.feiteamart.com/class-1--intro-sketch-basic" },
     { id: "class-market-101", title: "Art Collecting 101", desc: "Understanding Value & Provenance.", price: 0, tag: "market", type: "course", url: "https://www.feiteamart.com/contact" },
@@ -175,13 +174,10 @@ class FEICreatorLab {
             li.innerHTML = `<input type="checkbox" class="lab-checkbox"> <input type="text" class="lab-input" style="margin:0; padding:6px;" placeholder="New Step...">`;
             this.milestoneList.appendChild(li);
         });
-        
-        // ✅ FIX: REAL SUBMISSION SIMULATION
         document.getElementById("btn-submit").addEventListener("click", () => {
             if(this.user.role.includes("Child")) {
                 alert("Quest Complete! Your guide has received your adventure map!");
             } else {
-                // Simulate sending email
                 const projectName = document.getElementById("project-name-input").value || "Untitled Project";
                 alert(`✅ SUCCESS\n\nProject "${projectName}" has been submitted to your Mentor.\n\nA confirmation has been sent to info@feiteamart.com.`);
             }
@@ -212,10 +208,7 @@ function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
   
-  // ✅ FIX: INITIALIZE LAB BEFORE SHOWING BUTTON
   window.creatorLab = new FEICreatorLab(userProfile);
-  
-  // ✅ FIX: REVEAL BUTTON NOW
   document.getElementById("lab-trigger").style.display = "flex";
   
   setTimeout(() => {
@@ -304,7 +297,6 @@ function buildGallery() {
 
     const arts = ART_DATA.filter(a => Number(a.floor) === f.id);
     
-    // SCULPTURE & INSTALLATION LOGIC (Floors 4, 5)
     if (f.type === "sculpture") {
         arts.forEach((data, idx) => {
             const z = -40 + (idx * 15);
@@ -525,10 +517,24 @@ function startBlueprint() {
     const pathData = LEARNING_PATHS[interest] || LEARNING_PATHS.general;
 
     let recommendedCourse = null;
+    let courseDesc = "";
+    let courseTitle = "";
+    let courseUrl = "#";
+
+    // ✅ LOGIC: FIND MATCH OR OFFER CUSTOM DESIGN
     if (CATALOG.products) {
         recommendedCourse = CATALOG.products.find(p => p.type === "course" && p.tag === interest);
-        // Fallback
-        if (!recommendedCourse) recommendedCourse = CATALOG.products.find(p => p.id === "class-sketch-a");
+    }
+
+    if (recommendedCourse) {
+        courseTitle = recommendedCourse.title;
+        courseDesc = recommendedCourse.desc;
+        courseUrl = recommendedCourse.url;
+    } else {
+        // Fallback to "Custom Design"
+        courseTitle = "Custom Curriculum Design";
+        courseDesc = "We don't have a pre-made class for this specific interest yet. Work with a mentor to build your own personalized syllabus.";
+        courseUrl = "https://www.feiteamart.com/contact";
     }
 
     let premiumHtml = "";
@@ -571,10 +577,10 @@ function startBlueprint() {
              <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">Recommended Class</div>
              <div style="display:flex; align-items:center; gap:15px;">
                 <div style="flex:1;">
-                   <strong style="color:var(--blue); font-size:1.1rem;">${recommendedCourse ? recommendedCourse.title : 'Art Class'}</strong>
-                   <p style="font-size:11px; color:#64748b; margin:5px 0;">${recommendedCourse ? recommendedCourse.desc : 'Explore our catalog'}</p>
+                   <strong style="color:var(--blue); font-size:1.1rem;">${courseTitle}</strong>
+                   <p style="font-size:11px; color:#64748b; margin:5px 0;">${courseDesc}</p>
                 </div>
-                <button class="plan-btn" style="width:auto; padding:10px 20px; font-size:11px;" onclick="window.open('${recommendedCourse ? recommendedCourse.url : '#'}', '_blank')">View Class</button>
+                <button class="plan-btn" style="width:auto; padding:10px 20px; font-size:11px;" onclick="window.open('${courseUrl}', '_blank')">View Options</button>
              </div>
           </div>
           <div style="text-transform:uppercase; font-size:10px; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">Ask an Expert</div>
