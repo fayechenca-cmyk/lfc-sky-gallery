@@ -3,13 +3,12 @@
 // ==========================================
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 
-// User Profile (Will be populated by Registration)
-let userProfile = { role: [], goal: [], ageGroup: "Adult", age: 25 }; 
+let userProfile = { role: [], goal: [], ageGroup: "Adult", age: 25 };
 
 // ✅ DATA ENGINE: Tracks the 4 Pillars
 let intentScores = { technique: 0, history: 0, market: 0, theory: 0 };
 let questionCount = 0; 
-let discoveryProgress = 0; // Gamification
+let discoveryProgress = 0; 
 
 // ✅ CONTENT ENGINE: The "Two-Lane" Journey Data (Free Path)
 const LEARNING_PATHS = {
@@ -85,7 +84,15 @@ const FLOORS = [
   { id: 12, name: "Contemporary Lens", type: "standard" },
 ];
 
-let ART_DATA = []; let CATALOG = { products: [] }; 
+let ART_DATA = []; 
+// ✅ FIXED CATALOG: Added "Market" tag to a course so recommendation works
+let CATALOG = { products: [
+    { id: "class-sketch-a", title: "Foundation of Sketch A", desc: "Form, Light & Perspective.", price: 0, tag: "technique", type: "course", url: "https://www.feiteamart.com/class-1--intro-sketch-basic" },
+    { id: "class-market-101", title: "Art Collecting 101", desc: "Understanding Value & Provenance.", price: 0, tag: "market", type: "course", url: "https://www.feiteamart.com/contact" },
+    { id: "service-curator", title: "Human Curator", desc: "Exhibition logic & context.", price: 50, type: "premium", url: "https://www.feiteamart.com/contact" },
+    { id: "service-mentor", title: "Artist Mentor", desc: "Technique direction.", price: 75, type: "premium", url: "https://www.feiteamart.com/contact" }
+] }; 
+
 let chatHistory = []; 
 let currentOpenArt = null;
 const interactables = [];
@@ -93,7 +100,7 @@ let isInputLocked = false;
 let isSending = false;
 
 // ==========================================
-// 2. CREATOR LAB LOGIC (NEW)
+// 2. CREATOR LAB LOGIC
 // ==========================================
 const LAB_TERMS = {
     pro: { trigger: "Creator Lab", title: "Project Charter", name: "Project Title", goal: "Strategic Objective", refs: "Reference Board", steps: "Milestones", addStep: "+ Add Milestone", help: "Contact Mentor", submit: "Submit Proposal" },
@@ -180,10 +187,12 @@ function completeRegistration() {
   if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
   document.body.classList.add('doors-open');
   
-  // Initialize Lab based on User Profile
+  // ✅ FIX: INITIALIZE LAB BEFORE SHOWING BUTTON
   window.creatorLab = new FEICreatorLab(userProfile);
   
-  // Onboarding
+  // ✅ FIX: REVEAL BUTTON NOW
+  document.getElementById("lab-trigger").style.display = "flex";
+  
   setTimeout(() => {
     document.getElementById('onboarding-tip').classList.add('visible');
     setTimeout(() => { document.getElementById('onboarding-tip').classList.remove('visible'); }, 5000);
@@ -274,11 +283,9 @@ function buildGallery() {
     if (f.type === "sculpture") {
         arts.forEach((data, idx) => {
             const z = -40 + (idx * 15);
-            // Plinth
             const plinth = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 3), matPlinth);
             plinth.position.set(0, y + 0.75, z);
             group.add(plinth);
-            // 2.5D Standee
             const standeeGroup = new THREE.Group();
             standeeGroup.position.set(0, y + 2.5, z);
             const geom = new THREE.PlaneGeometry(3, 3);
@@ -287,7 +294,6 @@ function buildGallery() {
             const mesh = new THREE.Mesh(geom, mat);
             standeeGroup.add(mesh);
             standeeGroup.rotation.y = Math.random() * 0.5 - 0.25;
-            // Hitbox
             const hitbox = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 4), new THREE.MeshBasicMaterial({ visible: false }));
             hitbox.userData = { type: "art", data: data, viewPos: { x: 5, y: y + 4, z: z + 5 } };
             interactables.push(hitbox);
@@ -295,7 +301,6 @@ function buildGallery() {
             group.add(standeeGroup);
         });
     } 
-    // STANDARD WALL HANGING
     else if (arts.length > 0) {
       const left = []; const right = []; arts.forEach((d, i) => { (i % 2 === 0) ? right.push(d) : left.push(d); });
       let w = 4, h = 5; if(f.type === "darkroom") { w = 8; h = 4.5; }
@@ -381,11 +386,11 @@ function openAI(data) {
   addChatMsg("ai", welcomeMsg);
 }
 
-// Global function for the Pin button in HTML
+// Global function for the Pin button
 window.pinCurrentArt = function() {
     if(window.creatorLab && currentOpenArt) {
         window.creatorLab.pinFromGallery(currentOpenArt);
-        window.creatorLab.toggle(); // Open lab to show the user
+        window.creatorLab.toggle();
     }
 };
 
@@ -397,10 +402,11 @@ async function sendChat() {
   const sendBtn = document.getElementById("send-btn");
   if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = "0.7"; }
 
-  addChatMsg("user",txt); i.value="";
+  // ✅ FIX: Force append User Message
+  addChatMsg("user",txt); 
+  i.value="";
   
   questionCount++;
-  // Update Discovery Progress Bar
   discoveryProgress = Math.min(100, discoveryProgress + 15);
   document.getElementById("discovery-fill").style.width = discoveryProgress + "%";
 
@@ -410,9 +416,8 @@ async function sendChat() {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
     
     let systemInstruction = "You are a helpful art docent.";
-    if (userProfile.role.includes("Child")) systemInstruction = "You are a friendly, encouraging guide for a child. Use simple metaphors. Ask how it makes them feel.";
-    else if (userProfile.role.includes("Student")) systemInstruction = "You are a studio mentor. Focus on technique, process, and how they can create this.";
-    else if (userProfile.role.includes("Collector")) systemInstruction = "You are an art market analyst. Focus on value, history, and rarity.";
+    if (userProfile.role.includes("Child")) systemInstruction = "You are a friendly, encouraging guide for a child.";
+    else if (userProfile.role.includes("Collector")) systemInstruction = "You are an art market analyst.";
 
     const thinkId = addChatMsg("ai", "..."); 
     
@@ -420,11 +425,12 @@ async function sendChat() {
       message:txt, history:chatHistory, art: artPayload, userProfile: userProfile, systemInstruction: systemInstruction
     })});
     
+    // ✅ FIX: Remove Thinking Dots AFTER response returns
+    const thinkEl = document.getElementById(thinkId); if(thinkEl) thinkEl.remove();
+
     if(!res.ok) throw new Error(res.status);
     const d=await res.json();
     
-    const thinkEl = document.getElementById(thinkId); if(thinkEl) thinkEl.remove();
-
     let cleanReply = d.reply;
     if (typeof cleanReply === 'string') {
         cleanReply = cleanReply.replace(/```json/gi, "").replace(/```/g, "").trim();
@@ -480,7 +486,7 @@ function sendDataBeacon() {
   console.log("📡 DATA BEACON SENT:", { session: "user_" + Date.now(), interests: intentScores, questions: questionCount });
 }
 
-// ✅ NEW TWO-LANE JOURNEY LAYOUT
+// ✅ NEW TWO-LANE JOURNEY LAYOUT (Smart Recommendation)
 function startBlueprint() {
   document.getElementById("blueprint").classList.add("active");
   const container = document.getElementById("bp-products");
@@ -496,6 +502,7 @@ function startBlueprint() {
     let recommendedCourse = null;
     if (CATALOG.products) {
         recommendedCourse = CATALOG.products.find(p => p.type === "course" && p.tag === interest);
+        // Fallback
         if (!recommendedCourse) recommendedCourse = CATALOG.products.find(p => p.id === "class-sketch-a");
     }
 
@@ -563,7 +570,8 @@ const cr=new THREE.Raycaster(), cm=new THREE.Vector2();
 document.addEventListener('pointerup',(e)=>{if(isDragging)return; cm.x=(e.clientX/window.innerWidth)*2-1; cm.y=-(e.clientY/window.innerHeight)*2+1; cr.setFromCamera(cm,camera); const h=cr.intersectObjects(interactables); if(h.length>0 && h[0].object.userData.type==="art") focusArt(h[0].object.userData); });
 
 fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.floors).forEach(f=>f.items.forEach(i=>ART_DATA.push(i))); else ART_DATA=d; buildGallery(); }).catch(()=>buildGallery());
-fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
+// Use internal catalog definition for reliability
+// fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
 
 window.showRegistration = showRegistration; window.toggleOption = toggleOption; window.completeRegistration = completeRegistration;
 document.getElementById("send-btn").onclick=sendChat; document.getElementById("user-input").onkeypress=(e)=>{if(e.key==="Enter")sendChat();};
