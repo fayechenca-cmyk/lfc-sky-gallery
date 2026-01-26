@@ -3,74 +3,59 @@
 // ==========================================
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 
-let userProfile = { role: [], goal: [], ageGroup: "Adult", age: 25 };
-
-// ✅ DATA ENGINE: Tracks the 4 Pillars
+// Initial State (Will be overwritten by Load)
+let userProfile = { role: [], goal: [], keywords: [], ageGroup: "Adult", age: 25 }; 
 let intentScores = { technique: 0, history: 0, market: 0, theory: 0 };
 let questionCount = 0; 
 let discoveryProgress = 0; 
+let userID = localStorage.getItem('lfc_uid') || 'guest_' + Date.now();
+localStorage.setItem('lfc_uid', userID);
 
-// ✅ CONTENT ENGINE: Enhanced Descriptions
+// ✅ CONTENT ENGINE (ENHANCED)
 const LEARNING_PATHS = {
   technique: {
     title: "The Material Observer",
     focus: "Technique & Process",
-    reason: "You showed strong interest in how artworks are physically constructed.",
-    learn: [
-        "Core Skill: Observing Brushwork Density",
-        "Deep Dive: The Chemistry of Pigments",
-        "Project: Textural Analysis"
-    ],
-    practice: "Zoom in on one specific brushstroke. Sketch its direction and speed on paper.",
-    reflect: "How does the material choice change the emotional weight of the work?",
+    reason: "Your keywords (Painting Tech, Sculpture) suggest a focus on making.",
+    learn: ["Impasto & Texture Guide", "The Chemistry of Pigments", "Brushwork Analysis"],
+    practice: "Zoom in on one brushstroke. Sketch its direction.",
+    reflect: "How does the material change the feeling?",
     next: "Sculpture Floor (Floor 4)"
   },
   history: {
     title: "The Contextual Historian",
     focus: "Time & Context",
-    reason: "You focused on the historical era and the artist's background.",
-    learn: [
-        "Timeline: Art in the Age of Revolution",
-        "Biography: The Artist's Early Life",
-        "Context: The World in 2025"
-    ],
-    practice: "Find one other artist from this same year in the gallery and compare them.",
+    reason: "Your keywords (History, Modern Art) suggest a focus on era.",
+    learn: ["Timeline of this Era", "Artist Biography", "World Context"],
+    practice: "Find one other artist from this same year.",
     reflect: "Why did the artist make this *then* and not now?",
     next: "Contemporary Lens (Floor 12)"
   },
   market: {
     title: "The Strategic Collector",
     focus: "Value & Provenance",
-    reason: "You inquired about value, collecting strategy, and ownership history.",
-    learn: [
-        "Market Report: Auction Results 2024",
-        "Valuation: How to Price Emerging Art",
-        "Strategy: Primary vs. Secondary Markets"
-    ],
-    practice: "Estimate the primary market price vs. secondary market based on the artist's career stage.",
-    reflect: "What drives the value of this specific piece beyond its visual appeal?",
+    reason: "Your keywords (Art Market, Investment) suggest a focus on value.",
+    learn: ["Auction Results 2024", "Valuation Strategy", "Edition Strategy"],
+    practice: "Estimate the primary market price vs. secondary market.",
+    reflect: "What drives the value of this piece?",
     next: "The Atrium (Manifesto)"
   },
   theory: {
     title: "The Critical Thinker",
     focus: "Meaning & Philosophy",
-    reason: "You searched for the deeper meaning and conceptual framework.",
-    learn: [
-        "Concept: Semiotics in Visual Art",
-        "Reading: The Conceptual Art Manifesto",
-        "Philosophy: Visual Deconstruction"
-    ],
-    practice: "Write one sentence that explains the 'Invisible Meaning' here.",
-    reflect: "Is the idea more important than the visual execution?",
+    reason: "Your keywords (Philosophy, Social Themes) suggest a focus on concepts.",
+    learn: ["Semiotics in Art", "Conceptual Manifesto", "Visual Philosophy"],
+    practice: "Write one sentence that explains the 'Invisible Meaning'.",
+    reflect: "Is the idea more important than the visual?",
     next: "Installation Floor (Floor 5)"
   },
   general: { 
     title: "The Open Observer",
     focus: "General Appreciation",
-    reason: "You are exploring broadly across multiple disciplines.",
-    learn: ["Guide: How to Look at Art (Slow Looking)", "Overview: The LFC Collection"],
-    practice: "Spend 3 minutes looking at one corner of the piece without looking away.",
-    reflect: "What stands out the most to you right now?",
+    reason: "You are exploring broadly.",
+    learn: ["How to Look at Art", "Slow Looking Guide"],
+    practice: "Spend 3 minutes looking at one corner.",
+    reflect: "What stands out the most?",
     next: "Painting Floor (Floor 1)"
   }
 };
@@ -100,7 +85,6 @@ const FLOORS = [
 ];
 
 let ART_DATA = []; 
-// ✅ CATALOG: Added "Market" tag so market questions get a match
 let CATALOG = { products: [
     { id: "class-sketch-a", title: "Foundation of Sketch A", desc: "Form, Light & Perspective.", price: 0, tag: "technique", type: "course", url: "https://www.feiteamart.com/class-1--intro-sketch-basic" },
     { id: "class-market-101", title: "Art Collecting 101", desc: "Understanding Value & Provenance.", price: 0, tag: "market", type: "course", url: "https://www.feiteamart.com/contact" },
@@ -139,7 +123,7 @@ class FEICreatorLab {
         this.setupEventListeners();
     }
     renderInterface() {
-        const isChild = this.user.role.includes("Child");
+        const isChild = this.user.role.includes("Child") || this.user.age < 12;
         const mode = isChild ? "explorer" : "pro";
         const terms = LAB_TERMS[mode];
         document.body.classList.remove("theme-pro", "theme-explorer");
@@ -186,31 +170,85 @@ class FEICreatorLab {
 }
 
 // ==========================================
-// 3. REGISTRATION & INIT
+// 3. REGISTRATION & PERSISTENCE
 // ==========================================
-function showRegistration() {
-  document.getElementById('entrance-content').style.opacity = '0';
-  setTimeout(() => { document.getElementById('reg-panel').classList.add('active'); }, 300);
+function saveProgress() {
+    const data = {
+        profile: userProfile,
+        scores: intentScores,
+        progress: discoveryProgress,
+        history: chatHistory
+    };
+    localStorage.setItem('lfc_progress_' + userID, JSON.stringify(data));
 }
 
-function toggleOption(category, btn) {
-  btn.classList.toggle('selected');
-  const txt = btn.innerText;
-  const idx = userProfile[category].indexOf(txt);
-  if(idx > -1) userProfile[category].splice(idx, 1); else userProfile[category].push(txt);
-  
-  const enterBtn = document.getElementById('final-enter-btn');
-  if(userProfile.role.length > 0 && userProfile.goal.length > 0) enterBtn.classList.add('ready');
-  else enterBtn.classList.remove('ready');
+function loadProgress() {
+    const saved = localStorage.getItem('lfc_progress_' + userID);
+    if(saved) {
+        const data = JSON.parse(saved);
+        userProfile = data.profile || userProfile;
+        intentScores = data.scores || intentScores;
+        discoveryProgress = data.progress || 0;
+        // Skip chat history visual reload for simplicity, but keep data
+        return true; // Found existing user
+    }
+    return false;
+}
+
+function showRegistration() {
+    if (loadProgress()) {
+        // Resume User
+        completeRegistration();
+    } else {
+        // New User
+        document.getElementById('entrance-content').style.opacity = '0';
+        setTimeout(() => { document.getElementById('reg-panel').classList.add('active'); }, 300);
+    }
+}
+
+function toggleOption(category, btn, val) {
+  if (category === 'age') {
+      // Single Select for Age
+      const sibs = btn.parentElement.querySelectorAll('.reg-btn');
+      sibs.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      userProfile.age = val;
+      userProfile.ageGroup = (val < 12) ? "Child" : "Adult";
+  } else {
+      // Multi Select
+      btn.classList.toggle('selected');
+      const txt = btn.innerText;
+      const idx = userProfile[category].indexOf(txt);
+      if(idx > -1) userProfile[category].splice(idx, 1); else userProfile[category].push(txt);
+  }
+  checkReady();
+}
+
+function toggleKeyword(btn) {
+    btn.classList.toggle('selected');
+    const txt = btn.innerText;
+    const idx = userProfile.keywords.indexOf(txt);
+    if(idx > -1) userProfile.keywords.splice(idx, 1); else userProfile.keywords.push(txt);
+    checkReady();
+}
+
+function checkReady() {
+    const btn = document.getElementById('final-enter-btn');
+    if(userProfile.role.length > 0 && userProfile.keywords.length > 0) btn.classList.add('ready');
+    else btn.classList.remove('ready');
 }
 
 function completeRegistration() {
-  if(userProfile.role.length === 0 || userProfile.goal.length === 0) return;
+  saveProgress(); // Save Data
   document.body.classList.add('doors-open');
   
+  // Initialize Lab based on User Profile
   window.creatorLab = new FEICreatorLab(userProfile);
   document.getElementById("lab-trigger").style.display = "flex";
   
+  // Update Bar
+  document.getElementById("discovery-fill").style.width = discoveryProgress + "%";
+
   setTimeout(() => {
     document.getElementById('onboarding-tip').classList.add('visible');
     setTimeout(() => { document.getElementById('onboarding-tip').classList.remove('visible'); }, 5000);
@@ -426,6 +464,7 @@ async function sendChat() {
   questionCount++;
   discoveryProgress = Math.min(100, discoveryProgress + 15);
   document.getElementById("discovery-fill").style.width = discoveryProgress + "%";
+  saveProgress(); // Save state on every chat
 
   chatHistory.push({ role: "user", parts: [{ text: txt }] });
 
@@ -511,9 +550,21 @@ function startBlueprint() {
   
   setTimeout(() => {
     let maxScore = 0; let interest = "general";
+    
+    // 1. Determine Winning Interest (From Chat Scores)
     for(const [key, val] of Object.entries(intentScores)) {
         if(val > maxScore) { maxScore = val; interest = key; }
     }
+
+    // 2. Fallback: Use Keywords if no chat score
+    if (maxScore === 0 && userProfile.keywords.length > 0) {
+        const k = userProfile.keywords;
+        if(k.includes("Art Market") || k.includes("Investment")) interest = "market";
+        else if(k.includes("History") || k.includes("Impressionism")) interest = "history";
+        else if(k.includes("Painting Tech") || k.includes("Sculpture")) interest = "technique";
+        else if(k.includes("Philosophy") || k.includes("Social Themes")) interest = "theory";
+    }
+
     const pathData = LEARNING_PATHS[interest] || LEARNING_PATHS.general;
 
     let recommendedCourse = null;
@@ -607,6 +658,15 @@ fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.
 // Use internal catalog definition for reliability
 // fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
 
-window.showRegistration = showRegistration; window.toggleOption = toggleOption; window.completeRegistration = completeRegistration;
+// Initialize Registration Check
+window.showRegistration = showRegistration; window.toggleOption = toggleOption; window.toggleKeyword = toggleKeyword; window.completeRegistration = completeRegistration;
 document.getElementById("send-btn").onclick=sendChat; document.getElementById("user-input").onkeypress=(e)=>{if(e.key==="Enter")sendChat();};
 window.startBlueprint=startBlueprint; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=goToFloor; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
+
+// Check if user is returning
+window.addEventListener('load', () => {
+    if(loadProgress()) {
+        console.log("Welcome back, " + userID);
+        completeRegistration(); // Skip registration UI if data exists
+    }
+});
