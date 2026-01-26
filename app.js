@@ -134,15 +134,16 @@ class FEICreatorLab {
         const terms = LAB_TERMS[mode];
         document.body.classList.remove("theme-pro", "theme-explorer");
         document.body.classList.add(isChild ? "theme-explorer" : "theme-pro");
-        document.getElementById("lab-trigger-text").innerText = terms.trigger;
-        document.getElementById("lab-title").innerText = terms.title;
-        document.getElementById("label-name").innerText = terms.name;
-        document.getElementById("label-goal").innerText = terms.goal;
-        document.getElementById("label-refs").innerText = terms.refs;
-        document.getElementById("label-steps").innerText = terms.steps;
-        document.getElementById("btn-add-step").innerText = terms.addStep;
-        document.getElementById("btn-help").innerText = terms.help;
-        document.getElementById("btn-submit").innerText = terms.submit;
+        
+        if(document.getElementById("lab-trigger-text")) document.getElementById("lab-trigger-text").innerText = terms.trigger;
+        if(document.getElementById("lab-title")) document.getElementById("lab-title").innerText = terms.title;
+        if(document.getElementById("label-name")) document.getElementById("label-name").innerText = terms.name;
+        if(document.getElementById("label-goal")) document.getElementById("label-goal").innerText = terms.goal;
+        if(document.getElementById("label-refs")) document.getElementById("label-refs").innerText = terms.refs;
+        if(document.getElementById("label-steps")) document.getElementById("label-steps").innerText = terms.steps;
+        if(document.getElementById("btn-add-step")) document.getElementById("btn-add-step").innerText = terms.addStep;
+        if(document.getElementById("btn-help")) document.getElementById("btn-help").innerText = terms.help;
+        if(document.getElementById("btn-submit")) document.getElementById("btn-submit").innerText = terms.submit;
     }
     toggle() {
         this.isOpen = !this.isOpen;
@@ -159,19 +160,26 @@ class FEICreatorLab {
         if(!this.isOpen) { const icon = document.getElementById("lab-trigger-icon"); icon.innerText = "✨"; setTimeout(() => icon.innerText = "⚡", 1000); }
     }
     setupEventListeners() {
-        document.getElementById("btn-add-step").addEventListener("click", () => {
-            const li = document.createElement("li"); li.className = "lab-milestone-item";
-            li.innerHTML = `<input type="checkbox" class="lab-checkbox"> <input type="text" class="lab-input" style="margin:0; padding:6px;" placeholder="New Step...">`;
-            this.milestoneList.appendChild(li);
-        });
-        document.getElementById("btn-submit").addEventListener("click", () => {
-            if(this.user.ageGroup === 'Child') {
-                alert("Quest Complete! Your guide has received your adventure map!");
-            } else {
-                const projectName = document.getElementById("project-name-input").value || "Untitled Project";
-                alert(`✅ SUCCESS\n\nProject "${projectName}" has been submitted to your Mentor.\n\nA confirmation has been sent to info@feiteamart.com.`);
-            }
-        });
+        const btnAdd = document.getElementById("btn-add-step");
+        if(btnAdd) {
+            btnAdd.addEventListener("click", () => {
+                const li = document.createElement("li"); li.className = "lab-milestone-item";
+                li.innerHTML = `<input type="checkbox" class="lab-checkbox"> <input type="text" class="lab-input" style="margin:0; padding:6px;" placeholder="New Step...">`;
+                this.milestoneList.appendChild(li);
+            });
+        }
+        const btnSubmit = document.getElementById("btn-submit");
+        if(btnSubmit) {
+            btnSubmit.addEventListener("click", () => {
+                if(this.user.ageGroup === 'Child') {
+                    alert("Quest Complete! Your guide has received your adventure map!");
+                } else {
+                    const nameInput = document.getElementById("project-name-input");
+                    const projectName = nameInput ? nameInput.value : "Untitled Project";
+                    alert(`✅ SUCCESS\n\nProject "${projectName}" has been submitted to your Mentor.\n\nA confirmation has been sent to info@feiteamart.com.`);
+                }
+            });
+        }
     }
 }
 
@@ -200,11 +208,17 @@ function loadProgress() {
     return false;
 }
 
+// ✅ FIX: LOGIC FOR "BEGIN JOURNEY" BUTTON
 function showRegistration() {
-    if (loadProgress()) {
+    // 1. Hide Intro Content (The Poster)
+    document.getElementById('entrance-content').style.opacity = '0';
+    
+    // 2. Check if we have a saved profile with a valid role (not just empty)
+    if (loadProgress() && userProfile.role.length > 0) {
+        // If they are returning, skip the form and go inside
         completeRegistration();
     } else {
-        document.getElementById('entrance-content').style.opacity = '0';
+        // If they are new, SHOW THE FORM
         setTimeout(() => { document.getElementById('reg-panel').classList.add('active'); }, 300);
     }
 }
@@ -261,8 +275,14 @@ function toggleInterest(btn) {
 // 5. Validation
 function checkReady() {
   const enterBtn = document.getElementById('final-enter-btn');
+  // Logic: Role AND Age AND at least 1 Goal
   const isReady = userProfile.role.length > 0 && userProfile.ageGroup !== "" && userProfile.goal.length > 0;
-  if (isReady) enterBtn.classList.add('ready'); else enterBtn.classList.remove('ready');
+  
+  if (isReady) {
+    enterBtn.classList.add('ready');
+  } else {
+    enterBtn.classList.remove('ready');
+  }
 }
 
 // 6. Skip Logic
@@ -271,6 +291,9 @@ function skipRegistration() {
   userProfile.ageGroup = "Adult";
   userProfile.goal = [];
   userProfile.interests = [];
+  // Force completion
+  const enterBtn = document.getElementById('final-enter-btn');
+  enterBtn.classList.add('ready'); // Fake readiness
   completeRegistration();
 }
 
@@ -282,6 +305,7 @@ function completeRegistration() {
   saveProgress(); 
   document.body.classList.add('doors-open');
   
+  // Initialize Lab based on User Profile
   window.creatorLab = new FEICreatorLab(userProfile);
   document.getElementById("lab-trigger").style.display = "flex";
   document.getElementById("discovery-fill").style.width = discoveryProgress + "%";
@@ -403,7 +427,7 @@ function buildGallery() {
       for(let i=0; i<6; i++) { const isRight = i % 2 === 0; createArtFrame(group, isRight?18.5:-18.5, y+6.5, -40+(i*15), isRight?-Math.PI/2:Math.PI/2, 4, 5, { title: `Future Exhibit`, artist: f.name, img: "" }); }
     }
     scene.add(group);
-    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => goToFloor(f.id); document.getElementById("elevator").prepend(btn);
+    const btn = document.createElement("div"); btn.className = "floor-item"; btn.innerHTML = `<div class="floor-label">${f.name}</div><div class="floor-num">${f.id}</div>`; btn.onclick = () => window.goToFloor(f.id); document.getElementById("elevator").prepend(btn);
   });
 }
 
@@ -438,11 +462,22 @@ window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;
 // ==========================================
 // 7. INTERACTION & AI
 // ==========================================
-function goToFloor(id) { 
+// ✅ FIX: Exported Global Function for Buttons
+window.goToFloor = function(id) { 
   closeBlueprint(); exitFocus(); 
   isInputLocked = true; 
-  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2000).easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => { isInputLocked = false; }).start(); 
-}
+  // Safety: Stop any running tweens to prevent conflicts
+  TWEEN.removeAll();
+  
+  new TWEEN.Tween(camera.position)
+    .to({ y: (id * floorHeight) + 5 }, 2000)
+    .easing(TWEEN.Easing.Quadratic.InOut)
+    .onComplete(() => { 
+        isInputLocked = false; 
+        console.log("Arrived at Floor " + id);
+    })
+    .start(); 
+};
 
 function focusArt(userData) {
   if (userData.data.isExternal && userData.data.link) { window.open(userData.data.link, "_blank"); return; }
@@ -592,10 +627,10 @@ function startBlueprint() {
     // 2. Fallback: Use Keywords if no chat score
     if (maxScore === 0 && userProfile.interests.length > 0) {
         const k = userProfile.interests;
-        if(k.includes("Art Market") || k.includes("Investment")) interest = "market";
-        else if(k.includes("History") || k.includes("Impressionism")) interest = "history";
-        else if(k.includes("Painting") || k.includes("Sculpture")) interest = "technique";
-        else if(k.includes("Philosophy") || k.includes("Social Themes")) interest = "theory";
+        if(k.includes("Art Market") || k.includes("Understand Collecting/Market")) interest = "market";
+        else if(k.includes("History") || k.includes("Impressionism") || k.includes("Learn Art History")) interest = "history";
+        else if(k.includes("Painting") || k.includes("Sculpture") || k.includes("Learn Techniques")) interest = "technique";
+        else if(k.includes("Philosophy") || k.includes("Social Themes") || k.includes("Explore Meaning & Ideas")) interest = "theory";
     }
 
     const pathData = LEARNING_PATHS[interest] || LEARNING_PATHS.general;
