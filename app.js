@@ -462,8 +462,11 @@ window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;
 // ==========================================
 // ✅ FIX: EXPORTED GLOBAL FUNCTION for Buttons
 window.goToFloor = function(id) { 
-  closeBlueprint(); exitFocus(); 
+  // ✅ FIX: call the global safe close (prevents crash)
+  if (window.closeBlueprint) window.closeBlueprint();
+  exitFocus(); 
   isInputLocked = true; 
+  
   // Safety: Stop any running tweens to prevent conflicts
   TWEEN.removeAll();
   
