@@ -4,7 +4,13 @@
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 
 // Initial State (Will be overwritten by Load)
-let userProfile = { role: [], goal: [], keywords: [], ageGroup: "Adult", age: 25 }; 
+let userProfile = { 
+  role: [],       
+  goal: [],       
+  ageGroup: "",   
+  interests: []   
+};
+
 let intentScores = { technique: 0, history: 0, market: 0, theory: 0 };
 let questionCount = 0; 
 let discoveryProgress = 0; 
@@ -16,7 +22,7 @@ const LEARNING_PATHS = {
   technique: {
     title: "The Material Observer",
     focus: "Technique & Process",
-    reason: "Your keywords (Painting Tech, Sculpture) suggest a focus on making.",
+    reason: "Your profile suggests a focus on making and process.",
     learn: ["Impasto & Texture Guide", "The Chemistry of Pigments", "Brushwork Analysis"],
     practice: "Zoom in on one brushstroke. Sketch its direction.",
     reflect: "How does the material change the feeling?",
@@ -25,7 +31,7 @@ const LEARNING_PATHS = {
   history: {
     title: "The Contextual Historian",
     focus: "Time & Context",
-    reason: "Your keywords (History, Modern Art) suggest a focus on era.",
+    reason: "Your profile suggests a focus on history and era.",
     learn: ["Timeline of this Era", "Artist Biography", "World Context"],
     practice: "Find one other artist from this same year.",
     reflect: "Why did the artist make this *then* and not now?",
@@ -34,7 +40,7 @@ const LEARNING_PATHS = {
   market: {
     title: "The Strategic Collector",
     focus: "Value & Provenance",
-    reason: "Your keywords (Art Market, Investment) suggest a focus on value.",
+    reason: "Your profile suggests a focus on the art market and value.",
     learn: ["Auction Results 2024", "Valuation Strategy", "Edition Strategy"],
     practice: "Estimate the primary market price vs. secondary market.",
     reflect: "What drives the value of this piece?",
@@ -43,7 +49,7 @@ const LEARNING_PATHS = {
   theory: {
     title: "The Critical Thinker",
     focus: "Meaning & Philosophy",
-    reason: "Your keywords (Philosophy, Social Themes) suggest a focus on concepts.",
+    reason: "Your profile suggests a focus on concepts and meaning.",
     learn: ["Semiotics in Art", "Conceptual Manifesto", "Visual Philosophy"],
     practice: "Write one sentence that explains the 'Invisible Meaning'.",
     reflect: "Is the idea more important than the visual?",
@@ -123,7 +129,7 @@ class FEICreatorLab {
         this.setupEventListeners();
     }
     renderInterface() {
-        const isChild = this.user.role.includes("Child") || this.user.age < 12;
+        const isChild = this.user.ageGroup === 'Child';
         const mode = isChild ? "explorer" : "pro";
         const terms = LAB_TERMS[mode];
         document.body.classList.remove("theme-pro", "theme-explorer");
@@ -159,7 +165,7 @@ class FEICreatorLab {
             this.milestoneList.appendChild(li);
         });
         document.getElementById("btn-submit").addEventListener("click", () => {
-            if(this.user.role.includes("Child")) {
+            if(this.user.ageGroup === 'Child') {
                 alert("Quest Complete! Your guide has received your adventure map!");
             } else {
                 const projectName = document.getElementById("project-name-input").value || "Untitled Project";
@@ -189,64 +195,95 @@ function loadProgress() {
         userProfile = data.profile || userProfile;
         intentScores = data.scores || intentScores;
         discoveryProgress = data.progress || 0;
-        // Skip chat history visual reload for simplicity, but keep data
-        return true; // Found existing user
+        return true; 
     }
     return false;
 }
 
 function showRegistration() {
     if (loadProgress()) {
-        // Resume User
         completeRegistration();
     } else {
-        // New User
         document.getElementById('entrance-content').style.opacity = '0';
         setTimeout(() => { document.getElementById('reg-panel').classList.add('active'); }, 300);
     }
 }
 
-function toggleOption(category, btn, val) {
-  if (category === 'age') {
-      // Single Select for Age
-      const sibs = btn.parentElement.querySelectorAll('.reg-btn');
-      sibs.forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      userProfile.age = val;
-      userProfile.ageGroup = (val < 12) ? "Child" : "Adult";
+// 1. Role Selection (Single Select Enforced)
+function toggleRole(btn) {
+  const container = document.getElementById('opt-role');
+  const siblings = container.querySelectorAll('.reg-btn');
+  siblings.forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  userProfile.role = [btn.innerText]; 
+  checkReady();
+}
+
+// 2. Age Selection (Single Select)
+function toggleAge(btn, val) {
+  const container = document.getElementById('opt-age');
+  const siblings = container.querySelectorAll('.reg-btn');
+  siblings.forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  userProfile.ageGroup = val; 
+  checkReady();
+}
+
+// 3. Goal Selection (Multi-Select, Max 2)
+function toggleGoal(btn) {
+  const txt = btn.innerText;
+  if (btn.classList.contains('selected')) {
+    btn.classList.remove('selected');
+    userProfile.goal = userProfile.goal.filter(g => g !== txt);
   } else {
-      // Multi Select
-      btn.classList.toggle('selected');
-      const txt = btn.innerText;
-      const idx = userProfile[category].indexOf(txt);
-      if(idx > -1) userProfile[category].splice(idx, 1); else userProfile[category].push(txt);
+    if (userProfile.goal.length < 2) {
+      btn.classList.add('selected');
+      userProfile.goal.push(txt);
+    }
   }
   checkReady();
 }
 
-function toggleKeyword(btn) {
-    btn.classList.toggle('selected');
-    const txt = btn.innerText;
-    const idx = userProfile.keywords.indexOf(txt);
-    if(idx > -1) userProfile.keywords.splice(idx, 1); else userProfile.keywords.push(txt);
-    checkReady();
+// 4. Interest Selection (Multi-Select, Max 3, Optional)
+function toggleInterest(btn) {
+  const txt = btn.innerText;
+  if (btn.classList.contains('selected')) {
+    btn.classList.remove('selected');
+    userProfile.interests = userProfile.interests.filter(i => i !== txt);
+  } else {
+    if (userProfile.interests.length < 3) {
+      btn.classList.add('selected');
+      userProfile.interests.push(txt);
+    }
+  }
 }
 
+// 5. Validation
 function checkReady() {
-    const btn = document.getElementById('final-enter-btn');
-    if(userProfile.role.length > 0 && userProfile.keywords.length > 0) btn.classList.add('ready');
-    else btn.classList.remove('ready');
+  const enterBtn = document.getElementById('final-enter-btn');
+  const isReady = userProfile.role.length > 0 && userProfile.ageGroup !== "" && userProfile.goal.length > 0;
+  if (isReady) enterBtn.classList.add('ready'); else enterBtn.classList.remove('ready');
+}
+
+// 6. Skip Logic
+function skipRegistration() {
+  userProfile.role = ["Viewer"];
+  userProfile.ageGroup = "Adult";
+  userProfile.goal = [];
+  userProfile.interests = [];
+  completeRegistration();
 }
 
 function completeRegistration() {
-  saveProgress(); // Save Data
+  // Guard check unless skipping (Role set)
+  const enterBtn = document.getElementById('final-enter-btn');
+  if (!enterBtn.classList.contains('ready') && userProfile.role[0] !== "Viewer") return;
+
+  saveProgress(); 
   document.body.classList.add('doors-open');
   
-  // Initialize Lab based on User Profile
   window.creatorLab = new FEICreatorLab(userProfile);
   document.getElementById("lab-trigger").style.display = "flex";
-  
-  // Update Bar
   document.getElementById("discovery-fill").style.width = discoveryProgress + "%";
 
   setTimeout(() => {
@@ -433,15 +470,13 @@ function openAI(data) {
   chatHistory = []; questionCount = 0;
   document.getElementById("chat-stream").innerHTML = "";
   
-  // Adaptive Welcome
   let welcomeMsg = "I am observing this piece with you. What do you see?";
-  if (userProfile.role.includes("Child")) welcomeMsg = "Hi! I'm your art buddy. Does this look like anything you've seen before?";
+  if (userProfile.ageGroup === "Child") welcomeMsg = "Hi! I'm your art buddy. Does this look like anything you've seen before?";
   else if (userProfile.role.includes("Collector")) welcomeMsg = "Welcome. Shall we analyze the provenance and market value?";
   
   addChatMsg("ai", welcomeMsg);
 }
 
-// Global function for the Pin button
 window.pinCurrentArt = function() {
     if(window.creatorLab && currentOpenArt) {
         window.creatorLab.pinFromGallery(currentOpenArt);
@@ -457,14 +492,13 @@ async function sendChat() {
   const sendBtn = document.getElementById("send-btn");
   if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = "0.7"; }
 
-  // ✅ FIX: Force append User Message
   addChatMsg("user",txt); 
   i.value="";
   
   questionCount++;
   discoveryProgress = Math.min(100, discoveryProgress + 15);
   document.getElementById("discovery-fill").style.width = discoveryProgress + "%";
-  saveProgress(); // Save state on every chat
+  saveProgress(); 
 
   chatHistory.push({ role: "user", parts: [{ text: txt }] });
 
@@ -472,7 +506,7 @@ async function sendChat() {
     const artPayload = currentOpenArt ? { title: currentOpenArt.title, artist: currentOpenArt.artist, year: currentOpenArt.year, medium: currentOpenArt.medium, floor: "Gallery" } : { title: "Unknown" };
     
     let systemInstruction = "You are a helpful art docent.";
-    if (userProfile.role.includes("Child")) systemInstruction = "You are a friendly, encouraging guide for a child.";
+    if (userProfile.ageGroup === "Child") systemInstruction = "You are a friendly, encouraging guide for a child.";
     else if (userProfile.role.includes("Collector")) systemInstruction = "You are an art market analyst.";
 
     const thinkId = addChatMsg("ai", "..."); 
@@ -481,7 +515,6 @@ async function sendChat() {
       message:txt, history:chatHistory, art: artPayload, userProfile: userProfile, systemInstruction: systemInstruction
     })});
     
-    // ✅ FIX: Remove Thinking Dots AFTER response returns
     const thinkEl = document.getElementById(thinkId); if(thinkEl) thinkEl.remove();
 
     if(!res.ok) throw new Error(res.status);
@@ -557,11 +590,11 @@ function startBlueprint() {
     }
 
     // 2. Fallback: Use Keywords if no chat score
-    if (maxScore === 0 && userProfile.keywords.length > 0) {
-        const k = userProfile.keywords;
+    if (maxScore === 0 && userProfile.interests.length > 0) {
+        const k = userProfile.interests;
         if(k.includes("Art Market") || k.includes("Investment")) interest = "market";
         else if(k.includes("History") || k.includes("Impressionism")) interest = "history";
-        else if(k.includes("Painting Tech") || k.includes("Sculpture")) interest = "technique";
+        else if(k.includes("Painting") || k.includes("Sculpture")) interest = "technique";
         else if(k.includes("Philosophy") || k.includes("Social Themes")) interest = "theory";
     }
 
@@ -655,18 +688,14 @@ const cr=new THREE.Raycaster(), cm=new THREE.Vector2();
 document.addEventListener('pointerup',(e)=>{if(isDragging)return; cm.x=(e.clientX/window.innerWidth)*2-1; cm.y=-(e.clientY/window.innerHeight)*2+1; cr.setFromCamera(cm,camera); const h=cr.intersectObjects(interactables); if(h.length>0 && h[0].object.userData.type==="art") focusArt(h[0].object.userData); });
 
 fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.floors).forEach(f=>f.items.forEach(i=>ART_DATA.push(i))); else ART_DATA=d; buildGallery(); }).catch(()=>buildGallery());
-// Use internal catalog definition for reliability
-// fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
 
-// Initialize Registration Check
-window.showRegistration = showRegistration; window.toggleOption = toggleOption; window.toggleKeyword = toggleKeyword; window.completeRegistration = completeRegistration;
+window.showRegistration = showRegistration; window.toggleOption = toggleOption; window.toggleKeyword = toggleInterest; window.completeRegistration = completeRegistration;
 document.getElementById("send-btn").onclick=sendChat; document.getElementById("user-input").onkeypress=(e)=>{if(e.key==="Enter")sendChat();};
 window.startBlueprint=startBlueprint; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=goToFloor; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
-// Check if user is returning
 window.addEventListener('load', () => {
     if(loadProgress()) {
         console.log("Welcome back, " + userID);
-        completeRegistration(); // Skip registration UI if data exists
+        completeRegistration(); 
     }
 });
