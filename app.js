@@ -751,3 +751,20 @@ window.addEventListener('load', () => {
         console.log("Welcome back, " + userID);
     }
 });
+// ✅ FIX: force-bind My Journey close button (X) if it exists
+window.addEventListener("DOMContentLoaded", () => {
+  const closeBtn =
+    document.getElementById("bp-close") ||
+    document.getElementById("blueprint-close") ||
+    document.getElementById("close-blueprint") ||
+    document.querySelector(".bp-close") ||
+    document.querySelector('[data-action="close-blueprint"]');
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (window.closeBlueprint) window.closeBlueprint();
+    });
+  }
+});
