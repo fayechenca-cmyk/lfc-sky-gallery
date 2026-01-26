@@ -3,7 +3,7 @@
 // ==========================================
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 
-// Initial State (Will be overwritten by Load)
+// Initial State
 let userProfile = { 
   role: [],       
   goal: [],       
@@ -17,7 +17,7 @@ let discoveryProgress = 0;
 let userID = localStorage.getItem('lfc_uid') || 'guest_' + Date.now();
 localStorage.setItem('lfc_uid', userID);
 
-// ✅ CONTENT ENGINE (ENHANCED)
+// ✅ CONTENT ENGINE
 const LEARNING_PATHS = {
   technique: {
     title: "The Material Observer",
@@ -208,22 +208,23 @@ function loadProgress() {
     return false;
 }
 
-// ✅ FIX: LOGIC FOR "BEGIN JOURNEY" BUTTON
+// ✅ FIX: "Begin Journey" now ALWAYS opens the panel to prevent freezing
 function showRegistration() {
-    // 1. Hide Intro Content (The Poster)
+    // 1. Fade out the poster
     document.getElementById('entrance-content').style.opacity = '0';
     
-    // 2. Check if we have a saved profile with a valid role (not just empty)
-    if (loadProgress() && userProfile.role.length > 0) {
-        // If they are returning, skip the form and go inside
-        completeRegistration();
-    } else {
-        // If they are new, SHOW THE FORM
-        setTimeout(() => { document.getElementById('reg-panel').classList.add('active'); }, 300);
-    }
+    // 2. Open the form directly. 
+    // We removed the auto-skip check here to fix the "Closed Door" bug.
+    setTimeout(() => { 
+        document.getElementById('reg-panel').classList.add('active'); 
+        // Try to restore previous button states visually if they exist
+        if(userProfile.role.length > 0) {
+            // (Optional: You could add logic here to re-highlight buttons, but purely functional for now)
+        }
+    }, 300);
 }
 
-// 1. Role Selection (Single Select Enforced)
+// 1. Role Selection
 function toggleRole(btn) {
   const container = document.getElementById('opt-role');
   const siblings = container.querySelectorAll('.reg-btn');
@@ -233,7 +234,7 @@ function toggleRole(btn) {
   checkReady();
 }
 
-// 2. Age Selection (Single Select)
+// 2. Age Selection
 function toggleAge(btn, val) {
   const container = document.getElementById('opt-age');
   const siblings = container.querySelectorAll('.reg-btn');
@@ -243,7 +244,7 @@ function toggleAge(btn, val) {
   checkReady();
 }
 
-// 3. Goal Selection (Multi-Select, Max 2)
+// 3. Goal Selection
 function toggleGoal(btn) {
   const txt = btn.innerText;
   if (btn.classList.contains('selected')) {
@@ -258,7 +259,7 @@ function toggleGoal(btn) {
   checkReady();
 }
 
-// 4. Interest Selection (Multi-Select, Max 3, Optional)
+// 4. Interest Selection
 function toggleInterest(btn) {
   const txt = btn.innerText;
   if (btn.classList.contains('selected')) {
@@ -275,14 +276,8 @@ function toggleInterest(btn) {
 // 5. Validation
 function checkReady() {
   const enterBtn = document.getElementById('final-enter-btn');
-  // Logic: Role AND Age AND at least 1 Goal
   const isReady = userProfile.role.length > 0 && userProfile.ageGroup !== "" && userProfile.goal.length > 0;
-  
-  if (isReady) {
-    enterBtn.classList.add('ready');
-  } else {
-    enterBtn.classList.remove('ready');
-  }
+  if (isReady) enterBtn.classList.add('ready'); else enterBtn.classList.remove('ready');
 }
 
 // 6. Skip Logic
@@ -291,29 +286,37 @@ function skipRegistration() {
   userProfile.ageGroup = "Adult";
   userProfile.goal = [];
   userProfile.interests = [];
-  // Force completion
-  const enterBtn = document.getElementById('final-enter-btn');
-  enterBtn.classList.add('ready'); // Fake readiness
-  completeRegistration();
+  
+  // Bypass visual check and enter
+  enterGallery();
 }
 
+// 7. Click Handler for "Enter Gallery" Button
 function completeRegistration() {
-  // Guard check unless skipping (Role set)
   const enterBtn = document.getElementById('final-enter-btn');
-  if (!enterBtn.classList.contains('ready') && userProfile.role[0] !== "Viewer") return;
+  // Only proceed if button is ready
+  if (enterBtn.classList.contains('ready')) {
+      enterGallery();
+  }
+}
 
+// ✅ NEW HELPER: Shared Entry Logic
+function enterGallery() {
   saveProgress(); 
   document.body.classList.add('doors-open');
   
-  // Initialize Lab based on User Profile
   window.creatorLab = new FEICreatorLab(userProfile);
   document.getElementById("lab-trigger").style.display = "flex";
   document.getElementById("discovery-fill").style.width = discoveryProgress + "%";
 
   setTimeout(() => {
-    document.getElementById('onboarding-tip').classList.add('visible');
-    setTimeout(() => { document.getElementById('onboarding-tip').classList.remove('visible'); }, 5000);
+    const tip = document.getElementById('onboarding-tip');
+    if(tip) {
+        tip.classList.add('visible');
+        setTimeout(() => { tip.classList.remove('visible'); }, 5000);
+    }
   }, 3000);
+  
   setTimeout(() => {
     document.getElementById('entrance-layer').style.display = 'none';
     document.getElementById('reg-panel').style.display = 'none';
@@ -462,21 +465,11 @@ window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;
 // ==========================================
 // 7. INTERACTION & AI
 // ==========================================
-// ✅ FIX: Exported Global Function for Buttons
 window.goToFloor = function(id) { 
   closeBlueprint(); exitFocus(); 
   isInputLocked = true; 
-  // Safety: Stop any running tweens to prevent conflicts
   TWEEN.removeAll();
-  
-  new TWEEN.Tween(camera.position)
-    .to({ y: (id * floorHeight) + 5 }, 2000)
-    .easing(TWEEN.Easing.Quadratic.InOut)
-    .onComplete(() => { 
-        isInputLocked = false; 
-        console.log("Arrived at Floor " + id);
-    })
-    .start(); 
+  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2000).easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => { isInputLocked = false; console.log("Arrived at Floor " + id); }).start(); 
 };
 
 function focusArt(userData) {
@@ -725,12 +718,15 @@ document.addEventListener('pointerup',(e)=>{if(isDragging)return; cm.x=(e.client
 fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.floors).forEach(f=>f.items.forEach(i=>ART_DATA.push(i))); else ART_DATA=d; buildGallery(); }).catch(()=>buildGallery());
 
 window.showRegistration = showRegistration; window.toggleOption = toggleOption; window.toggleKeyword = toggleInterest; window.completeRegistration = completeRegistration;
+window.toggleRole = toggleRole; window.toggleAge = toggleAge; window.toggleGoal = toggleGoal; window.skipRegistration = skipRegistration;
+
 document.getElementById("send-btn").onclick=sendChat; document.getElementById("user-input").onkeypress=(e)=>{if(e.key==="Enter")sendChat();};
-window.startBlueprint=startBlueprint; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=goToFloor; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
+window.startBlueprint=startBlueprint; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=window.goToFloor; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
 window.addEventListener('load', () => {
+    // We check if data exists, but we NO LONGER auto-complete.
+    // The user MUST click "Begin Journey" to enter.
     if(loadProgress()) {
         console.log("Welcome back, " + userID);
-        completeRegistration(); 
     }
 });
