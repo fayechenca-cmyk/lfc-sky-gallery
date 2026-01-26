@@ -33,14 +33,18 @@
     .begin-btn:hover { background: var(--blue); color: #fff; box-shadow: 0 15px 40px rgba(30,58,138,0.2); transform: translateY(-2px); }
     
     /* ========================================== */
-    /* 3. REGISTRATION PANEL                      */
+    /* 3. REGISTRATION PANEL (UPDATED)            */
     /* ========================================== */
-    #reg-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); background: rgba(255,255,255,0.98); backdrop-filter: blur(30px); padding: 3rem; border-radius: 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.15); z-index: 3010; text-align: center; opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1); max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.8); }
+    #reg-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); background: rgba(255,255,255,0.98); backdrop-filter: blur(30px); padding: 3rem; border-radius: 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.15); z-index: 3010; text-align: center; opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1); max-width: 850px; width: 95%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.8); }
     #reg-panel.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
     
     .section-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); margin: 25px 0 12px 0; display: block; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
     .reg-options { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 1rem; }
-    .reg-btn { padding: 10px 20px; border: 1px solid #cbd5e1; color: #64748b; background: #fff; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 11px; transition: all 0.2s; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }
+    
+    /* New Keyword Grid */
+    .keyword-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+    
+    .reg-btn { padding: 10px 15px; border: 1px solid #cbd5e1; color: #64748b; background: #fff; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 10px; transition: all 0.2s; font-family: 'Montserrat', sans-serif; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .reg-btn:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-1px); }
     .reg-btn.selected { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: 0 5px 15px rgba(30,58,138,0.25); }
     
@@ -95,7 +99,7 @@
     /* FIXED CLOSE BUTTON (Prevent Overlap) */
     .panel-close { position: absolute; top: 1rem; right: 1rem; font-size: 2rem; cursor: pointer; color: var(--blue); font-weight: 800; z-index: 600; padding: 10px; }
     
-    /* ✅ FIX: BUTTON RENAMED & SIZED */
+    /* PIN BUTTON */
     .pin-btn { background: var(--ok); color: #fff; border: none; padding: 8px 16px; border-radius: 50px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing:1px; cursor: pointer; float: right; margin-top: 5px; margin-right: 40px; box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3); }
     .pin-btn:hover { background: #16a34a; transform:translateY(-1px); }
 
@@ -118,7 +122,6 @@
     /* 6. FEI CREATOR LAB OVERLAY & THEMES        */
     /* ========================================== */
     
-    /* ✅ FIX: BUTTON IS HIDDEN DEFAULT. JS SHOWS IT LATER. */
     #lab-trigger {
         position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9000;
         padding: 12px 20px; border-radius: 50px; cursor: pointer;
@@ -225,20 +228,29 @@
       <button class="reg-btn" onclick="toggleOption('role', this)">Artist</button>
       <button class="reg-btn" onclick="toggleOption('role', this)">Viewer</button>
       <button class="reg-btn" onclick="toggleOption('role', this)">Collector</button>
-      <button class="reg-btn" onclick="toggleOption('role', this)">Critic</button>
       <button class="reg-btn" onclick="toggleOption('role', this)">Art Lover</button>
-      <button class="reg-btn" onclick="toggleOption('role', this)">Art Historian</button>
       <button class="reg-btn" onclick="toggleOption('role', this)">Child</button>
     </div>
-    
-    <span class="section-label">MY GOALS ARE...</span>
+
+    <span class="section-label">MY AGE GROUP...</span>
     <div class="reg-options">
-      <button class="reg-btn" onclick="toggleOption('goal', this)">Learn Techniques</button>
-      <button class="reg-btn" onclick="toggleOption('goal', this)">Contemporary Art</button>
-      <button class="reg-btn" onclick="toggleOption('goal', this)">Art History</button>
-      <button class="reg-btn" onclick="toggleOption('goal', this)">Art Market</button>
-      <button class="reg-btn" onclick="toggleOption('goal', this)">Teaching Kids</button>
-      <button class="reg-btn" onclick="toggleOption('goal', this)">Find Inspiration</button>
+      <button class="reg-btn" onclick="toggleOption('age', this, 10)">Under 12</button>
+      <button class="reg-btn" onclick="toggleOption('age', this, 16)">12 - 18</button>
+      <button class="reg-btn" onclick="toggleOption('age', this, 25)">Adult</button>
+    </div>
+    
+    <span class="section-label">I AM INTERESTED IN...</span>
+    <div class="reg-options keyword-grid">
+      <button class="reg-btn" onclick="toggleKeyword(this)">Modern Art</button>
+      <button class="reg-btn" onclick="toggleKeyword(this)">Social Themes</button>
+      <button class="reg-btn" onclick="toggleKeyword(this)">Impressionism</button>
+      <button class="reg-btn" onclick="toggleKeyword(this)">Painting Tech</button>
+      <button class="reg-btn" onclick="toggleKeyword(this)">Art Market</button>
+      <button class="reg-btn" onclick="toggleKeyword(this)">Sculpture</button>
+      <button class="reg-btn" onclick="toggleKeyword(this)">Digital Art</button>
+      <button class="reg-btn" onclick="toggleKeyword(this)">Abstract</button>
+      <button class="reg-btn" onclick="toggleKeyword(this)">History</button>
+      <button class="reg-btn" onclick="toggleKeyword(this)">Philosophy</button>
     </div>
     
     <button id="final-enter-btn" class="final-enter-btn" onclick="completeRegistration()">Enter Gallery</button>
