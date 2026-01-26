@@ -733,7 +733,16 @@ fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.
 
 window.showRegistration = showRegistration; window.toggleOption = toggleOption; window.toggleKeyword = toggleInterest; window.completeRegistration = completeRegistration;
 document.getElementById("send-btn").onclick=sendChat; document.getElementById("user-input").onkeypress=(e)=>{if(e.key==="Enter")sendChat();};
-window.startBlueprint=startBlueprint; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=window.goToFloor; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
+window.startBlueprint=startBlueprint;
+
+// ✅ FIX: real function + exported to window (so buttons + inline onclick both work)
+function closeBlueprint(){ 
+  const bp = document.getElementById("blueprint");
+  if(bp) bp.classList.remove("active"); 
+}
+window.closeBlueprint = closeBlueprint;
+
+window.exitFocus=exitFocus; window.goToFloor=window.goToFloor; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
 window.addEventListener('load', () => {
     // We check if data exists, but we NO LONGER auto-complete.
