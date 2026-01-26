@@ -33,7 +33,7 @@
     .begin-btn:hover { background: var(--blue); color: #fff; box-shadow: 0 15px 40px rgba(30,58,138,0.2); transform: translateY(-2px); }
     
     /* ========================================== */
-    /* 3. REGISTRATION PANEL (UPDATED)            */
+    /* 3. REGISTRATION PANEL (NEW DESIGN)         */
     /* ========================================== */
     #reg-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); background: rgba(255,255,255,0.98); backdrop-filter: blur(30px); padding: 3rem; border-radius: 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.15); z-index: 3010; text-align: center; opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1); max-width: 850px; width: 95%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.8); }
     #reg-panel.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
@@ -41,16 +41,20 @@
     .section-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); margin: 25px 0 12px 0; display: block; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
     .reg-options { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 1rem; }
     
-    /* New Keyword Grid */
-    .keyword-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+    /* Keyword Grid for Interests */
+    .keyword-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
     
     .reg-btn { padding: 10px 15px; border: 1px solid #cbd5e1; color: #64748b; background: #fff; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 10px; transition: all 0.2s; font-family: 'Montserrat', sans-serif; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .reg-btn:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-1px); }
     .reg-btn.selected { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: 0 5px 15px rgba(30,58,138,0.25); }
     
-    .final-enter-btn { background: var(--blue); color: #fff; border: none; padding: 1.2rem 4rem; border-radius: 50px; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; opacity: 0.4; pointer-events: none; transition: 0.3s; margin-top: 2rem; font-family: 'Montserrat', sans-serif; }
+    .final-enter-btn { background: var(--blue); color: #fff; border: none; padding: 1.2rem 4rem; border-radius: 50px; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; opacity: 0.5; pointer-events: none; transition: 0.3s; font-family: 'Montserrat', sans-serif; }
     .final-enter-btn.ready { opacity: 1; pointer-events: auto; box-shadow: 0 10px 30px rgba(30,58,138,0.3); }
     
+    /* Skip Link Style */
+    .skip-link { background: none; border: none; color: var(--gray); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; opacity: 0.7; padding: 10px; transition: opacity 0.2s; font-family: 'Montserrat', sans-serif; margin-top: 5px; }
+    .skip-link:hover { opacity: 1; text-decoration: underline; color: var(--blue); }
+
     /* Animation States */
     body.doors-open .door-panel.left { transform: translateX(-100%); }
     body.doors-open .door-panel.right { transform: translateX(100%); }
@@ -153,7 +157,7 @@
     .lab-primary-btn, .lab-secondary-btn { flex: 1; padding: 15px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 11px; border-radius: 8px; }
     .lab-action-btn { background: transparent; border: 1px dashed #ccc; padding: 8px; width: 100%; cursor: pointer; border-radius: 6px; }
 
-    /* THEME: "THE PRO" (Age >= 12) */
+    /* THEME: "THE PRO" (Adult/Teen) */
     .theme-pro #lab-trigger { background: #0f172a; color: white; border: 1px solid #1e293b; }
     .theme-pro #creator-lab-overlay { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-left: 1px solid #e2e8f0; }
     .theme-pro .lab-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
@@ -161,7 +165,7 @@
     .theme-pro .lab-primary-btn { background: #0f172a; color: white; }
     .theme-pro .lab-secondary-btn { background: #f1f5f9; color: #0f172a; }
 
-    /* THEME: "THE EXPLORER" (Age < 12) */
+    /* THEME: "THE EXPLORER" (Child) */
     .theme-explorer #lab-trigger { background: #ff9f43; color: white; border: 4px solid #feca57; box-shadow: 0 5px 0 #e67e22; top: 25px; /* Keep consistent */ }
     .theme-explorer #creator-lab-overlay { background: #fffbe6; border-left: 5px solid #ff9f43; }
     .theme-explorer .lab-header { background: #ff9f43; padding: 20px; color: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid #feca57; }
@@ -220,40 +224,53 @@
 
   <div id="reg-panel">
     <h2 style="color:var(--blue); margin-bottom:0.5rem; font-weight:800;">VISITOR PROFILE</h2>
-    <p style="color:var(--gray); margin-bottom:1.5rem; font-size:13px;">Tell us about yourself so the AI can guide you.</p>
+    <p style="color:var(--gray); margin-bottom:1.5rem; font-size:13px;">
+      Help us curate your experience.
+    </p>
     
-    <span class="section-label">I IDENTIFY AS...</span>
-    <div class="reg-options">
-      <button class="reg-btn" onclick="toggleOption('role', this)">Student</button>
-      <button class="reg-btn" onclick="toggleOption('role', this)">Artist</button>
-      <button class="reg-btn" onclick="toggleOption('role', this)">Viewer</button>
-      <button class="reg-btn" onclick="toggleOption('role', this)">Collector</button>
-      <button class="reg-btn" onclick="toggleOption('role', this)">Art Lover</button>
-      <button class="reg-btn" onclick="toggleOption('role', this)">Child</button>
+    <span class="section-label">I’M VISITING AS... (Pick 1)</span>
+    <div class="reg-options" id="opt-role">
+      <button class="reg-btn" onclick="toggleRole(this)">Student</button>
+      <button class="reg-btn" onclick="toggleRole(this)">Artist</button>
+      <button class="reg-btn" onclick="toggleRole(this)">Viewer</button>
+      <button class="reg-btn" onclick="toggleRole(this)">Collector</button>
+      <button class="reg-btn" onclick="toggleRole(this)">Art Lover</button>
+      <button class="reg-btn" onclick="toggleRole(this)">Parent/Educator</button>
     </div>
 
-    <span class="section-label">MY AGE GROUP...</span>
-    <div class="reg-options">
-      <button class="reg-btn" onclick="toggleOption('age', this, 10)">Under 12</button>
-      <button class="reg-btn" onclick="toggleOption('age', this, 16)">12 - 18</button>
-      <button class="reg-btn" onclick="toggleOption('age', this, 25)">Adult</button>
+    <span class="section-label">AGE GROUP... (Pick 1)</span>
+    <div class="reg-options" id="opt-age">
+      <button class="reg-btn" onclick="toggleAge(this, 'Child')">Under 12</button>
+      <button class="reg-btn" onclick="toggleAge(this, 'Teen')">12 - 18</button>
+      <button class="reg-btn" onclick="toggleAge(this, 'Adult')">Adult</button>
     </div>
     
-    <span class="section-label">I AM INTERESTED IN...</span>
-    <div class="reg-options keyword-grid">
-      <button class="reg-btn" onclick="toggleKeyword(this)">Modern Art</button>
-      <button class="reg-btn" onclick="toggleKeyword(this)">Social Themes</button>
-      <button class="reg-btn" onclick="toggleKeyword(this)">Impressionism</button>
-      <button class="reg-btn" onclick="toggleKeyword(this)">Painting Tech</button>
-      <button class="reg-btn" onclick="toggleKeyword(this)">Art Market</button>
-      <button class="reg-btn" onclick="toggleKeyword(this)">Sculpture</button>
-      <button class="reg-btn" onclick="toggleKeyword(this)">Digital Art</button>
-      <button class="reg-btn" onclick="toggleKeyword(this)">Abstract</button>
-      <button class="reg-btn" onclick="toggleKeyword(this)">History</button>
-      <button class="reg-btn" onclick="toggleKeyword(this)">Philosophy</button>
+    <span class="section-label">MY GOAL TODAY... (Max 2)</span>
+    <div class="reg-options" id="opt-goal">
+      <button class="reg-btn" onclick="toggleGoal(this)">Learn Techniques</button>
+      <button class="reg-btn" onclick="toggleGoal(this)">Learn Art History</button>
+      <button class="reg-btn" onclick="toggleGoal(this)">Explore Meaning & Ideas</button>
+      <button class="reg-btn" onclick="toggleGoal(this)">Understand Collecting/Market</button>
+    </div>
+
+    <span class="section-label">I’M CURIOUS ABOUT... (Optional, Max 3)</span>
+    <div class="reg-options keyword-grid" id="opt-interests">
+      <button class="reg-btn" onclick="toggleInterest(this)">Modern & Contemporary</button>
+      <button class="reg-btn" onclick="toggleInterest(this)">Social Themes</button>
+      <button class="reg-btn" onclick="toggleInterest(this)">Impressionism</button>
+      <button class="reg-btn" onclick="toggleInterest(this)">Painting</button>
+      <button class="reg-btn" onclick="toggleInterest(this)">Sculpture</button>
+      <button class="reg-btn" onclick="toggleInterest(this)">Photography</button>
+      <button class="reg-btn" onclick="toggleInterest(this)">Digital Art</button>
+      <button class="reg-btn" onclick="toggleInterest(this)">Abstract</button>
+      <button class="reg-btn" onclick="toggleInterest(this)">History</button>
+      <button class="reg-btn" onclick="toggleInterest(this)">Philosophy</button>
     </div>
     
-    <button id="final-enter-btn" class="final-enter-btn" onclick="completeRegistration()">Enter Gallery</button>
+    <div style="margin-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+      <button id="final-enter-btn" class="final-enter-btn" onclick="completeRegistration()">Enter Gallery</button>
+      <button id="skip-btn" class="skip-link" onclick="skipRegistration()">Skip for now</button>
+    </div>
   </div>
 
   <div id="lab-trigger" onclick="creatorLab.toggle()">
