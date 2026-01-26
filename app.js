@@ -3,7 +3,7 @@
 // ==========================================
 const AI_ENDPOINT = "https://lfc-ai-gateway.fayechenca.workers.dev/chat";
 
-// Initial State
+// Initial State (Will be overwritten by Load)
 let userProfile = { 
   role: [],       
   goal: [],       
@@ -17,7 +17,7 @@ let discoveryProgress = 0;
 let userID = localStorage.getItem('lfc_uid') || 'guest_' + Date.now();
 localStorage.setItem('lfc_uid', userID);
 
-// ✅ CONTENT ENGINE
+// ✅ CONTENT ENGINE (ENHANCED)
 const LEARNING_PATHS = {
   technique: {
     title: "The Material Observer",
@@ -214,13 +214,8 @@ function showRegistration() {
     document.getElementById('entrance-content').style.opacity = '0';
     
     // 2. Open the form directly. 
-    // We removed the auto-skip check here to fix the "Closed Door" bug.
     setTimeout(() => { 
         document.getElementById('reg-panel').classList.add('active'); 
-        // Try to restore previous button states visually if they exist
-        if(userProfile.role.length > 0) {
-            // (Optional: You could add logic here to re-highlight buttons, but purely functional for now)
-        }
     }, 300);
 }
 
@@ -465,11 +460,21 @@ window.moveStart=(d)=>{if(d==='f')moveForward=true;if(d==='b')moveBackward=true;
 // ==========================================
 // 7. INTERACTION & AI
 // ==========================================
+// ✅ FIX: EXPORTED GLOBAL FUNCTION for Buttons
 window.goToFloor = function(id) { 
   closeBlueprint(); exitFocus(); 
   isInputLocked = true; 
+  // Safety: Stop any running tweens to prevent conflicts
   TWEEN.removeAll();
-  new TWEEN.Tween(camera.position).to({ y: (id * floorHeight) + 5 }, 2000).easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => { isInputLocked = false; console.log("Arrived at Floor " + id); }).start(); 
+  
+  new TWEEN.Tween(camera.position)
+    .to({ y: (id * floorHeight) + 5 }, 2000)
+    .easing(TWEEN.Easing.Quadratic.InOut)
+    .onComplete(() => { 
+        isInputLocked = false; 
+        console.log("Arrived at Floor " + id);
+    })
+    .start(); 
 };
 
 function focusArt(userData) {
@@ -498,6 +503,7 @@ function openAI(data) {
   chatHistory = []; questionCount = 0;
   document.getElementById("chat-stream").innerHTML = "";
   
+  // Adaptive Welcome
   let welcomeMsg = "I am observing this piece with you. What do you see?";
   if (userProfile.ageGroup === "Child") welcomeMsg = "Hi! I'm your art buddy. Does this look like anything you've seen before?";
   else if (userProfile.role.includes("Collector")) welcomeMsg = "Welcome. Shall we analyze the provenance and market value?";
@@ -505,6 +511,7 @@ function openAI(data) {
   addChatMsg("ai", welcomeMsg);
 }
 
+// Global function for the Pin button
 window.pinCurrentArt = function() {
     if(window.creatorLab && currentOpenArt) {
         window.creatorLab.pinFromGallery(currentOpenArt);
@@ -520,6 +527,7 @@ async function sendChat() {
   const sendBtn = document.getElementById("send-btn");
   if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = "0.7"; }
 
+  // ✅ FIX: Force append User Message
   addChatMsg("user",txt); 
   i.value="";
   
@@ -543,6 +551,7 @@ async function sendChat() {
       message:txt, history:chatHistory, art: artPayload, userProfile: userProfile, systemInstruction: systemInstruction
     })});
     
+    // ✅ FIX: Remove Thinking Dots AFTER response returns
     const thinkEl = document.getElementById(thinkId); if(thinkEl) thinkEl.remove();
 
     if(!res.ok) throw new Error(res.status);
@@ -716,10 +725,10 @@ const cr=new THREE.Raycaster(), cm=new THREE.Vector2();
 document.addEventListener('pointerup',(e)=>{if(isDragging)return; cm.x=(e.clientX/window.innerWidth)*2-1; cm.y=-(e.clientY/window.innerHeight)*2+1; cr.setFromCamera(cm,camera); const h=cr.intersectObjects(interactables); if(h.length>0 && h[0].object.userData.type==="art") focusArt(h[0].object.userData); });
 
 fetch('artworks.json').then(r=>r.json()).then(d=>{ if(d.floors) Object.values(d.floors).forEach(f=>f.items.forEach(i=>ART_DATA.push(i))); else ART_DATA=d; buildGallery(); }).catch(()=>buildGallery());
+// Use internal catalog definition for reliability
+// fetch('catalog.json').then(r=>r.json()).then(d=>CATALOG=d);
 
 window.showRegistration = showRegistration; window.toggleOption = toggleOption; window.toggleKeyword = toggleInterest; window.completeRegistration = completeRegistration;
-window.toggleRole = toggleRole; window.toggleAge = toggleAge; window.toggleGoal = toggleGoal; window.skipRegistration = skipRegistration;
-
 document.getElementById("send-btn").onclick=sendChat; document.getElementById("user-input").onkeypress=(e)=>{if(e.key==="Enter")sendChat();};
 window.startBlueprint=startBlueprint; window.closeBlueprint=()=>{document.getElementById("blueprint").classList.remove("active");}; window.exitFocus=exitFocus; window.goToFloor=window.goToFloor; window.moveStop=()=>{moveForward=false;moveBackward=false;moveLeft=false;moveRight=false;};
 
