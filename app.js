@@ -205,63 +205,120 @@ window.setAIPersona = function(mode) {
 // 2. CREATOR LAB LOGIC
 // ==========================================
 const LAB_TERMS = {
-  pro: { trigger: "Creator Lab", title: "Project Charter", name: "Project Title", goal: "Strategic Objective", refs: "Reference Board", steps: "Milestones", addStep: "+ Add Milestone", help: "Contact Mentor", submit: "Submit Proposal" },
-  explorer: { trigger: "My Backpack", title: "Mission Card", name: "Adventure Name", goal: "My Quest Goal", refs: "Collected Treasures", steps: "Adventure Map", addStep: "+ Next Step", help: "Ask Guide", submit: "Complete Quest" }
+  pro: {
+    trigger: "Creator Lab",
+    title: "Project Charter",
+    name: "Project Title",
+    goal: "Strategic Objective",
+    refs: "Reference Board",
+    steps: "Milestones",
+    addStep: "+ Add Milestone",
+    help: "Contact Mentor",
+    submit: "Submit Proposal",
+  },
+  explorer: {
+    trigger: "My Backpack",
+    title: "Mission Card",
+    name: "Adventure Name",
+    goal: "My Quest Goal",
+    refs: "Collected Treasures",
+    steps: "Adventure Map",
+    addStep: "+ Next Step",
+    help: "Ask Guide",
+    submit: "Complete Quest",
+  },
 };
+
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mnjvqkdb";
 
 class FEICreatorLab {
   constructor(userProfile) {
-    this.user = userProfile;
+    this.user = userProfile || {};
     this.isOpen = false;
     this.projectData = { name: "", goal: "", milestones: [], references: [] };
+
     this.overlay = document.getElementById("creator-lab-overlay");
     this.trigger = document.getElementById("lab-trigger");
     this.refContainer = document.getElementById("lab-gallery-pins");
     this.milestoneList = document.getElementById("lab-milestone-list");
+
     this.init();
   }
+
   init() {
     this.renderInterface();
     this.setupEventListeners();
   }
+
   renderInterface() {
     const isChild = this.user.ageGroup === "Child";
     const mode = isChild ? "explorer" : "pro";
     const terms = LAB_TERMS[mode];
+
     document.body.classList.remove("theme-pro", "theme-explorer");
     document.body.classList.add(isChild ? "theme-explorer" : "theme-pro");
 
-    if (document.getElementById("lab-trigger-text")) document.getElementById("lab-trigger-text").innerText = terms.trigger;
-    if (document.getElementById("lab-title")) document.getElementById("lab-title").innerText = terms.title;
-    if (document.getElementById("label-name")) document.getElementById("label-name").innerText = terms.name;
-    if (document.getElementById("label-goal")) document.getElementById("label-goal").innerText = terms.goal;
-    if (document.getElementById("label-refs")) document.getElementById("label-refs").innerText = terms.refs;
-    if (document.getElementById("label-steps")) document.getElementById("label-steps").innerText = terms.steps;
-    if (document.getElementById("btn-add-step")) document.getElementById("btn-add-step").innerText = terms.addStep;
-    if (document.getElementById("btn-help")) document.getElementById("btn-help").innerText = terms.help;
-    if (document.getElementById("btn-submit")) document.getElementById("btn-submit").innerText = terms.submit;
+    const setText = (id, text) => {
+      const el = document.getElementById(id);
+      if (el) el.innerText = text;
+    };
+
+    setText("lab-trigger-text", terms.trigger);
+    setText("lab-title", terms.title);
+    setText("label-name", terms.name);
+    setText("label-goal", terms.goal);
+    setText("label-refs", terms.refs);
+    setText("label-steps", terms.steps);
+
+    const btnAdd = document.getElementById("btn-add-step");
+    if (btnAdd) btnAdd.innerText = terms.addStep;
+
+    const btnHelp = document.getElementById("btn-help");
+    if (btnHelp) btnHelp.innerText = terms.help;
+
+    const btnSubmit = document.getElementById("btn-submit");
+    if (btnSubmit) btnSubmit.innerText = terms.submit;
   }
+
   toggle() {
+    if (!this.overlay) return;
+
     this.isOpen = !this.isOpen;
     if (this.isOpen) this.overlay.classList.add("lab-visible");
     else this.overlay.classList.remove("lab-visible");
   }
-  pinFromGallery(artData) {
-    if (!artData || this.projectData.references.find(r => r.title === artData.title)) return;
 
-    // ✅ record pin for My Journey
-    recordPin(artData);
+  pinFromGallery(artData) {
+    if (!artData) return;
+    if (this.projectData.references.find((r) => r.title === artData.title)) return;
+
+    // optional: only call if it exists
+    if (typeof recordPin === "function") recordPin(artData);
 
     this.projectData.references.push(artData);
+
+    // If the UI container doesn't exist, don't crash.
+    if (!this.refContainer) return;
+
     const pin = document.createElement("div");
     pin.className = "lab-pin-card";
     const imgUrl = artData.img || "https://placehold.co/100x100/1e3a8a/ffffff?text=ART";
-    pin.innerHTML = `<img src="${imgUrl}" class="lab-pin-img"><span>${toSafeText(artData.title)}</span>`;
+    pin.innerHTML = `<img src="${imgUrl}" class="lab-pin-img"><span>${typeof toSafeText === "function" ? toSafeText(artData.title) : (artData.title || "")}</span>`;
+
     const emptyState = this.refContainer.querySelector(".lab-empty-state");
     if (emptyState) emptyState.remove();
+
     this.refContainer.appendChild(pin);
 
-    logJourney({ ts: Date.now(), type: "pin", title: artData.title, artist: artData.artist, floor: artData.floor ?? "Gallery" });
+    if (typeof logJourney === "function") {
+      logJourney({
+        ts: Date.now(),
+        type: "pin",
+        title: artData.title,
+        artist: artData.artist,
+        floor: artData.floor ?? "Gallery",
+      });
+    }
 
     if (!this.isOpen) {
       const icon = document.getElementById("lab-trigger-icon");
@@ -271,33 +328,113 @@ class FEICreatorLab {
       }
     }
   }
+
   setupEventListeners() {
+    // Add step
     const btnAdd = document.getElementById("btn-add-step");
     if (btnAdd) {
       btnAdd.addEventListener("click", () => {
+        if (!this.milestoneList) return;
+
         const li = document.createElement("li");
         li.className = "lab-milestone-item";
-        li.innerHTML = `<input type="checkbox" class="lab-checkbox"> <input type="text" class="lab-input" style="margin:0; padding:6px;" placeholder="New Step...">`;
+        li.innerHTML =
+          `<input type="checkbox" class="lab-checkbox"> ` +
+          `<input type="text" class="lab-input" style="margin:0; padding:6px;" placeholder="New Step...">`;
+
         this.milestoneList.appendChild(li);
       });
     }
 
+    // Help button
     const btnHelp = document.getElementById("btn-help");
     if (btnHelp) {
       btnHelp.addEventListener("click", () => {
-        window.open(PREMIUM_CONTACT_URL, "_blank");
+        if (typeof PREMIUM_CONTACT_URL !== "undefined" && PREMIUM_CONTACT_URL) {
+          window.open(PREMIUM_CONTACT_URL, "_blank");
+        } else {
+          alert("Contact link is not set yet.");
+        }
       });
     }
 
+    // Submit button -> Formspree
     const btnSubmit = document.getElementById("btn-submit");
     if (btnSubmit) {
-      btnSubmit.addEventListener("click", () => {
-        if (this.user.ageGroup === "Child") {
-          alert("Quest Complete! Your guide has received your adventure map!");
-        } else {
+      btnSubmit.addEventListener("click", async () => {
+        // prevent double-submit
+        btnSubmit.disabled = true;
+        btnSubmit.style.opacity = "0.6";
+        btnSubmit.style.pointerEvents = "none";
+
+        try {
+          // Project name
           const nameInput = document.getElementById("project-name-input");
-          const projectName = nameInput ? nameInput.value : "Untitled Project";
-          alert(`✅ SUCCESS\n\nProject "${projectName}" has been submitted to your Mentor.\n\nA confirmation has been sent to info@feiteamart.com.`);
+          const projectName = nameInput?.value?.trim() || "Untitled Project";
+
+          // Goal (support multiple possible IDs)
+          const goalInput =
+            document.getElementById("project-goal-input") ||
+            document.getElementById("goal-input") ||
+            document.getElementById("project-goal");
+          const projectGoal = goalInput?.value?.trim() || "";
+
+          // Milestones
+          const milestones = [...document.querySelectorAll("#lab-milestone-list .lab-milestone-item")]
+            .map((li) => {
+              const done = li.querySelector(".lab-checkbox")?.checked ?? false;
+              const text = li.querySelector('input[type="text"]')?.value?.trim() || "";
+              return text ? { done, text } : null;
+            })
+            .filter(Boolean);
+
+          // Pinned references
+          const references = Array.isArray(this.projectData?.references) ? this.projectData.references : [];
+
+          // Formspree payload
+          const payload = {
+            intent_type: "creator_lab_submit",
+            mode: this.user?.ageGroup === "Child" ? "explorer" : "pro",
+            age_group: this.user?.ageGroup || "",
+            project_name: projectName,
+            project_goal: projectGoal,
+            milestones: JSON.stringify(milestones),
+            references: JSON.stringify(references),
+            page_url: location.href,
+            ts: new Date().toISOString(),
+            _subject: `Creator Lab Submission: ${projectName}`,
+          };
+
+          const formData = new FormData();
+          Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
+
+          const res = await fetch(FORMSPREE_ENDPOINT, {
+            method: "POST",
+            body: formData,
+            headers: { Accept: "application/json" },
+          });
+
+          if (!res.ok) {
+            let msg = "Submission failed.";
+            try {
+              const data = await res.json();
+              if (data?.errors?.length) msg = data.errors.map((e) => e.message).join(" | ");
+            } catch {}
+            throw new Error(msg);
+          }
+
+          // Success message
+          if (this.user?.ageGroup === "Child") {
+            alert("Quest Complete! Your guide has received your adventure map!");
+          } else {
+            alert(`✅ SUCCESS\n\nProject "${projectName}" has been submitted.\n\n(Check Formspree → Submissions to confirm.)`);
+          }
+        } catch (err) {
+          alert(`❌ Submission failed.\n\n${err?.message || "Unknown error"}`);
+        } finally {
+          btnSubmit.disabled = false;
+          btnSubmit.style.opacity = "";
+          btnSubmit.style.pointerEvents = "";
         }
       });
     }
