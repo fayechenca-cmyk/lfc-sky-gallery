@@ -256,7 +256,7 @@ class FEICreatorLab {
     const terms = LAB_TERMS[mode];
 
     document.body.classList.remove("theme-pro", "theme-explorer");
-    document.body.classList.add(isChild ? "theme-explorer" : "theme-pro");
+    document.body.classList.add("theme-pro"); // force original look for everyone
 
     const setText = (id, text) => {
       const el = document.getElementById(id);
