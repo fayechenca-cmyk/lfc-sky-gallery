@@ -427,7 +427,7 @@ class FEICreatorLab {
           if (this.user?.ageGroup === "Child") {
             alert("Quest Complete! Your guide has received your adventure map!");
           } else {
-            alert(`✅ SUCCESS\n\nProject "${projectName}" has been submitted.\n\n(Check Formspree → Submissions to confirm.)`);
+            alert(`✅ SUCCESS\n\nProject "${projectName}" has been submitted.\n\nThank you! We'll review it and get back to you if needed.`);
           }
         } catch (err) {
           alert(`❌ Submission failed.\n\n${err?.message || "Unknown error"}`);
