@@ -1818,4 +1818,715 @@ window.addEventListener("DOMContentLoaded", () => {
   // ensure AI mode buttons reflect saved preference
   updateAIModeUI();
 });
+/* =========================================================
+   ✅ PATCH v1 (APPEND-ONLY)
+   - No refactor, no redesign, no rename
+   - Adds: artwork size normalization, detail zoom/pan, lab email required,
+           onboarding helper, where-am-I, teleport feedback, home button,
+           elevator hover preview
+   ========================================================= */
+(function () {
+  const PATCH_KEY = "__LFC_MIN_PATCH_V1__";
+  if (window[PATCH_KEY]) return;
+  window[PATCH_KEY] = true;
+
+  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+  const qs = (sel, root = document) => root.querySelector(sel);
+  const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  function onReady(fn) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", fn, { once: true });
+    } else fn();
+  }
+
+  function showToast(text) {
+    const el = qs("#teleport-toast");
+    if (!el) return;
+    el.textContent = text || "Teleporting...";
+    el.classList.add("visible");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => el.classList.remove("visible"), 900);
+  }
+
+  function setLabMessage(text, kind) {
+    const box = qs("#lab-inline-message");
+    if (!box) return;
+    box.style.display = "block";
+    box.textContent = text || "";
+    // no harsh red, stay in your design language
+    if (kind === "error") {
+      box.style.borderColor = "#cbd5e1";
+      box.style.background = "#f1f5f9";
+      box.style.color = "#334155";
+    } else if (kind === "success") {
+      box.style.borderColor = "#e2e8f0";
+      box.style.background = "#f1f5f9";
+      box.style.color = "#334155";
+    }
+    clearTimeout(setLabMessage._t);
+    setLabMessage._t = setTimeout(() => { box.style.display = "none"; }, 3800);
+  }
+
+  function isValidEmail(v) {
+    if (!v) return false;
+    const s = String(v).trim();
+    // simple but reliable enough for client-side gatekeeping
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+  }
+
+  function safeDefineGoHome() {
+    if (typeof window.goHome === "function") return;
+
+    window.goHome = function () {
+      try { if (typeof window.exitFocus === "function") window.exitFocus(); } catch (e) {}
+      showToast("Returning to Atrium...");
+      // safest: click first elevator item if exists
+      const first = qs("#elevator .floor-item");
+      if (first) {
+        try { first.click(); } catch (e) {}
+        return;
+      }
+      // fallback: if your app exposes a teleport/home function, call it
+      if (typeof window.teleportHome === "function") {
+        try { window.teleportHome(); } catch (e) {}
+      }
+    };
+  }
+
+  function setupWhereAmI() {
+    const badge = qs("#whereami-text");
+    if (!badge) return;
+
+    function computeLabel() {
+      const bp = qs("#blueprint");
+      const lab = qs("#creator-lab-overlay");
+      const ai = qs("#ai-panel");
+
+      if (bp && bp.classList.contains("active")) return "My Journey";
+      if (lab && lab.classList.contains("lab-visible")) return "Creator Lab";
+      if (ai && ai.classList.contains("active")) return "Artwork";
+
+      const active = qs("#elevator .floor-item.active .floor-label");
+      if (active && active.textContent.trim()) return active.textContent.trim();
+      return "Atrium";
+    }
+
+    function update() {
+      const t = computeLabel();
+      badge.textContent = t;
+    }
+
+    // observe class changes for state transitions
+    const obs = new MutationObserver(update);
+    obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+
+    ["#blueprint", "#creator-lab-overlay", "#ai-panel"].forEach((id) => {
+      const el = qs(id);
+      if (!el) return;
+      obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+    });
+
+    const elev = qs("#elevator");
+    if (elev) elev.addEventListener("click", () => setTimeout(update, 80), true);
+
+    update();
+  }
+
+  function setupOnboardingCard() {
+    const KEY = "lfc_onboarded_v1";
+    const card = qs("#onboarding-card");
+    const close = qs("#onboarding-close");
+    const gotit = qs("#onboarding-gotit");
+    if (!card || !close || !gotit) return;
+
+    function hide() {
+      card.classList.remove("visible");
+      card.setAttribute("aria-hidden", "true");
+      try { localStorage.setItem(KEY, "1"); } catch (e) {}
+    }
+
+    close.addEventListener("click", hide);
+    gotit.addEventListener("click", hide);
+
+    // show 6 seconds after doors open, only once
+    const shouldShow = (() => {
+      try { return localStorage.getItem(KEY) !== "1"; } catch (e) { return true; }
+    })();
+
+    if (!shouldShow) return;
+
+    const mo = new MutationObserver(() => {
+      if (document.body.classList.contains("doors-open")) {
+        mo.disconnect();
+        setTimeout(() => {
+          // avoid showing if user already deep in other overlays
+          card.classList.add("visible");
+          card.setAttribute("aria-hidden", "false");
+        }, 6000);
+      }
+    });
+    mo.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  }
+
+  function setupTeleportFeedbackAndPreview() {
+    const elevator = qs("#elevator");
+    const preview = qs("#nav-preview");
+    const pThumb = qs("#nav-preview-thumb");
+    const pTitle = qs("#nav-preview-title");
+    const pMeta = qs("#nav-preview-meta");
+    if (!elevator) return;
+
+    function getFloorLabel(item) {
+      const lbl = qs(".floor-label", item);
+      return (lbl ? lbl.textContent : "").trim() || "Zone";
+    }
+
+    function getPreviewData(label) {
+      // Heuristic: try your existing global data if present; otherwise placeholder.
+      const out = { thumb: "", count: "", keywords: "" };
+
+      // common patterns
+      const pools = [
+        window.floors, window.FLOORS, window.zones, window.ZONES,
+        window.galleryFloors, window.galleryZones
+      ].filter(Boolean);
+
+      for (const p of pools) {
+        try {
+          const found = Array.isArray(p)
+            ? p.find(x => (x.label || x.name || x.title || "").toLowerCase() === label.toLowerCase())
+            : null;
+          if (found) {
+            out.count = found.count || (found.artworks ? found.artworks.length : "") || "";
+            out.keywords = (found.keywords || found.tags || []).slice ? (found.keywords || found.tags).slice(0,3).join(", ") : (found.keywords || "");
+            out.thumb = found.thumb || found.preview || "";
+            return out;
+          }
+        } catch (e) {}
+      }
+
+      // artworks array fallback
+      const arts = window.artworks || window.ARTWORKS || window.galleryArtworks;
+      if (Array.isArray(arts)) {
+        const list = arts.filter(a => {
+          const z = (a.floor || a.zone || a.section || a.room || "").toString().toLowerCase();
+          return z && z === label.toLowerCase();
+        });
+        if (list.length) {
+          out.count = list.length;
+          const first = list[0];
+          out.thumb = first.image || first.img || first.src || first.url || "";
+          out.keywords = (first.keywords || first.tags || []).slice ? (first.keywords || first.tags).slice(0,3).join(", ") : "";
+        }
+      }
+
+      return out;
+    }
+
+    // click feedback
+    elevator.addEventListener("click", (e) => {
+      const item = e.target.closest(".floor-item");
+      if (!item) return;
+      showToast("Teleporting to " + getFloorLabel(item) + "...");
+      setTimeout(() => {
+        // after teleport likely completes, refresh artwork sizing (safe no-op if not ready)
+        tryApplyArtworkSizing(true);
+      }, 900);
+    }, true);
+
+    // hover/focus preview tooltip
+    if (!preview || !pThumb || !pTitle || !pMeta) return;
+
+    function showPreview(item) {
+      const label = getFloorLabel(item);
+      const data = getPreviewData(label);
+
+      pTitle.textContent = label;
+      pMeta.textContent =
+        (data.count ? (`Works: ${data.count}`) : "Works: —") +
+        (data.keywords ? (` • ${data.keywords}`) : "");
+
+      if (data.thumb) {
+        pThumb.src = data.thumb;
+        pThumb.style.display = "block";
+      } else {
+        // keep minimal placeholder look
+        pThumb.removeAttribute("src");
+        pThumb.style.display = "block";
+      }
+
+      const r = item.getBoundingClientRect();
+      const x = Math.max(16, r.left - 300);
+      const y = clamp(r.top + r.height / 2 - 60, 16, window.innerHeight - 180);
+      preview.style.left = x + "px";
+      preview.style.top = y + "px";
+      preview.classList.add("visible");
+      preview.setAttribute("aria-hidden", "false");
+    }
+
+    function hidePreview() {
+      preview.classList.remove("visible");
+      preview.setAttribute("aria-hidden", "true");
+    }
+
+    elevator.addEventListener("mouseover", (e) => {
+      const item = e.target.closest(".floor-item");
+      if (!item) return;
+      showPreview(item);
+    }, true);
+
+    elevator.addEventListener("mouseout", (e) => {
+      const item = e.target.closest(".floor-item");
+      if (!item) return;
+      hidePreview();
+    }, true);
+
+    elevator.addEventListener("focusin", (e) => {
+      const item = e.target.closest(".floor-item");
+      if (!item) return;
+      showPreview(item);
+    }, true);
+
+    elevator.addEventListener("focusout", hidePreview, true);
+
+    window.addEventListener("scroll", hidePreview, { passive: true });
+    window.addEventListener("resize", hidePreview, { passive: true });
+  }
+
+  function setupZoomPan() {
+    const viewport = qs("#ai-img-viewport");
+    const img = qs("#ai-img");
+    const resetBtn = qs("#ai-zoom-reset");
+    const hint = qs("#ai-zoom-hint");
+    if (!viewport || !img || !resetBtn) return;
+
+    let scale = 1;
+    let tx = 0;
+    let ty = 0;
+
+    const MIN = 1;
+    const MAX = 4;
+
+    function apply() {
+      // clamp pan so you can't drag image completely away
+      const w = viewport.clientWidth;
+      const h = viewport.clientHeight;
+      const maxX = Math.max(0, w * scale - w);
+      const maxY = Math.max(0, h * scale - h);
+
+      tx = clamp(tx, -maxX, 0);
+      ty = clamp(ty, -maxY, 0);
+
+      img.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
+
+      if (scale > 1.001) {
+        resetBtn.style.display = "inline-block";
+        if (hint) hint.style.display = "inline-block";
+      } else {
+        resetBtn.style.display = "none";
+        if (hint) hint.style.display = "none";
+      }
+    }
+
+    function reset() {
+      scale = 1;
+      tx = 0;
+      ty = 0;
+      apply();
+    }
+
+    resetBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      reset();
+    });
+
+    viewport.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") reset();
+    });
+
+    // wheel zoom (prevent scroll conflict)
+    viewport.addEventListener("wheel", (e) => {
+      // Only zoom when cursor is over viewport
+      e.preventDefault();
+
+      const rect = viewport.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+
+      const wheel = e.deltaY;
+      const zoomIn = wheel < 0;
+      const factor = zoomIn ? 1.12 : 0.89;
+
+      const next = clamp(scale * factor, MIN, MAX);
+      if (Math.abs(next - scale) < 1e-4) return;
+
+      // zoom about pointer
+      const ix = (px - tx) / scale;
+      const iy = (py - ty) / scale;
+
+      scale = next;
+      tx = px - ix * scale;
+      ty = py - iy * scale;
+
+      apply();
+    }, { passive: false });
+
+    // drag pan
+    let dragging = false;
+    let lastX = 0, lastY = 0;
+
+    viewport.addEventListener("pointerdown", (e) => {
+      if (scale <= 1.001) return;
+      dragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      try { viewport.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+
+    viewport.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      tx += dx;
+      ty += dy;
+      apply();
+    });
+
+    viewport.addEventListener("pointerup", () => { dragging = false; });
+    viewport.addEventListener("pointercancel", () => { dragging = false; });
+
+    // pinch zoom (two pointers)
+    const pts = new Map();
+    let pinchStartDist = 0;
+    let pinchStartScale = 1;
+    let pinchAnchor = null;
+
+    viewport.addEventListener("pointerdown", (e) => {
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) {
+        const a = Array.from(pts.values());
+        pinchStartDist = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+        pinchStartScale = scale;
+
+        const rect = viewport.getBoundingClientRect();
+        pinchAnchor = {
+          x: ((a[0].x + a[1].x) / 2) - rect.left,
+          y: ((a[0].y + a[1].y) / 2) - rect.top
+        };
+      }
+    });
+
+    viewport.addEventListener("pointermove", (e) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size !== 2) return;
+
+      const a = Array.from(pts.values());
+      const dist = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+      if (!pinchStartDist) return;
+
+      const next = clamp(pinchStartScale * (dist / pinchStartDist), MIN, MAX);
+      if (!pinchAnchor) return;
+
+      const ax = pinchAnchor.x;
+      const ay = pinchAnchor.y;
+      const ix = (ax - tx) / scale;
+      const iy = (ay - ty) / scale;
+
+      scale = next;
+      tx = ax - ix * scale;
+      ty = ay - iy * scale;
+
+      apply();
+    });
+
+    function endPointer(e) {
+      pts.delete(e.pointerId);
+      if (pts.size < 2) {
+        pinchStartDist = 0;
+        pinchAnchor = null;
+      }
+    }
+
+    viewport.addEventListener("pointerup", endPointer);
+    viewport.addEventListener("pointercancel", endPointer);
+
+    // reset zoom whenever artwork image src changes
+    const imgObs = new MutationObserver(() => reset());
+    imgObs.observe(img, { attributes: true, attributeFilter: ["src"] });
+
+    apply();
+  }
+
+  function setupCreatorLabEmailRequired() {
+    const submitBtn = qs("#btn-submit");
+    const emailInput = qs("#contact-email-input");
+    const prefInput = qs("#contact-preferred-input");
+    if (!submitBtn || !emailInput) return;
+
+    // 1) hard gate submit click (capture, blocks existing handlers if invalid)
+    submitBtn.addEventListener("click", (e) => {
+      const email = (emailInput.value || "").trim();
+      if (!isValidEmail(email)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        setLabMessage("Please enter a valid email before submitting.", "error");
+        emailInput.focus();
+        return false;
+      }
+    }, true);
+
+    // 2) Ensure FormData includes email via fetch injection (minimal, no refactor)
+    const FORMSPREE_MATCH = "formspree.io/f/";
+    const origFetch = window.fetch ? window.fetch.bind(window) : null;
+    if (!origFetch) return;
+
+    if (!window.__lfc_fetch_patched__) {
+      window.__lfc_fetch_patched__ = true;
+
+      window.fetch = function (input, init) {
+        try {
+          const url = (typeof input === "string") ? input : (input && input.url);
+          const isFormspree = url && url.includes(FORMSPREE_MATCH);
+          if (isFormspree && init && init.body instanceof FormData) {
+            const fd = init.body;
+
+            const email = (emailInput.value || "").trim();
+            const pref = prefInput ? (prefInput.value || "").trim() : "";
+
+            // Guarantee email stored in payload
+            if (email && !fd.has("email")) fd.append("email", email);
+            if (pref && !fd.has("preferred_contact")) fd.append("preferred_contact", pref);
+          }
+        } catch (err) {}
+
+        const p = origFetch(input, init);
+        // show success note if formspree ok
+        try {
+          const url = (typeof input === "string") ? input : (input && input.url);
+          if (url && url.includes(FORMSPREE_MATCH)) {
+            p.then((res) => {
+              if (res && res.ok) {
+                const email = (emailInput.value || "").trim();
+                if (email) setLabMessage(`Submitted. We will contact you at: ${email}`, "success");
+              }
+            }).catch(() => {});
+          }
+        } catch (e) {}
+        return p;
+      };
+    }
+  }
+
+  // ---------- P0-A: Artwork sizing patch (scene traversal, bottom align) ----------
+  function parseWH(meta) {
+    const out = { w: NaN, h: NaN };
+    if (!meta) return out;
+
+    function num(v) {
+      if (typeof v === "number" && isFinite(v)) return v;
+      if (typeof v !== "string") return NaN;
+      const m = v.match(/([\d.]+)/);
+      return m ? parseFloat(m[1]) : NaN;
+    }
+
+    // direct
+    out.w = num(meta.width ?? meta.w);
+    out.h = num(meta.height ?? meta.h);
+
+    // dimension string: "120 x 80" / "120×80"
+    if (!isFinite(out.w) || !isFinite(out.h)) {
+      const s = (meta.dimensions || meta.size || meta.dimension || "").toString();
+      const m = s.match(/([\d.]+)\s*[x×]\s*([\d.]+)/i);
+      if (m) {
+        out.w = parseFloat(m[1]);
+        out.h = parseFloat(m[2]);
+      }
+    }
+
+    // aspect only (ratio)
+    if ((!isFinite(out.w) || !isFinite(out.h)) && meta.aspect) {
+      const a = num(meta.aspect);
+      if (isFinite(a) && a > 0) { out.w = a; out.h = 1; }
+    }
+
+    return out;
+  }
+
+  function tryApplyArtworkSizing(force) {
+    const THREE = window.THREE;
+    if (!THREE) return false;
+
+    const scene =
+      window.scene ||
+      window._scene ||
+      window.SCENE ||
+      (window.app && window.app.scene) ||
+      null;
+
+    if (!scene || typeof scene.traverse !== "function") return false;
+
+    const roots = new Set();
+
+    function findRoot(obj) {
+      let cur = obj;
+      for (let i = 0; i < 6 && cur; i++) {
+        if (cur.userData && (cur.userData.artwork || cur.userData.isArtwork || cur.userData.type === "artwork")) return cur;
+        cur = cur.parent;
+      }
+      return obj.parent || obj;
+    }
+
+    scene.traverse((o) => {
+      if (!o) return;
+
+      // prefer explicit
+      if (o.userData && (o.userData.artwork || o.userData.isArtwork || o.userData.type === "artwork")) {
+        roots.add(o);
+        return;
+      }
+
+      // heuristic: mesh with texture map -> likely artwork surface
+      if (o.isMesh && o.material && o.material.map && o.material.map.image) {
+        roots.add(findRoot(o));
+      }
+    });
+
+    const list = Array.from(roots).filter(Boolean);
+    if (!list.length) return false;
+
+    // collect raw sizes
+    const items = [];
+    for (const obj of list) {
+      const meta =
+        (obj.userData && (obj.userData.artwork || obj.userData.data || obj.userData.meta)) ||
+        (obj.userData || null);
+
+      let { w, h } = parseWH(meta);
+
+      // fallback to texture image dimensions (ratio only; size diff may be limited)
+      if ((!isFinite(w) || !isFinite(h)) && obj.isMesh && obj.material && obj.material.map && obj.material.map.image) {
+        const im = obj.material.map.image;
+        if (im && im.width && im.height) { w = im.width; h = im.height; }
+      }
+
+      // final fallback: try first textured child
+      if (!isFinite(w) || !isFinite(h)) {
+        let found = null;
+        obj.traverse((c) => {
+          if (found) return;
+          if (c.isMesh && c.material && c.material.map && c.material.map.image) found = c.material.map.image;
+        });
+        if (found && found.width && found.height) { w = found.width; h = found.height; }
+      }
+
+      if (!isFinite(w) || !isFinite(h) || w <= 0 || h <= 0) {
+        // cannot size; skip unless force asked (still keep ratio if possible)
+        continue;
+      }
+
+      const box = new THREE.Box3().setFromObject(obj);
+      const currW = Math.max(1e-6, box.max.x - box.min.x);
+      const currH = Math.max(1e-6, box.max.y - box.min.y);
+
+      items.push({ obj, w, h, currW, currH, baseMinY: box.min.y });
+    }
+
+    if (!items.length) return false;
+
+    const hs = items.map(x => x.h);
+    const minH = Math.min(...hs);
+    const maxH = Math.max(...hs);
+    const span = Math.max(1e-6, maxH - minH);
+
+    // world-unit normalization (keeps differences, avoids extreme blow-up)
+    const MIN_H_WORLD = 0.75;
+    const MAX_H_WORLD = 1.35;
+
+    for (const it of items) {
+      const obj = it.obj;
+
+      // store original transform once to avoid cumulative scaling
+      if (!obj.userData.__lfcSizePatch) {
+        obj.userData.__lfcSizePatch = {
+          scale: obj.scale.clone ? obj.scale.clone() : { x: obj.scale.x, y: obj.scale.y, z: obj.scale.z },
+          posY: obj.position.y
+        };
+      } else if (!force) {
+        // already patched; skip unless forced
+        continue;
+      }
+
+      // restore original before re-applying (prevents drift)
+      const orig = obj.userData.__lfcSizePatch;
+      if (orig && orig.scale) {
+        obj.scale.set(orig.scale.x, orig.scale.y, orig.scale.z);
+        obj.position.y = orig.posY;
+      }
+
+      // map raw height into [MIN_H_WORLD, MAX_H_WORLD] (slightly eased)
+      let t = (it.h - minH) / span;
+      t = Math.pow(clamp(t, 0, 1), 0.85);
+      const targetH = MIN_H_WORLD + t * (MAX_H_WORLD - MIN_H_WORLD);
+
+      const aspect = it.w / it.h;
+      const targetW = targetH * aspect;
+
+      // compute scale factors from current bbox
+      const box0 = new THREE.Box3().setFromObject(obj);
+      const currW0 = Math.max(1e-6, box0.max.x - box0.min.x);
+      const currH0 = Math.max(1e-6, box0.max.y - box0.min.y);
+      const baseMinY = box0.min.y;
+
+      const sx = targetW / currW0;
+      const sy = targetH / currH0;
+
+      obj.scale.set(obj.scale.x * sx, obj.scale.y * sy, obj.scale.z);
+
+      // bottom align: keep old minY
+      const box1 = new THREE.Box3().setFromObject(obj);
+      const newMinY = box1.min.y;
+      const dyWorld = baseMinY - newMinY;
+
+      // convert world delta to local delta by parent scale.y (safe enough for y-only adjustment)
+      let parentScaleY = 1;
+      try {
+        if (obj.parent && obj.parent.getWorldScale) {
+          const v = new THREE.Vector3();
+          obj.parent.getWorldScale(v);
+          parentScaleY = v.y || 1;
+        }
+      } catch (e) {}
+
+      obj.position.y += (dyWorld / parentScaleY);
+    }
+
+    return true;
+  }
+
+  function setupArtworkSizing() {
+    // poll until scene exists; no refactor needed
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries++;
+      const ok = tryApplyArtworkSizing(false);
+      if (ok || tries > 40) clearInterval(timer);
+    }, 300);
+  }
+
+  // ---------- Boot ----------
+  onReady(() => {
+    safeDefineGoHome();
+    setupZoomPan();
+    setupCreatorLabEmailRequired();
+    setupOnboardingCard();
+    setupWhereAmI();
+    setupTeleportFeedbackAndPreview();
+    setupArtworkSizing();
+  });
+})();
 
