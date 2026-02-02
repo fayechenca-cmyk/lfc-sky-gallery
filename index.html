@@ -112,6 +112,7 @@
     #ai-panel.active { transform: translateX(0); }
 
     .ai-header { padding: 1.6rem; border-bottom: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.6); position: relative; }
+
     .ai-img-preview { width: 100%; height: 160px; object-fit: contain; border-radius: 12px; margin-bottom: 1rem; background: #f1f5f9; }
     .panel-close { position: absolute; top: 1rem; right: 1rem; font-size: 2rem; cursor: pointer; color: var(--blue); font-weight: 800; z-index: 600; padding: 10px; }
     .pin-btn { background: var(--ok); color: #fff; border: none; padding: 8px 16px; border-radius: 50px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing:1px; cursor: pointer; float: right; margin-top: 5px; margin-right: 40px; box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3); }
@@ -204,12 +205,159 @@
     }
 
     @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ========================================================= */
+    /* ✅ PATCH v1 (MINIMAL, NO REDESIGN / NO RENAME / NO REFACTOR) */
+    /* ========================================================= */
+
+    /* Detail zoom viewport (keeps exact size & styling) */
+    #ai-img-viewport.ai-img-preview { position: relative; overflow: hidden; }
+    #ai-img-viewport #ai-img.ai-img-preview { width: 100%; height: 100%; margin-bottom: 0; background: transparent; transform: translate3d(0px,0px,0px) scale(1); transform-origin: 0 0; cursor: grab; }
+    #ai-img-viewport #ai-img:active { cursor: grabbing; }
+
+    /* Teleport toast */
+    #teleport-toast {
+      position: fixed; top: 18px; left: 50%;
+      transform: translateX(-50%) translateY(-18px);
+      background: rgba(30, 58, 138, 0.92);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9100;
+      box-shadow: 0 10px 30px rgba(30,58,138,0.35);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    #teleport-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Onboarding card (glass, consistent language) */
+    #onboarding-card {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.98);
+      width: 92%; max-width: 720px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(25px);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 20px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+      z-index: 9050;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+      padding: 22px;
+      color: var(--ink);
+    }
+    #onboarding-card.visible { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    #onboarding-card h3 { margin: 0 0 10px 0; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); }
+    #onboarding-card p { margin: 0; font-size: 13px; line-height: 1.8; color: var(--gray); font-weight: 500; }
+    #onboarding-card .close-x {
+      position: absolute; top: 10px; right: 12px;
+      font-size: 22px; font-weight: 900; color: var(--blue);
+      cursor: pointer; padding: 10px;
+    }
+    #onboarding-card .mini-row { margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    #onboarding-card .mini-btn { padding: 10px 14px; font-size: 10px; }
+
+    /* Home button (safe exit) */
+    #home-btn {
+      position: absolute;
+      bottom: 3rem;
+      left: 2rem;
+      pointer-events: auto;
+      z-index: 600;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid #e2e8f0;
+      color: var(--blue);
+      padding: 1rem 1.2rem;
+      border-radius: 50px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 11px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.05);
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s;
+      font-family: 'Montserrat', sans-serif;
+    }
+    #home-btn:hover { transform: translateY(-1px); }
+
+    /* Nav preview tooltip */
+    #nav-preview {
+      position: fixed;
+      min-width: 220px;
+      max-width: 280px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(226,232,240,1);
+      border-radius: 14px;
+      box-shadow: 0 20px 55px rgba(0,0,0,0.12);
+      z-index: 9055;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      transform: translateY(8px);
+      overflow: hidden;
+      color: var(--ink);
+    }
+    #nav-preview.visible { opacity: 1; transform: translateY(0); }
+    #nav-preview .thumb { width: 100%; height: 120px; background: #f1f5f9; object-fit: cover; display:block; }
+    #nav-preview .body { padding: 12px; }
+    #nav-preview .title { font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; }
+    #nav-preview .meta { font-size: 10px; color: var(--gray); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; line-height: 1.6; }
+
+    /* Lab message (error/success, no harsh red) */
+    #lab-inline-message {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+    }
   </style>
 </head>
 <body>
   <div id="canvas-container"></div>
 
   <div id="onboarding-tip">Click Artwork to Chat</div>
+
+  <!-- ✅ PATCH: onboarding help card (hidden by default) -->
+  <div id="onboarding-card" aria-hidden="true">
+    <div class="close-x" id="onboarding-close">×</div>
+    <h3>Quick Guide</h3>
+    <p>
+      • Rotate view: mouse drag / trackpad drag<br>
+      • Move: WASD / Arrow keys / on-screen pad<br>
+      • Jump quickly: use the right elevator buttons<br>
+      • Return to walk: “Return to Walk” button (or close the panel)
+    </p>
+    <div class="mini-row">
+      <button class="reg-btn mini-btn" id="onboarding-gotit">Got it</button>
+    </div>
+  </div>
+
+  <!-- ✅ PATCH: teleport toast -->
+  <div id="teleport-toast">Teleporting...</div>
+
+  <!-- ✅ PATCH: nav preview tooltip -->
+  <div id="nav-preview" role="tooltip" aria-hidden="true">
+    <img class="thumb" id="nav-preview-thumb" src="" alt="" />
+    <div class="body">
+      <div class="title" id="nav-preview-title">Preview</div>
+      <div class="meta" id="nav-preview-meta">Loading...</div>
+    </div>
+  </div>
 
   <div id="entrance-layer">
     <div class="door-panel left"></div>
@@ -294,13 +442,14 @@
             <h3 id="label-name">Project Name</h3>
             <input type="text" id="project-name-input" class="lab-input" placeholder="...">
             <h3 id="label-goal">Core Objective</h3>
- <textarea id="project-goal-input" class="lab-input" rows="3" placeholder="..."></textarea>
- <h3 id="label-email">Email (Required)</h3>
- <input type="email" id="project-email-input" class="lab-input" placeholder="name@email.com" required>
- <div id="lab-email-hint" style="font-size:11px; color: var(--gray); opacity:0.85; margin:-6px 0 10px 0; display:none;"></div>
- <h3 id="label-contact">Preferred Contact (Optional)</h3>
- <input type="text" id="project-contact-input" class="lab-input" placeholder="WeChat / WhatsApp / Phone (optional)">
+            <textarea id="project-goal-input" class="lab-input" rows="3" placeholder="..."></textarea>
 
+            <!-- ✅ PATCH: Contact fields (required email) -->
+            <h3 id="label-email">Contact Email (Required)</h3>
+            <input type="email" id="contact-email-input" class="lab-input" placeholder="Email (required)" autocomplete="email" required>
+            <h3 id="label-preferred">Preferred Contact (Optional)</h3>
+            <input type="text" id="contact-preferred-input" class="lab-input" placeholder="WeChat / WhatsApp / Phone (optional)">
+            <div id="lab-inline-message"></div>
         </div>
         <div class="lab-section">
             <h3 id="label-refs">Reference Board</h3>
@@ -323,7 +472,12 @@
   <div id="ui-layer">
     <div id="hud">
       <h1>LFC SYSTEM</h1>
-      <div class="subtitle"><div class="live-dot"></div> SKY ARTSPACE <span id="whereami" style="opacity:0.85;">• Atrium</span></div>
+
+      <!-- ✅ PATCH: where-am-I badge added inline (no layout height change) -->
+      <div class="subtitle">
+        <div class="live-dot"></div> SKY ARTSPACE
+        <span id="whereami-text" class="floor-label" style="padding:4px 10px; font-size:9px;">Atrium</span>
+      </div>
 
       <div id="journey-wrapper">
         <div id="journey-btn" onclick="startBlueprint()">
@@ -337,13 +491,24 @@
     </div>
 
     <div id="elevator"></div>
+
+    <!-- ✅ PATCH: Home/Atrium safe exit -->
+    <div id="home-btn" onclick="goHome()">⌂ Atrium</div>
+
     <div id="back-btn" onclick="exitFocus()">← Return to Walk</div>
 
     <div id="ai-panel">
       <div class="ai-header">
         <span class="panel-close" onclick="exitFocus()">×</span>
         <button class="pin-btn" onclick="pinCurrentArt()">📌 Start LFC Project</button>
-        <img id="ai-img" class="ai-img-preview" src="" />
+
+        <!-- ✅ PATCH: image viewport wrapper (same size, enables zoom/pan/reset) -->
+        <div id="ai-img-viewport" class="ai-img-preview" tabindex="0" aria-label="Artwork image viewer">
+          <img id="ai-img" class="ai-img-preview" src="" />
+          <button id="ai-zoom-reset" class="reg-btn" style="position:absolute; right:10px; top:10px; padding:8px 10px; font-size:9px; display:none;">Reset</button>
+          <div id="ai-zoom-hint" style="position:absolute; left:12px; bottom:10px; font-size:9px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:rgba(100,116,139,0.85); background:rgba(255,255,255,0.8); padding:4px 8px; border-radius:999px; border:1px solid rgba(226,232,240,1); display:none;">Scroll to Zoom • Drag</div>
+        </div>
+
         <h2 style="font-weight:800; margin:0; color:var(--blue); font-size:1.4rem;" id="ai-title">Untitled</h2>
         <div style="font-size:11px; text-transform:uppercase; color:var(--gray); margin-top:5px; font-weight:600;" id="ai-meta">Artist • Year</div>
 
