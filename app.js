@@ -1818,715 +1818,705 @@ window.addEventListener("DOMContentLoaded", () => {
   // ensure AI mode buttons reflect saved preference
   updateAIModeUI();
 });
-/* =========================================================
-   ✅ PATCH v1 (APPEND-ONLY)
-   - No refactor, no redesign, no rename
-   - Adds: artwork size normalization, detail zoom/pan, lab email required,
-           onboarding helper, where-am-I, teleport feedback, home button,
-           elevator hover preview
-   ========================================================= */
-(function () {
-  const PATCH_KEY = "__LFC_MIN_PATCH_V1__";
-  if (window[PATCH_KEY]) return;
-  window[PATCH_KEY] = true;
+/* ===========================
+   LFC PATCH (P0) - minimal additive patch
+   A: 3D artwork size/aspect scaling + baseline align
+   B: Detail image zoom/pan + reset
+   C: Creator Lab email required + inject into Formspree FormData (no change to your submit logic)
+   D: Onboarding tip + where-am-I + teleport feedback + Home + hover preview
+   =========================== */
+(function(){
+  'use strict';
 
-  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-  const qs = (sel, root = document) => root.querySelector(sel);
-  const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  var PATCH_VER = 'lfc-p0-patch-v1';
+  window.__LFC_PATCH_VERSION = PATCH_VER;
+  try { console.log('[LFC PATCH]', PATCH_VER, 'loaded'); } catch(e){}
 
-  function onReady(fn) {
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", fn, { once: true });
-    } else fn();
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function $all(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function once(fn){ var done=false; return function(){ if(done) return; done=true; return fn.apply(this, arguments);} }
+  function safeText(el, txt){ if(el) el.textContent = txt; }
+  function isNumber(n){ return typeof n === 'number' && isFinite(n); }
+  function toNum(v){ var n = parseFloat(v); return isFinite(n) ? n : null; }
+
+  /* ---------------------------------
+     [C] Creator Lab contact (Email required)
+     - adds validation without changing your existing button/submit wiring
+     - injects email into any Formspree FormData request
+  --------------------------------- */
+  var EMAIL_KEY = 'Email';
+  var OTHER_KEY = 'Preferred Contact';
+
+  function getEmail(){
+    var el = $('#contact-email-input');
+    return el ? (el.value||'').trim() : '';
+  }
+  function getOther(){
+    var el = $('#contact-other-input');
+    return el ? (el.value||'').trim() : '';
+  }
+  function isValidEmail(email){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
-  function showToast(text) {
-    const el = qs("#teleport-toast");
-    if (!el) return;
-    el.textContent = text || "Teleporting...";
-    el.classList.add("visible");
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => el.classList.remove("visible"), 900);
+  function ensureLabErrorBox(){
+    var emailEl = $('#contact-email-input');
+    if(!emailEl) return null;
+
+    var existing = $('#lab-email-error');
+    if(existing) return existing;
+
+    var box = document.createElement('div');
+    box.id = 'lab-email-error';
+    box.style.marginTop = '-6px';
+    box.style.marginBottom = '10px';
+    box.style.padding = '10px 12px';
+    box.style.borderRadius = '8px';
+    box.style.fontSize = '11px';
+    box.style.fontWeight = '700';
+    box.style.color = '#334155';
+    box.style.background = '#f1f5f9';
+    box.style.borderLeft = '3px solid #1e3a8a';
+    box.style.display = 'none';
+    emailEl.insertAdjacentElement('afterend', box);
+    return box;
   }
 
-  function setLabMessage(text, kind) {
-    const box = qs("#lab-inline-message");
-    if (!box) return;
-    box.style.display = "block";
-    box.textContent = text || "";
-    // no harsh red, stay in your design language
-    if (kind === "error") {
-      box.style.borderColor = "#cbd5e1";
-      box.style.background = "#f1f5f9";
-      box.style.color = "#334155";
-    } else if (kind === "success") {
-      box.style.borderColor = "#e2e8f0";
-      box.style.background = "#f1f5f9";
-      box.style.color = "#334155";
-    }
-    clearTimeout(setLabMessage._t);
-    setLabMessage._t = setTimeout(() => { box.style.display = "none"; }, 3800);
+  function showLabEmailError(msg){
+    var box = ensureLabErrorBox();
+    if(!box) return;
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+  function clearLabEmailError(){
+    var box = $('#lab-email-error');
+    if(box) box.style.display = 'none';
   }
 
-  function isValidEmail(v) {
-    if (!v) return false;
-    const s = String(v).trim();
-    // simple but reliable enough for client-side gatekeeping
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
-  }
+  (function bindLabValidation(){
+    var btn = $('#btn-submit');
+    if(!btn) return;
 
-  function safeDefineGoHome() {
-    if (typeof window.goHome === "function") return;
+    btn.addEventListener('click', function(ev){
+      var emailInput = $('#contact-email-input');
+      if(!emailInput) return; // means index.html hasn't added the field yet
 
-    window.goHome = function () {
-      try { if (typeof window.exitFocus === "function") window.exitFocus(); } catch (e) {}
-      showToast("Returning to Atrium...");
-      // safest: click first elevator item if exists
-      const first = qs("#elevator .floor-item");
-      if (first) {
-        try { first.click(); } catch (e) {}
+      clearLabEmailError();
+
+      var email = getEmail();
+      if(!email){
+        ev.preventDefault(); ev.stopPropagation();
+        if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+        showLabEmailError('请填写 Email（必填），我们才能联系你。');
+        try { emailInput.focus(); } catch(e){}
         return;
       }
-      // fallback: if your app exposes a teleport/home function, call it
-      if (typeof window.teleportHome === "function") {
-        try { window.teleportHome(); } catch (e) {}
+      if(!isValidEmail(email)){
+        ev.preventDefault(); ev.stopPropagation();
+        if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+        showLabEmailError('Email 格式不正确。示例：name@example.com');
+        try { emailInput.focus(); } catch(e){}
+        return;
       }
-    };
-  }
 
-  function setupWhereAmI() {
-    const badge = qs("#whereami-text");
-    if (!badge) return;
+      window.__LFC_LAST_CONTACT = { email: email, other: getOther() || '' };
+    }, true);
 
-    function computeLabel() {
-      const bp = qs("#blueprint");
-      const lab = qs("#creator-lab-overlay");
-      const ai = qs("#ai-panel");
-
-      if (bp && bp.classList.contains("active")) return "My Journey";
-      if (lab && lab.classList.contains("lab-visible")) return "Creator Lab";
-      if (ai && ai.classList.contains("active")) return "Artwork";
-
-      const active = qs("#elevator .floor-item.active .floor-label");
-      if (active && active.textContent.trim()) return active.textContent.trim();
-      return "Atrium";
+    var emailEl = $('#contact-email-input');
+    if(emailEl){
+      emailEl.addEventListener('input', function(){ clearLabEmailError(); }, { passive:true });
     }
+  })();
 
-    function update() {
-      const t = computeLabel();
-      badge.textContent = t;
-    }
+  (function patchFetchForFormspree(){
+    if(!window.fetch || window.__LFC_FETCH_PATCHED) return;
 
-    // observe class changes for state transitions
-    const obs = new MutationObserver(update);
-    obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
-
-    ["#blueprint", "#creator-lab-overlay", "#ai-panel"].forEach((id) => {
-      const el = qs(id);
-      if (!el) return;
-      obs.observe(el, { attributes: true, attributeFilter: ["class"] });
-    });
-
-    const elev = qs("#elevator");
-    if (elev) elev.addEventListener("click", () => setTimeout(update, 80), true);
-
-    update();
-  }
-
-  function setupOnboardingCard() {
-    const KEY = "lfc_onboarded_v1";
-    const card = qs("#onboarding-card");
-    const close = qs("#onboarding-close");
-    const gotit = qs("#onboarding-gotit");
-    if (!card || !close || !gotit) return;
-
-    function hide() {
-      card.classList.remove("visible");
-      card.setAttribute("aria-hidden", "true");
-      try { localStorage.setItem(KEY, "1"); } catch (e) {}
-    }
-
-    close.addEventListener("click", hide);
-    gotit.addEventListener("click", hide);
-
-    // show 6 seconds after doors open, only once
-    const shouldShow = (() => {
-      try { return localStorage.getItem(KEY) !== "1"; } catch (e) { return true; }
-    })();
-
-    if (!shouldShow) return;
-
-    const mo = new MutationObserver(() => {
-      if (document.body.classList.contains("doors-open")) {
-        mo.disconnect();
-        setTimeout(() => {
-          // avoid showing if user already deep in other overlays
-          card.classList.add("visible");
-          card.setAttribute("aria-hidden", "false");
-        }, 6000);
-      }
-    });
-    mo.observe(document.body, { attributes: true, attributeFilter: ["class"] });
-  }
-
-  function setupTeleportFeedbackAndPreview() {
-    const elevator = qs("#elevator");
-    const preview = qs("#nav-preview");
-    const pThumb = qs("#nav-preview-thumb");
-    const pTitle = qs("#nav-preview-title");
-    const pMeta = qs("#nav-preview-meta");
-    if (!elevator) return;
-
-    function getFloorLabel(item) {
-      const lbl = qs(".floor-label", item);
-      return (lbl ? lbl.textContent : "").trim() || "Zone";
-    }
-
-    function getPreviewData(label) {
-      // Heuristic: try your existing global data if present; otherwise placeholder.
-      const out = { thumb: "", count: "", keywords: "" };
-
-      // common patterns
-      const pools = [
-        window.floors, window.FLOORS, window.zones, window.ZONES,
-        window.galleryFloors, window.galleryZones
-      ].filter(Boolean);
-
-      for (const p of pools) {
-        try {
-          const found = Array.isArray(p)
-            ? p.find(x => (x.label || x.name || x.title || "").toLowerCase() === label.toLowerCase())
-            : null;
-          if (found) {
-            out.count = found.count || (found.artworks ? found.artworks.length : "") || "";
-            out.keywords = (found.keywords || found.tags || []).slice ? (found.keywords || found.tags).slice(0,3).join(", ") : (found.keywords || "");
-            out.thumb = found.thumb || found.preview || "";
-            return out;
+    var origFetch = window.fetch.bind(window);
+    window.fetch = function(input, init){
+      try{
+        var url = (typeof input === 'string') ? input : (input && input.url);
+        if(url && url.indexOf('formspree.io') !== -1 && init && init.body && (typeof FormData !== 'undefined') && (init.body instanceof FormData)){
+          var c = window.__LFC_LAST_CONTACT || null;
+          if(c && c.email){
+            if(!init.body.has(EMAIL_KEY)) init.body.append(EMAIL_KEY, c.email);
+            if(c.other && !init.body.has(OTHER_KEY)) init.body.append(OTHER_KEY, c.other);
           }
-        } catch (e) {}
-      }
-
-      // artworks array fallback
-      const arts = window.artworks || window.ARTWORKS || window.galleryArtworks;
-      if (Array.isArray(arts)) {
-        const list = arts.filter(a => {
-          const z = (a.floor || a.zone || a.section || a.room || "").toString().toLowerCase();
-          return z && z === label.toLowerCase();
-        });
-        if (list.length) {
-          out.count = list.length;
-          const first = list[0];
-          out.thumb = first.image || first.img || first.src || first.url || "";
-          out.keywords = (first.keywords || first.tags || []).slice ? (first.keywords || first.tags).slice(0,3).join(", ") : "";
         }
-      }
+      }catch(e){}
+      return origFetch(input, init).then(function(res){
+        try{
+          var url2 = (typeof input === 'string') ? input : (input && input.url);
+          if(url2 && url2.indexOf('formspree.io') !== -1){
+            var c2 = window.__LFC_LAST_CONTACT || null;
+            if(res && res.ok && c2 && c2.email){
+              var tip = $('#lab-submit-hint');
+              if(!tip){
+                var footer = $('.lab-footer');
+                if(footer){
+                  tip = document.createElement('div');
+                  tip.id = 'lab-submit-hint';
+                  tip.style.marginTop = '10px';
+                  tip.style.fontSize = '11px';
+                  tip.style.fontWeight = '700';
+                  tip.style.color = '#64748b';
+                  tip.style.textTransform = 'uppercase';
+                  tip.style.letterSpacing = '1px';
+                  footer.insertAdjacentElement('afterend', tip);
+                }
+              }
+              if(tip){
+                tip.textContent = 'We will contact you at: ' + c2.email;
+              }
+            }
+          }
+        }catch(e){}
+        return res;
+      });
+    };
 
-      return out;
+    window.__LFC_FETCH_PATCHED = true;
+  })();
+
+  /* ---------------------------------
+     [B] Zoom & pan for #ai-img
+     - wheel zoom + drag pan + pinch zoom + Reset
+     - no layout changes, injects a small Reset button using existing reg-btn
+  --------------------------------- */
+  (function enableImageZoom(){
+    var img = $('#ai-img');
+    if(!img) return;
+
+    var header = img.parentElement;
+    if(header && !$('#ai-zoom-reset')){
+      var btn = document.createElement('button');
+      btn.id = 'ai-zoom-reset';
+      btn.className = 'reg-btn';
+      btn.type = 'button';
+      btn.textContent = 'Reset View';
+      btn.style.padding = '8px 12px';
+      btn.style.fontSize = '9px';
+      btn.style.marginTop = '10px';
+      btn.style.opacity = '0.9';
+      header.appendChild(btn);
     }
 
-    // click feedback
-    elevator.addEventListener("click", (e) => {
-      const item = e.target.closest(".floor-item");
-      if (!item) return;
-      showToast("Teleporting to " + getFloorLabel(item) + "...");
-      setTimeout(() => {
-        // after teleport likely completes, refresh artwork sizing (safe no-op if not ready)
-        tryApplyArtworkSizing(true);
+    var state = { scale:1, tx:0, ty:0, dragging:false, px:0, py:0, pointers:{}, lastDist:0 };
+
+    function apply(){
+      img.style.transform = 'translate(' + state.tx + 'px,' + state.ty + 'px) scale(' + state.scale + ')';
+    }
+    function reset(){
+      state.scale = 1; state.tx = 0; state.ty = 0;
+      state.dragging=false; state.pointers={}; state.lastDist=0;
+      apply();
+      img.style.cursor = 'grab';
+    }
+
+    img.style.transformOrigin = '50% 50%';
+    img.style.userSelect = 'none';
+    img.style.touchAction = 'none';
+    img.style.cursor = 'grab';
+    apply();
+
+    var resetBtn = $('#ai-zoom-reset');
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){ reset(); }, { passive:true });
+    }
+
+    img.addEventListener('wheel', function(e){
+      e.preventDefault();
+      var delta = (e.deltaY || 0);
+      var factor = delta > 0 ? 0.92 : 1.08;
+      state.scale = clamp(state.scale * factor, 1, 4);
+      apply();
+    }, { passive:false });
+
+    function pointerCount(){
+      return Object.keys(state.pointers).length;
+    }
+    function getTwoPointers(){
+      var keys = Object.keys(state.pointers);
+      if(keys.length < 2) return null;
+      return [state.pointers[keys[0]], state.pointers[keys[1]]];
+    }
+
+    img.addEventListener('pointerdown', function(e){
+      try { img.setPointerCapture(e.pointerId); } catch(err){}
+      state.pointers[e.pointerId] = { x:e.clientX, y:e.clientY };
+
+      if(pointerCount() === 1){
+        state.dragging = true;
+        state.px = e.clientX; state.py = e.clientY;
+        img.style.cursor = 'grabbing';
+      }
+    });
+
+    img.addEventListener('pointermove', function(e){
+      if(!state.pointers[e.pointerId]) return;
+
+      var prev = state.pointers[e.pointerId];
+      state.pointers[e.pointerId] = { x:e.clientX, y:e.clientY };
+
+      if(pointerCount() === 1 && state.dragging && state.scale > 1){
+        var dx = e.clientX - state.px;
+        var dy = e.clientY - state.py;
+        state.px = e.clientX; state.py = e.clientY;
+        state.tx += dx;
+        state.ty += dy;
+        apply();
+        return;
+      }
+
+      if(pointerCount() === 2){
+        var pts = getTwoPointers();
+        if(!pts) return;
+        var dx2 = pts[0].x - pts[1].x;
+        var dy2 = pts[0].y - pts[1].y;
+        var dist = Math.sqrt(dx2*dx2 + dy2*dy2);
+
+        if(state.lastDist){
+          var ratio = dist / state.lastDist;
+          state.scale = clamp(state.scale * ratio, 1, 4);
+          apply();
+        }
+        state.lastDist = dist;
+      }
+    });
+
+    function endPointer(e){
+      delete state.pointers[e.pointerId];
+      if(pointerCount() < 2) state.lastDist = 0;
+      if(pointerCount() === 0){
+        state.dragging = false;
+        img.style.cursor = 'grab';
+      }
+    }
+    img.addEventListener('pointerup', endPointer);
+    img.addEventListener('pointercancel', endPointer);
+
+    img.addEventListener('dblclick', function(){ reset(); }, { passive:true });
+
+    var lastSrc = img.src;
+    setInterval(function(){
+      if(img.src !== lastSrc){
+        lastSrc = img.src;
+        reset();
+      }
+    }, 300);
+  })();
+
+  /* ---------------------------------
+     [D] Onboarding + where-am-I + teleport feedback + Home + hover preview
+  --------------------------------- */
+  (function onboardingTip(){
+    var tip = $('#onboarding-tip');
+    if(!tip) return;
+
+    var KEY = 'lfc_onboard_v1_done';
+    if(localStorage.getItem(KEY) === '1') return;
+
+    tip.style.pointerEvents = 'auto';
+    tip.style.cursor = 'pointer';
+    tip.textContent = '拖拽旋转视角 · WASD/方向键移动 · 右侧电梯传送 · 点击作品聊天 · Return to Walk 返回';
+
+    var hide = once(function(){
+      tip.classList.remove('visible');
+      localStorage.setItem(KEY, '1');
+    });
+    tip.addEventListener('click', hide);
+
+    var tries = 0;
+    var t = setInterval(function(){
+      tries++;
+      if(document.body && document.body.classList.contains('doors-open')){
+        tip.classList.add('visible');
+        setTimeout(hide, 6000);
+        clearInterval(t);
+      }
+      if(tries > 60) clearInterval(t);
+    }, 200);
+  })();
+
+  (function whereAmI(){
+    var hud = $('#hud');
+    if(!hud) return;
+    if($('#whereami')) return;
+
+    var tag = document.createElement('div');
+    tag.id = 'whereami';
+    tag.className = 'discovery-text';
+    tag.style.marginTop = '6px';
+    tag.style.opacity = '0.9';
+    tag.textContent = 'MODE: WALK';
+    hud.appendChild(tag);
+
+    function update(){
+      var mode = 'WALK';
+      if($('#blueprint') && $('#blueprint').classList.contains('active')) mode = 'JOURNEY';
+      else if($('#ai-panel') && $('#ai-panel').classList.contains('active')) mode = 'ARTWORK';
+
+      var loc = '';
+      var active = $('#elevator .floor-item.active .floor-label');
+      if(active && active.textContent) loc = active.textContent.trim();
+
+      tag.textContent = 'MODE: ' + mode + (loc ? ' • ' + loc : '');
+    }
+    setInterval(update, 400);
+    update();
+  })();
+
+  (function teleportFeedback(){
+    var elevator = $('#elevator');
+    var tip = $('#onboarding-tip');
+    if(!elevator || !tip) return;
+
+    elevator.addEventListener('click', function(e){
+      var item = e.target && e.target.closest ? e.target.closest('.floor-item') : null;
+      if(!item) return;
+
+      tip.textContent = 'Teleporting…';
+      tip.classList.add('visible');
+
+      clearTimeout(window.__LFC_TP_TIMER);
+      window.__LFC_TP_TIMER = setTimeout(function(){
+        if(localStorage.getItem('lfc_onboard_v1_done') !== '1'){
+          tip.textContent = '拖拽旋转视角 · WASD/方向键移动 · 右侧电梯传送 · 点击作品聊天 · Return to Walk 返回';
+        } else {
+          tip.classList.remove('visible');
+        }
       }, 900);
     }, true);
-
-    // hover/focus preview tooltip
-    if (!preview || !pThumb || !pTitle || !pMeta) return;
-
-    function showPreview(item) {
-      const label = getFloorLabel(item);
-      const data = getPreviewData(label);
-
-      pTitle.textContent = label;
-      pMeta.textContent =
-        (data.count ? (`Works: ${data.count}`) : "Works: —") +
-        (data.keywords ? (` • ${data.keywords}`) : "");
-
-      if (data.thumb) {
-        pThumb.src = data.thumb;
-        pThumb.style.display = "block";
-      } else {
-        // keep minimal placeholder look
-        pThumb.removeAttribute("src");
-        pThumb.style.display = "block";
-      }
-
-      const r = item.getBoundingClientRect();
-      const x = Math.max(16, r.left - 300);
-      const y = clamp(r.top + r.height / 2 - 60, 16, window.innerHeight - 180);
-      preview.style.left = x + "px";
-      preview.style.top = y + "px";
-      preview.classList.add("visible");
-      preview.setAttribute("aria-hidden", "false");
-    }
-
-    function hidePreview() {
-      preview.classList.remove("visible");
-      preview.setAttribute("aria-hidden", "true");
-    }
-
-    elevator.addEventListener("mouseover", (e) => {
-      const item = e.target.closest(".floor-item");
-      if (!item) return;
-      showPreview(item);
-    }, true);
-
-    elevator.addEventListener("mouseout", (e) => {
-      const item = e.target.closest(".floor-item");
-      if (!item) return;
-      hidePreview();
-    }, true);
-
-    elevator.addEventListener("focusin", (e) => {
-      const item = e.target.closest(".floor-item");
-      if (!item) return;
-      showPreview(item);
-    }, true);
-
-    elevator.addEventListener("focusout", hidePreview, true);
-
-    window.addEventListener("scroll", hidePreview, { passive: true });
-    window.addEventListener("resize", hidePreview, { passive: true });
-  }
-
-  function setupZoomPan() {
-    const viewport = qs("#ai-img-viewport");
-    const img = qs("#ai-img");
-    const resetBtn = qs("#ai-zoom-reset");
-    const hint = qs("#ai-zoom-hint");
-    if (!viewport || !img || !resetBtn) return;
-
-    let scale = 1;
-    let tx = 0;
-    let ty = 0;
-
-    const MIN = 1;
-    const MAX = 4;
-
-    function apply() {
-      // clamp pan so you can't drag image completely away
-      const w = viewport.clientWidth;
-      const h = viewport.clientHeight;
-      const maxX = Math.max(0, w * scale - w);
-      const maxY = Math.max(0, h * scale - h);
-
-      tx = clamp(tx, -maxX, 0);
-      ty = clamp(ty, -maxY, 0);
-
-      img.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
-
-      if (scale > 1.001) {
-        resetBtn.style.display = "inline-block";
-        if (hint) hint.style.display = "inline-block";
-      } else {
-        resetBtn.style.display = "none";
-        if (hint) hint.style.display = "none";
-      }
-    }
-
-    function reset() {
-      scale = 1;
-      tx = 0;
-      ty = 0;
-      apply();
-    }
-
-    resetBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      reset();
-    });
-
-    viewport.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") reset();
-    });
-
-    // wheel zoom (prevent scroll conflict)
-    viewport.addEventListener("wheel", (e) => {
-      // Only zoom when cursor is over viewport
-      e.preventDefault();
-
-      const rect = viewport.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
-
-      const wheel = e.deltaY;
-      const zoomIn = wheel < 0;
-      const factor = zoomIn ? 1.12 : 0.89;
-
-      const next = clamp(scale * factor, MIN, MAX);
-      if (Math.abs(next - scale) < 1e-4) return;
-
-      // zoom about pointer
-      const ix = (px - tx) / scale;
-      const iy = (py - ty) / scale;
-
-      scale = next;
-      tx = px - ix * scale;
-      ty = py - iy * scale;
-
-      apply();
-    }, { passive: false });
-
-    // drag pan
-    let dragging = false;
-    let lastX = 0, lastY = 0;
-
-    viewport.addEventListener("pointerdown", (e) => {
-      if (scale <= 1.001) return;
-      dragging = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      try { viewport.setPointerCapture(e.pointerId); } catch (err) {}
-    });
-
-    viewport.addEventListener("pointermove", (e) => {
-      if (!dragging) return;
-      const dx = e.clientX - lastX;
-      const dy = e.clientY - lastY;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      tx += dx;
-      ty += dy;
-      apply();
-    });
-
-    viewport.addEventListener("pointerup", () => { dragging = false; });
-    viewport.addEventListener("pointercancel", () => { dragging = false; });
-
-    // pinch zoom (two pointers)
-    const pts = new Map();
-    let pinchStartDist = 0;
-    let pinchStartScale = 1;
-    let pinchAnchor = null;
-
-    viewport.addEventListener("pointerdown", (e) => {
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pts.size === 2) {
-        const a = Array.from(pts.values());
-        pinchStartDist = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-        pinchStartScale = scale;
-
-        const rect = viewport.getBoundingClientRect();
-        pinchAnchor = {
-          x: ((a[0].x + a[1].x) / 2) - rect.left,
-          y: ((a[0].y + a[1].y) / 2) - rect.top
-        };
-      }
-    });
-
-    viewport.addEventListener("pointermove", (e) => {
-      if (!pts.has(e.pointerId)) return;
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pts.size !== 2) return;
-
-      const a = Array.from(pts.values());
-      const dist = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-      if (!pinchStartDist) return;
-
-      const next = clamp(pinchStartScale * (dist / pinchStartDist), MIN, MAX);
-      if (!pinchAnchor) return;
-
-      const ax = pinchAnchor.x;
-      const ay = pinchAnchor.y;
-      const ix = (ax - tx) / scale;
-      const iy = (ay - ty) / scale;
-
-      scale = next;
-      tx = ax - ix * scale;
-      ty = ay - iy * scale;
-
-      apply();
-    });
-
-    function endPointer(e) {
-      pts.delete(e.pointerId);
-      if (pts.size < 2) {
-        pinchStartDist = 0;
-        pinchAnchor = null;
-      }
-    }
-
-    viewport.addEventListener("pointerup", endPointer);
-    viewport.addEventListener("pointercancel", endPointer);
-
-    // reset zoom whenever artwork image src changes
-    const imgObs = new MutationObserver(() => reset());
-    imgObs.observe(img, { attributes: true, attributeFilter: ["src"] });
-
-    apply();
-  }
-
-  function setupCreatorLabEmailRequired() {
-    const submitBtn = qs("#btn-submit");
-    const emailInput = qs("#contact-email-input");
-    const prefInput = qs("#contact-preferred-input");
-    if (!submitBtn || !emailInput) return;
-
-    // 1) hard gate submit click (capture, blocks existing handlers if invalid)
-    submitBtn.addEventListener("click", (e) => {
-      const email = (emailInput.value || "").trim();
-      if (!isValidEmail(email)) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        setLabMessage("Please enter a valid email before submitting.", "error");
-        emailInput.focus();
-        return false;
-      }
-    }, true);
-
-    // 2) Ensure FormData includes email via fetch injection (minimal, no refactor)
-    const FORMSPREE_MATCH = "formspree.io/f/";
-    const origFetch = window.fetch ? window.fetch.bind(window) : null;
-    if (!origFetch) return;
-
-    if (!window.__lfc_fetch_patched__) {
-      window.__lfc_fetch_patched__ = true;
-
-      window.fetch = function (input, init) {
-        try {
-          const url = (typeof input === "string") ? input : (input && input.url);
-          const isFormspree = url && url.includes(FORMSPREE_MATCH);
-          if (isFormspree && init && init.body instanceof FormData) {
-            const fd = init.body;
-
-            const email = (emailInput.value || "").trim();
-            const pref = prefInput ? (prefInput.value || "").trim() : "";
-
-            // Guarantee email stored in payload
-            if (email && !fd.has("email")) fd.append("email", email);
-            if (pref && !fd.has("preferred_contact")) fd.append("preferred_contact", pref);
-          }
-        } catch (err) {}
-
-        const p = origFetch(input, init);
-        // show success note if formspree ok
-        try {
-          const url = (typeof input === "string") ? input : (input && input.url);
-          if (url && url.includes(FORMSPREE_MATCH)) {
-            p.then((res) => {
-              if (res && res.ok) {
-                const email = (emailInput.value || "").trim();
-                if (email) setLabMessage(`Submitted. We will contact you at: ${email}`, "success");
-              }
-            }).catch(() => {});
-          }
-        } catch (e) {}
-        return p;
-      };
-    }
-  }
-
-  // ---------- P0-A: Artwork sizing patch (scene traversal, bottom align) ----------
-  function parseWH(meta) {
-    const out = { w: NaN, h: NaN };
-    if (!meta) return out;
-
-    function num(v) {
-      if (typeof v === "number" && isFinite(v)) return v;
-      if (typeof v !== "string") return NaN;
-      const m = v.match(/([\d.]+)/);
-      return m ? parseFloat(m[1]) : NaN;
-    }
-
-    // direct
-    out.w = num(meta.width ?? meta.w);
-    out.h = num(meta.height ?? meta.h);
-
-    // dimension string: "120 x 80" / "120×80"
-    if (!isFinite(out.w) || !isFinite(out.h)) {
-      const s = (meta.dimensions || meta.size || meta.dimension || "").toString();
-      const m = s.match(/([\d.]+)\s*[x×]\s*([\d.]+)/i);
-      if (m) {
-        out.w = parseFloat(m[1]);
-        out.h = parseFloat(m[2]);
-      }
-    }
-
-    // aspect only (ratio)
-    if ((!isFinite(out.w) || !isFinite(out.h)) && meta.aspect) {
-      const a = num(meta.aspect);
-      if (isFinite(a) && a > 0) { out.w = a; out.h = 1; }
-    }
-
-    return out;
-  }
-
-  function tryApplyArtworkSizing(force) {
-    const THREE = window.THREE;
-    if (!THREE) return false;
-
-    const scene =
-      window.scene ||
-      window._scene ||
-      window.SCENE ||
-      (window.app && window.app.scene) ||
-      null;
-
-    if (!scene || typeof scene.traverse !== "function") return false;
-
-    const roots = new Set();
-
-    function findRoot(obj) {
-      let cur = obj;
-      for (let i = 0; i < 6 && cur; i++) {
-        if (cur.userData && (cur.userData.artwork || cur.userData.isArtwork || cur.userData.type === "artwork")) return cur;
-        cur = cur.parent;
-      }
-      return obj.parent || obj;
-    }
-
-    scene.traverse((o) => {
-      if (!o) return;
-
-      // prefer explicit
-      if (o.userData && (o.userData.artwork || o.userData.isArtwork || o.userData.type === "artwork")) {
-        roots.add(o);
-        return;
-      }
-
-      // heuristic: mesh with texture map -> likely artwork surface
-      if (o.isMesh && o.material && o.material.map && o.material.map.image) {
-        roots.add(findRoot(o));
-      }
-    });
-
-    const list = Array.from(roots).filter(Boolean);
-    if (!list.length) return false;
-
-    // collect raw sizes
-    const items = [];
-    for (const obj of list) {
-      const meta =
-        (obj.userData && (obj.userData.artwork || obj.userData.data || obj.userData.meta)) ||
-        (obj.userData || null);
-
-      let { w, h } = parseWH(meta);
-
-      // fallback to texture image dimensions (ratio only; size diff may be limited)
-      if ((!isFinite(w) || !isFinite(h)) && obj.isMesh && obj.material && obj.material.map && obj.material.map.image) {
-        const im = obj.material.map.image;
-        if (im && im.width && im.height) { w = im.width; h = im.height; }
-      }
-
-      // final fallback: try first textured child
-      if (!isFinite(w) || !isFinite(h)) {
-        let found = null;
-        obj.traverse((c) => {
-          if (found) return;
-          if (c.isMesh && c.material && c.material.map && c.material.map.image) found = c.material.map.image;
-        });
-        if (found && found.width && found.height) { w = found.width; h = found.height; }
-      }
-
-      if (!isFinite(w) || !isFinite(h) || w <= 0 || h <= 0) {
-        // cannot size; skip unless force asked (still keep ratio if possible)
-        continue;
-      }
-
-      const box = new THREE.Box3().setFromObject(obj);
-      const currW = Math.max(1e-6, box.max.x - box.min.x);
-      const currH = Math.max(1e-6, box.max.y - box.min.y);
-
-      items.push({ obj, w, h, currW, currH, baseMinY: box.min.y });
-    }
-
-    if (!items.length) return false;
-
-    const hs = items.map(x => x.h);
-    const minH = Math.min(...hs);
-    const maxH = Math.max(...hs);
-    const span = Math.max(1e-6, maxH - minH);
-
-    // world-unit normalization (keeps differences, avoids extreme blow-up)
-    const MIN_H_WORLD = 0.75;
-    const MAX_H_WORLD = 1.35;
-
-    for (const it of items) {
-      const obj = it.obj;
-
-      // store original transform once to avoid cumulative scaling
-      if (!obj.userData.__lfcSizePatch) {
-        obj.userData.__lfcSizePatch = {
-          scale: obj.scale.clone ? obj.scale.clone() : { x: obj.scale.x, y: obj.scale.y, z: obj.scale.z },
-          posY: obj.position.y
-        };
-      } else if (!force) {
-        // already patched; skip unless forced
-        continue;
-      }
-
-      // restore original before re-applying (prevents drift)
-      const orig = obj.userData.__lfcSizePatch;
-      if (orig && orig.scale) {
-        obj.scale.set(orig.scale.x, orig.scale.y, orig.scale.z);
-        obj.position.y = orig.posY;
-      }
-
-      // map raw height into [MIN_H_WORLD, MAX_H_WORLD] (slightly eased)
-      let t = (it.h - minH) / span;
-      t = Math.pow(clamp(t, 0, 1), 0.85);
-      const targetH = MIN_H_WORLD + t * (MAX_H_WORLD - MIN_H_WORLD);
-
-      const aspect = it.w / it.h;
-      const targetW = targetH * aspect;
-
-      // compute scale factors from current bbox
-      const box0 = new THREE.Box3().setFromObject(obj);
-      const currW0 = Math.max(1e-6, box0.max.x - box0.min.x);
-      const currH0 = Math.max(1e-6, box0.max.y - box0.min.y);
-      const baseMinY = box0.min.y;
-
-      const sx = targetW / currW0;
-      const sy = targetH / currH0;
-
-      obj.scale.set(obj.scale.x * sx, obj.scale.y * sy, obj.scale.z);
-
-      // bottom align: keep old minY
-      const box1 = new THREE.Box3().setFromObject(obj);
-      const newMinY = box1.min.y;
-      const dyWorld = baseMinY - newMinY;
-
-      // convert world delta to local delta by parent scale.y (safe enough for y-only adjustment)
-      let parentScaleY = 1;
-      try {
-        if (obj.parent && obj.parent.getWorldScale) {
-          const v = new THREE.Vector3();
-          obj.parent.getWorldScale(v);
-          parentScaleY = v.y || 1;
+  })();
+
+  (function elevatorHoverPreview(){
+    var elevator = $('#elevator');
+    if(!elevator) return;
+
+    if($('#elevator-preview-card')) return;
+
+    var card = document.createElement('div');
+    card.id = 'elevator-preview-card';
+    card.style.position = 'fixed';
+    card.style.zIndex = '9999';
+    card.style.display = 'none';
+    card.style.pointerEvents = 'none';
+    card.style.background = 'rgba(255,255,255,0.95)';
+    card.style.backdropFilter = 'blur(14px)';
+    card.style.border = '1px solid #e2e8f0';
+    card.style.borderRadius = '10px';
+    card.style.padding = '10px 12px';
+    card.style.boxShadow = '0 12px 35px rgba(0,0,0,0.10)';
+    card.style.fontFamily = 'Montserrat, sans-serif';
+    card.innerHTML =
+      '<div style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:1px; color:#1e3a8a" id="ep-title"></div>' +
+      '<div style="margin-top:6px; font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:1px" id="ep-meta"></div>';
+    document.body.appendChild(card);
+
+    function getSectionInfo(label){
+      var info = { count: null };
+      try{
+        var list = window.ARTWORKS || window.artworks || null;
+        if(Array.isArray(list)){
+          var hits = list.filter(function(a){
+            var sec = (a.section || a.floor || a.zone || '').toString().toLowerCase();
+            return sec && label && sec.indexOf(label.toLowerCase()) !== -1;
+          });
+          if(hits.length) info.count = hits.length;
         }
-      } catch (e) {}
-
-      obj.position.y += (dyWorld / parentScaleY);
+      }catch(e){}
+      return info;
     }
 
-    return true;
-  }
+    elevator.addEventListener('mousemove', function(e){
+      var item = e.target && e.target.closest ? e.target.closest('.floor-item') : null;
+      if(!item) return;
 
-  function setupArtworkSizing() {
-    // poll until scene exists; no refactor needed
-    let tries = 0;
-    const timer = setInterval(() => {
+      var labelEl = item.querySelector('.floor-label');
+      var label = labelEl ? labelEl.textContent.trim() : 'Section';
+      var info = getSectionInfo(label);
+
+      safeText($('#ep-title'), label);
+      safeText($('#ep-meta'), (info.count != null ? (info.count + ' works') : 'Click to teleport'));
+
+      card.style.left = (e.clientX - 220) + 'px';
+      card.style.top = (e.clientY - 20) + 'px';
+      card.style.display = 'block';
+    });
+
+    elevator.addEventListener('mouseleave', function(){
+      card.style.display = 'none';
+    });
+  })();
+
+  (function addHomeButton(){
+    var tries = 0;
+    var inserted = false;
+    var homeState = { camPos:null, target:null };
+
+    function captureHome(){
+      if(window.camera && window.camera.position && !homeState.camPos && window.camera.position.clone){
+        homeState.camPos = window.camera.position.clone();
+      }
+      if(window.controls && window.controls.target && !homeState.target && window.controls.target.clone){
+        homeState.target = window.controls.target.clone();
+      }
+    }
+
+    function goHome(){
+      captureHome();
+      if(!homeState.camPos || !window.camera) return;
+
+      try{
+        if(window.TWEEN && window.TWEEN.Tween){
+          new window.TWEEN.Tween(window.camera.position)
+            .to({ x: homeState.camPos.x, y: homeState.camPos.y, z: homeState.camPos.z }, 900)
+            .easing(window.TWEEN.Easing.Quadratic.Out)
+            .start();
+
+          if(window.controls && homeState.target){
+            new window.TWEEN.Tween(window.controls.target)
+              .to({ x: homeState.target.x, y: homeState.target.y, z: homeState.target.z }, 900)
+              .easing(window.TWEEN.Easing.Quadratic.Out)
+              .start();
+          }
+        } else {
+          window.camera.position.copy(homeState.camPos);
+          if(window.controls && homeState.target) window.controls.target.copy(homeState.target);
+        }
+      }catch(e){}
+
+      try{ if(typeof window.exitFocus === 'function') window.exitFocus(); }catch(e){}
+    }
+
+    var timer = setInterval(function(){
       tries++;
-      const ok = tryApplyArtworkSizing(false);
-      if (ok || tries > 40) clearInterval(timer);
-    }, 300);
-  }
+      captureHome();
 
-  // ---------- Boot ----------
-  onReady(() => {
-    safeDefineGoHome();
-    setupZoomPan();
-    setupCreatorLabEmailRequired();
-    setupOnboardingCard();
-    setupWhereAmI();
-    setupTeleportFeedbackAndPreview();
-    setupArtworkSizing();
-  });
+      var elevator = $('#elevator');
+      if(!elevator){ if(tries>120) clearInterval(timer); return; }
+
+      var items = elevator.querySelectorAll('.floor-item');
+      if(items && items.length && !inserted){
+        var home = document.createElement('div');
+        home.className = 'floor-item';
+        home.innerHTML = '<div class="floor-label">Home</div><div class="floor-num">⟲</div>';
+        home.addEventListener('click', function(e){ e.preventDefault(); goHome(); }, true);
+        elevator.insertBefore(home, elevator.firstChild);
+        inserted = true;
+      }
+
+      if(tries > 200) clearInterval(timer);
+    }, 250);
+  })();
+
+  /* ---------------------------------
+     [A] 3D artwork size/aspect scaling + baseline align
+     IMPORTANT: needs window.scene available.
+     If your app.js does not expose it, add ONE line after scene creation:
+       window.scene = scene; window.camera = camera; window.controls = controls;
+  --------------------------------- */
+  (function patchArtworkScaling(){
+    var tries = 0;
+    var done = false;
+
+    function isArtworkMesh(obj){
+      if(!obj || !obj.isMesh) return false;
+
+      var hasMap = false;
+      if(obj.material){
+        if(obj.material.map) hasMap = true;
+        else if(Array.isArray(obj.material)){
+          for(var i=0;i<obj.material.length;i++){
+            if(obj.material[i] && obj.material[i].map){ hasMap = true; break; }
+          }
+        }
+      }
+      if(!hasMap) return false;
+
+      var geo = obj.geometry;
+      var isPlane = !!(geo && (geo.type === 'PlaneGeometry' || geo.type === 'PlaneBufferGeometry'));
+      if(!isPlane) return false;
+
+      var ud = obj.userData || {};
+      var hasMeta = !!(ud.artwork || ud.isArtwork || ud.data || ud.title || ud.artist || ud.id || ud.meta);
+      return hasMeta;
+    }
+
+    function extractDims(obj){
+      var ud = obj.userData || {};
+      var data = ud.data || ud.art || ud.artwork || ud;
+
+      var w = toNum(data.width) || toNum(data.w) || toNum(data.pixelWidth) || toNum(data.imageWidth);
+      var h = toNum(data.height) || toNum(data.h) || toNum(data.pixelHeight) || toNum(data.imageHeight);
+
+      var aspect = null;
+
+      var tex = null;
+      if(obj.material){
+        if(obj.material.map) tex = obj.material.map;
+        else if(Array.isArray(obj.material)){
+          for(var i=0;i<obj.material.length;i++){
+            if(obj.material[i] && obj.material[i].map){ tex = obj.material[i].map; break; }
+          }
+        }
+      }
+
+      if(w && h) aspect = w / h;
+      if(!aspect && data && (toNum(data.aspect) || toNum(data.ratio))) aspect = toNum(data.aspect) || toNum(data.ratio);
+      if(!aspect && tex && tex.image && tex.image.width && tex.image.height) aspect = tex.image.width / tex.image.height;
+      if(!aspect) aspect = 1;
+
+      return { w:w, h:h, aspect:aspect };
+    }
+
+    function getWorldHeight(obj){
+      try{
+        var geo = obj.geometry;
+        var h = null;
+        if(geo && geo.parameters && isNumber(geo.parameters.height)) h = geo.parameters.height;
+        if(h == null && geo && geo.computeBoundingBox){
+          geo.computeBoundingBox();
+          if(geo.boundingBox) h = geo.boundingBox.max.y - geo.boundingBox.min.y;
+        }
+        if(h == null) h = 1;
+        return h * (obj.scale ? obj.scale.y : 1);
+      }catch(e){ return 1; }
+    }
+
+    function applyScaling(scene){
+      var meshes = [];
+      scene.traverse(function(o){ if(isArtworkMesh(o)) meshes.push(o); });
+      if(!meshes.length) return false;
+
+      var bottoms = meshes.map(function(m){
+        var h = getWorldHeight(m);
+        return (m.position ? m.position.y : 0) - (h/2);
+      }).sort(function(a,b){ return a-b; });
+
+      var baseline = bottoms[Math.floor(bottoms.length/2)] || 0;
+
+      var physHeights = meshes.map(function(m){
+        var d = extractDims(m);
+        return d.h;
+      }).filter(function(v){ return v != null; }).sort(function(a,b){ return a-b; });
+
+      var medianH = physHeights.length ? physHeights[Math.floor(physHeights.length/2)] : null;
+
+      var avgH = meshes.map(getWorldHeight).reduce(function(a,b){ return a+b; },0) / meshes.length;
+      var TARGET_H = clamp(avgH, 0.9, 1.8);
+      var MAX_W = TARGET_H * 2.2;
+
+      meshes.forEach(function(m){
+        var d = extractDims(m);
+        var aspect = d.aspect || 1;
+
+        var sizeFactor = 1.0;
+        if(medianH && d.h){
+          sizeFactor = clamp(d.h / medianH, 0.75, 1.25);
+        } else {
+          if(aspect > 1.6) sizeFactor = 0.88;
+          else if(aspect < 0.75) sizeFactor = 1.12;
+          else sizeFactor = 1.0;
+        }
+
+        var hWorld = TARGET_H * sizeFactor;
+        var wWorld = hWorld * aspect;
+
+        if(wWorld > MAX_W){
+          var s = MAX_W / wWorld;
+          wWorld *= s; hWorld *= s;
+        }
+
+        var geoH = 1, geoW = 1;
+        try{
+          if(m.geometry && m.geometry.parameters){
+            if(isNumber(m.geometry.parameters.height)) geoH = m.geometry.parameters.height;
+            if(isNumber(m.geometry.parameters.width)) geoW = m.geometry.parameters.width;
+          }
+        }catch(e){}
+
+        var sx = wWorld / geoW;
+        var sy = hWorld / geoH;
+
+        if(m.scale && m.scale.set){
+          m.scale.set(sx, sy, 1);
+        } else if(m.scale){
+          m.scale.x = sx; m.scale.y = sy; m.scale.z = 1;
+        }
+
+        if(m.position){
+          m.position.y = baseline + (hWorld / 2);
+        }
+
+        if(m.children && m.children.length){
+          m.children.forEach(function(ch){
+            if(ch && ch.scale) ch.scale.z = 1;
+          });
+        }
+      });
+
+      return true;
+    }
+
+    var timer = setInterval(function(){
+      tries++;
+
+      if(done){ clearInterval(timer); return; }
+      if(!window.scene){ if(tries>160) clearInterval(timer); return; }
+
+      try{
+        var ok = applyScaling(window.scene);
+        if(ok) done = true;
+      }catch(e){}
+
+      if(tries > 200) clearInterval(timer);
+    }, 250);
+  })();
+
+  /* ---------------------------------
+     Extra compatibility patch:
+     - Some environments don't fire click reliably on canvas.
+     - Forward pointerdown => mousedown/click.
+  --------------------------------- */
+  (function pointerCompat(){
+    var cc = $('#canvas-container');
+    if(!cc) return;
+
+    var canvas = cc.querySelector('canvas');
+    if(!canvas) return;
+
+    canvas.addEventListener('pointerdown', function(e){
+      try{
+        canvas.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true, clientX:e.clientX, clientY:e.clientY }));
+        canvas.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true, clientX:e.clientX, clientY:e.clientY }));
+      }catch(err){}
+    }, { passive:true });
+  })();
+
+  /* ---------------------------------
+     Safety: if toggleGoal is missing (your iPad "第三项点不了"常见原因)
+     define a fallback WITHOUT touching your existing code.
+  --------------------------------- */
+  (function regFallback(){
+    if(typeof window.toggleGoal === 'function') return;
+
+    window.toggleGoal = function(btn){
+      try{
+        var group = document.getElementById('opt-goal');
+        if(!group || !btn) return;
+
+        var selected = group.querySelectorAll('.reg-btn.selected');
+        var isSelected = btn.classList.contains('selected');
+
+        if(isSelected){
+          btn.classList.remove('selected');
+        } else {
+          if(selected.length >= 2) return; // Max 2 goals
+          btn.classList.add('selected');
+        }
+      }catch(e){}
+    };
+  })();
+
 })();
-
