@@ -1908,14 +1908,14 @@ window.addEventListener("DOMContentLoaded", () => {
       if(!email){
         ev.preventDefault(); ev.stopPropagation();
         if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-        showLabEmailError('请填写 Email（必填），我们才能联系你。');
+        showLabEmailError('Please enter your email (required) so we can contact you.');
         try { emailInput.focus(); } catch(e){}
         return;
       }
       if(!isValidEmail(email)){
         ev.preventDefault(); ev.stopPropagation();
         if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-        showLabEmailError('Email 格式不正确。示例：name@example.com');
+        showLabEmailError('Email Invalid email format. Example: name@example.com');
         try { emailInput.focus(); } catch(e){}
         return;
       }
