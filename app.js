@@ -2118,7 +2118,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     tip.style.pointerEvents = 'auto';
     tip.style.cursor = 'pointer';
-    tip.textContent = '拖拽旋转视角 · WASD/方向键移动 · 右侧电梯传送 · 点击作品聊天 · Return to Walk 返回';
+    tip.textContent = 'Drag to rotate · WASD/Arrow keys to move · Use the elevator to teleport · Click artwork to chat · Return to Walk to exit';
 
     var hide = once(function(){
       tip.classList.remove('visible');
@@ -2181,7 +2181,7 @@ window.addEventListener("DOMContentLoaded", () => {
       clearTimeout(window.__LFC_TP_TIMER);
       window.__LFC_TP_TIMER = setTimeout(function(){
         if(localStorage.getItem('lfc_onboard_v1_done') !== '1'){
-          tip.textContent = '拖拽旋转视角 · WASD/方向键移动 · 右侧电梯传送 · 点击作品聊天 · Return to Walk 返回';
+          tip.textContent = 'Drag to rotate · WASD/Arrow keys to move · Use the elevator to teleport · Click artwork to chat · Return to Walk to exit';
         } else {
           tip.classList.remove('visible');
         }
