@@ -3269,3 +3269,439 @@ window.addEventListener("DOMContentLoaded", () => {
   window.openThinkingQuest = openQuest;
 
 })();
+/* ===========================
+   LFC Thinking Quest - Chapter 1 Level 2 (Choice & Change)
+   - Adds a Level chooser when clicking "Thinking Quest"
+   - Level 2 is locked until Level 1 exists for the current artwork
+   - Saves a Judgment Card (chapter:1, level:2) into localStorage lfc_cards_v1
+   - Does NOT touch Gemini / AI logic
+   =========================== */
+(function(){
+  'use strict';
+  function $(s, r){ return (r||document).querySelector(s); }
+  function esc(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  var KEY_CARDS = 'lfc_cards_v1';
+  var KEY_GROUP = 'lfc_user_group_v1';
+
+  function readCards(){
+    try{ return JSON.parse(localStorage.getItem(KEY_CARDS) || '[]'); }catch(e){ return []; }
+  }
+  function writeCards(list){
+    try{ localStorage.setItem(KEY_CARDS, JSON.stringify(list||[])); }catch(e){}
+  }
+
+  function getArtworkSnapshot(){
+    var title = ($('#ai-title') && $('#ai-title').textContent) ? $('#ai-title').textContent.trim() : 'Untitled';
+    var meta  = ($('#ai-meta') && $('#ai-meta').textContent) ? $('#ai-meta').textContent.trim() : '';
+    var imgEl = $('#ai-img');
+    var img   = imgEl && imgEl.src ? imgEl.src : '';
+    return { title:title, meta:meta, img:img };
+  }
+
+  function toast(msg){
+    var t = $('#teleport-toast');
+    if(!t){
+      t = document.createElement('div');
+      t.id = 'teleport-toast';
+      t.style.position = 'fixed';
+      t.style.top = '18px';
+      t.style.left = '50%';
+      t.style.transform = 'translateX(-50%) translateY(-18px)';
+      t.style.background = 'rgba(30, 58, 138, 0.92)';
+      t.style.color = '#fff';
+      t.style.padding = '10px 18px';
+      t.style.borderRadius = '50px';
+      t.style.fontSize = '11px';
+      t.style.fontWeight = '800';
+      t.style.letterSpacing = '1px';
+      t.style.textTransform = 'uppercase';
+      t.style.opacity = '0';
+      t.style.pointerEvents = 'none';
+      t.style.zIndex = '9100';
+      t.style.boxShadow = '0 10px 30px rgba(30,58,138,0.35)';
+      t.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('visible');
+    clearTimeout(window.__LFC_TOAST2_TIMER);
+    window.__LFC_TOAST2_TIMER = setTimeout(function(){ t.classList.remove('visible'); }, 1400);
+  }
+
+  // English-only micro cleanup (in case earlier Chinese strings survive somewhere)
+  function enforceEnglish(){
+    var tip = $('#onboarding-tip');
+    if(tip && /[\u4e00-\u9fff]/.test(tip.textContent||'')){
+      tip.textContent = 'Rotate: drag · Move: WASD/Arrows · Elevator: right · Click artwork to chat · Return to Walk';
+    }
+    var err = $('#lab-email-error');
+    if(err && /[\u4e00-\u9fff]/.test(err.textContent||'')){
+      err.textContent = 'Email is required so we can contact you.';
+    }
+  }
+
+  /* ---------------------------------
+     Level Chooser Overlay
+  --------------------------------- */
+  function ensureChooser(){
+    if($('#lfc-level-overlay')) return;
+
+    var ov = document.createElement('div');
+    ov.id = 'lfc-level-overlay';
+    ov.style.position = 'fixed';
+    ov.style.inset = '0';
+    ov.style.background = 'rgba(15, 23, 42, 0.35)';
+    ov.style.backdropFilter = 'blur(10px)';
+    ov.style.zIndex = '9250';
+    ov.style.display = 'none';
+    ov.style.pointerEvents = 'none';
+
+    var card = document.createElement('div');
+    card.style.position = 'absolute';
+    card.style.top = '50%';
+    card.style.left = '50%';
+    card.style.transform = 'translate(-50%, -50%)';
+    card.style.width = '92%';
+    card.style.maxWidth = '620px';
+    card.style.background = 'rgba(255,255,255,0.94)';
+    card.style.border = '1px solid rgba(226,232,240,1)';
+    card.style.borderRadius = '20px';
+    card.style.boxShadow = '0 30px 60px rgba(0,0,0,0.18)';
+    card.style.padding = '18px';
+    card.style.fontFamily = 'Montserrat, sans-serif';
+    card.style.color = '#0f172a';
+
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+        <div>
+          <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#1e3a8a;">
+            THINKING QUEST
+          </div>
+          <div style="margin-top:6px; font-size:14px; font-weight:900;">Choose a Level</div>
+          <div style="margin-top:6px; font-size:11px; font-weight:700; color:#64748b; line-height:1.6;" id="lfc-level-artline"></div>
+        </div>
+        <div id="lfc-level-close" style="font-size:22px; font-weight:900; color:#1e3a8a; cursor:pointer; padding:6px 10px;">×</div>
+      </div>
+
+      <div style="margin-top:14px; border-top:1px solid #e2e8f0; padding-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="reg-btn" id="lfc-go-l1" type="button" style="padding:12px 14px; font-size:10px;">Level 1 · Observation</button>
+        <button class="reg-btn" id="lfc-go-l2" type="button" style="padding:12px 14px; font-size:10px;">Level 2 · Choice & Change</button>
+      </div>
+
+      <div id="lfc-level-msg" style="display:none; margin-top:12px; padding:10px 12px; border-radius:12px; background:#f1f5f9; border:1px solid #e2e8f0; font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#334155;"></div>
+    `;
+
+    ov.appendChild(card);
+    document.body.appendChild(ov);
+
+    function close(){
+      ov.style.display = 'none';
+      ov.style.pointerEvents = 'none';
+    }
+    $('#lfc-level-close').addEventListener('click', close, true);
+    ov.addEventListener('click', function(e){ if(e.target === ov) close(); }, true);
+  }
+
+  function showChooser(){
+    ensureChooser();
+    var ov = $('#lfc-level-overlay');
+    if(!ov) return;
+
+    var art = getArtworkSnapshot();
+    var line = esc(art.title) + (art.meta ? (' · ' + esc(art.meta)) : '');
+    var artLine = $('#lfc-level-artline');
+    if(artLine) artLine.textContent = line;
+
+    var msg = $('#lfc-level-msg');
+    if(msg) msg.style.display = 'none';
+
+    // lock logic: need at least one Level 1 for this artwork title
+    var cards = readCards();
+    var hasL1This = cards.some(function(c){
+      return c && c.chapter === 1 && c.level === 1 && (c.artworkTitle||'') === art.title;
+    });
+
+    var btnL2 = $('#lfc-go-l2');
+    if(btnL2){
+      btnL2.style.opacity = hasL1This ? '1' : '0.45';
+      btnL2.style.pointerEvents = hasL1This ? 'auto' : 'auto'; // still clickable to show message
+    }
+
+    // bind buttons (single-bind)
+    var btnL1 = $('#lfc-go-l1');
+    if(btnL1 && !btnL1.__bound){
+      btnL1.__bound = true;
+      btnL1.addEventListener('click', function(){
+        // close chooser then open existing Level 1 modal
+        ov.style.display = 'none'; ov.style.pointerEvents = 'none';
+        if(typeof window.openThinkingQuest === 'function'){
+          window.openThinkingQuest(); // this is Level 1 from your previous patch
+        }else{
+          toast('Level 1 not available');
+        }
+      }, true);
+    }
+
+    if(btnL2 && !btnL2.__bound){
+      btnL2.__bound = true;
+      btnL2.addEventListener('click', function(){
+        var art2 = getArtworkSnapshot();
+        var cards2 = readCards();
+        var ok = cards2.some(function(c){
+          return c && c.chapter === 1 && c.level === 1 && (c.artworkTitle||'') === art2.title;
+        });
+        if(!ok){
+          var m = $('#lfc-level-msg');
+          if(m){
+            m.textContent = 'Complete Level 1 for this artwork first.';
+            m.style.display = 'block';
+          }
+          return;
+        }
+        ov.style.display = 'none'; ov.style.pointerEvents = 'none';
+        openLevel2();
+      }, true);
+    }
+
+    ov.style.display = 'block';
+    ov.style.pointerEvents = 'auto';
+  }
+
+  /* ---------------------------------
+     Level 2 Overlay (Choice & Change)
+  --------------------------------- */
+  function ensureL2(){
+    if($('#lfc-l2-overlay')) return;
+
+    var ov = document.createElement('div');
+    ov.id = 'lfc-l2-overlay';
+    ov.style.position = 'fixed';
+    ov.style.inset = '0';
+    ov.style.background = 'rgba(15, 23, 42, 0.35)';
+    ov.style.backdropFilter = 'blur(10px)';
+    ov.style.zIndex = '9300';
+    ov.style.display = 'none';
+    ov.style.pointerEvents = 'none';
+
+    var card = document.createElement('div');
+    card.style.position = 'absolute';
+    card.style.top = '50%';
+    card.style.left = '50%';
+    card.style.transform = 'translate(-50%, -50%)';
+    card.style.width = '92%';
+    card.style.maxWidth = '720px';
+    card.style.background = 'rgba(255,255,255,0.94)';
+    card.style.border = '1px solid rgba(226,232,240,1)';
+    card.style.borderRadius = '20px';
+    card.style.boxShadow = '0 30px 60px rgba(0,0,0,0.18)';
+    card.style.padding = '18px';
+    card.style.fontFamily = 'Montserrat, sans-serif';
+    card.style.color = '#0f172a';
+
+    card.innerHTML = `
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+        <div>
+          <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#1e3a8a;">
+            LFC THINKING QUEST
+          </div>
+          <div style="margin-top:6px; font-size:14px; font-weight:900;">
+            Chapter 1 · Level 2 (Choice & Change)
+          </div>
+          <div style="margin-top:6px; font-size:11px; font-weight:700; color:#64748b; line-height:1.6;" id="lfc-l2-artline"></div>
+        </div>
+        <div id="lfc-l2-close" style="font-size:22px; font-weight:900; color:#1e3a8a; cursor:pointer; padding:6px 10px;">×</div>
+      </div>
+
+      <div style="margin-top:14px; border-top:1px solid #e2e8f0; padding-top:14px;">
+        <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#1e3a8a;">Level 2</div>
+
+        <div style="margin-top:10px; padding:12px; border:1px solid #e2e8f0; border-radius:16px; background:#fff;">
+          <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#64748b;">1) Choose one change</div>
+          <div style="margin-top:6px; font-size:13px; font-weight:800; color:#0f172a;">If you could change ONE thing, what would it be?</div>
+          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;" id="lfc-l2-q1"></div>
+        </div>
+
+        <div style="margin-top:10px; padding:12px; border:1px solid #e2e8f0; border-radius:16px; background:#fff;">
+          <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#64748b;">2) Predict the impact</div>
+          <div style="margin-top:6px; font-size:13px; font-weight:800; color:#0f172a;">What would your change do to the work?</div>
+          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;" id="lfc-l2-q2"></div>
+        </div>
+
+        <div style="margin-top:10px; padding:12px; border:1px solid #e2e8f0; border-radius:16px; background:#fff;">
+          <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#64748b;">3) Optional (why)</div>
+          <div style="margin-top:6px; font-size:13px; font-weight:800; color:#0f172a;">One sentence: why that change?</div>
+          <textarea id="lfc-l2-text" class="lab-input" rows="3" placeholder="Keep it short. No essays. You have a life." style="margin-top:10px;"></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:14px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+        <button class="reg-btn" id="lfc-l2-back" type="button" style="padding:10px 14px; font-size:10px;">Back</button>
+        <button class="reg-btn selected" id="lfc-l2-save" type="button" style="padding:10px 14px; font-size:10px;">Save Card</button>
+      </div>
+
+      <div id="lfc-l2-msg" style="display:none; margin-top:10px; padding:10px 12px; border-radius:12px; background:#f1f5f9; border:1px solid #e2e8f0; font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#334155;"></div>
+    `;
+
+    ov.appendChild(card);
+    document.body.appendChild(ov);
+
+    function close(){
+      ov.style.display = 'none';
+      ov.style.pointerEvents = 'none';
+    }
+    $('#lfc-l2-close').addEventListener('click', close, true);
+
+    $('#lfc-l2-back').addEventListener('click', function(){
+      close();
+      showChooser();
+    }, true);
+
+    ov.addEventListener('click', function(e){ if(e.target === ov) close(); }, true);
+  }
+
+  function setOptGroup(container, qid, options){
+    container.innerHTML = options.map(function(o){
+      return `<button type="button" class="reg-btn lfc-l2-opt" data-q="${esc(qid)}" data-v="${esc(o)}" style="padding:10px 12px; font-size:10px;">${esc(o)}</button>`;
+    }).join('');
+
+    container.querySelectorAll('.lfc-l2-opt').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-q');
+        container.querySelectorAll('.lfc-l2-opt[data-q="'+id+'"]').forEach(function(b){ b.classList.remove('selected'); });
+        btn.classList.add('selected');
+      }, true);
+    });
+  }
+
+  function openLevel2(){
+    ensureL2();
+    var ov = $('#lfc-l2-overlay');
+    if(!ov) return;
+
+    var art = getArtworkSnapshot();
+    var line = esc(art.title) + (art.meta ? (' · ' + esc(art.meta)) : '');
+    var artLine = $('#lfc-l2-artline');
+    if(artLine) artLine.textContent = line;
+
+    var group = 'adult';
+    try{ group = localStorage.getItem(KEY_GROUP) || 'adult'; }catch(e){}
+
+    var q1Opts;
+    var q2Opts;
+
+    if(group === 'teen'){
+      q1Opts = ['Color', 'Lighting', 'One key detail', 'Background/setting'];
+      q2Opts = ['Clearer meaning', 'Stronger mood', 'More drama', 'More confusing (maybe interesting)'];
+    }else if(group === 'early'){
+      q1Opts = ['Composition', 'Color palette', 'Scale', 'Title/text'];
+      q2Opts = ['Shifts the story', 'Changes the message', 'Changes the emotion', 'Changes how viewers behave'];
+    }else if(group === 'pro'){
+      q1Opts = ['Medium/material', 'Display/context', 'Formal structure', 'Conceptual framing'];
+      q2Opts = ['Alters interpretation', 'Alters power/ethics', 'Alters discourse context', 'Alters market reading'];
+    }else{
+      q1Opts = ['Composition', 'Color', 'Scale', 'Subject emphasis'];
+      q2Opts = ['Clearer meaning', 'Deeper mood', 'More tension', 'More calm/space'];
+    }
+
+    setOptGroup($('#lfc-l2-q1'), 'change_one', q1Opts);
+    setOptGroup($('#lfc-l2-q2'), 'impact', q2Opts);
+
+    var msg = $('#lfc-l2-msg');
+    if(msg) msg.style.display = 'none';
+
+    ov.style.display = 'block';
+    ov.style.pointerEvents = 'auto';
+
+    var saveBtn = $('#lfc-l2-save');
+    if(saveBtn && !saveBtn.__bound){
+      saveBtn.__bound = true;
+      saveBtn.addEventListener('click', function(){
+        var area = $('#lfc-l2-overlay');
+        var sel1 = area ? area.querySelector('.lfc-l2-opt.selected[data-q="change_one"]') : null;
+        var sel2 = area ? area.querySelector('.lfc-l2-opt.selected[data-q="impact"]') : null;
+        var txt = $('#lfc-l2-text') ? ($('#lfc-l2-text').value||'').trim() : '';
+
+        if(msg) msg.style.display = 'none';
+
+        if(!sel1){
+          if(msg){ msg.textContent = 'Pick one option for Question 1.'; msg.style.display = 'block'; }
+          return;
+        }
+        if(!sel2){
+          if(msg){ msg.textContent = 'Pick one option for Question 2.'; msg.style.display = 'block'; }
+          return;
+        }
+
+        var art2 = getArtworkSnapshot();
+        var group2 = 'adult';
+        try{ group2 = localStorage.getItem(KEY_GROUP) || 'adult'; }catch(e){}
+
+        var card = {
+          id: 'c_' + Math.random().toString(36).slice(2) + Date.now().toString(36),
+          createdAt: Date.now(),
+          group: group2,
+          chapter: 1,
+          level: 2,
+          artworkTitle: art2.title,
+          artworkMeta: art2.meta,
+          artworkImg: art2.img,
+          responses: {
+            change_one: sel1.getAttribute('data-v') || '',
+            impact: sel2.getAttribute('data-v') || '',
+            why: txt
+          }
+        };
+
+        var list = readCards();
+        list.push(card);
+        writeCards(list);
+
+        toast('Judgment Card saved');
+
+        ov.style.display = 'none';
+        ov.style.pointerEvents = 'none';
+
+        // Refresh Journey if open
+        try{
+          var bp = $('#blueprint');
+          if(bp && bp.classList.contains('active')){
+            if(typeof window.startBlueprint === 'function') window.startBlueprint();
+          }
+        }catch(e){}
+      }, true);
+    }
+  }
+
+  /* ---------------------------------
+     Hijack "Thinking Quest" click to open chooser
+     (We do NOT rely on editing your previous patch)
+  --------------------------------- */
+  function hijackQuestButton(){
+    var btn = $('#btn-thinking-quest');
+    if(!btn || btn.__l2_hijacked) return;
+    btn.__l2_hijacked = true;
+
+    btn.addEventListener('click', function(ev){
+      // capture the click and open chooser
+      try{
+        ev.preventDefault();
+        ev.stopPropagation();
+        if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      }catch(e){}
+      showChooser();
+    }, true);
+  }
+
+  setInterval(function(){
+    try{
+      enforceEnglish();
+      var p = $('#ai-panel');
+      if(p && p.classList.contains('active')){
+        hijackQuestButton();
+      }
+    }catch(e){}
+  }, 350);
+
+})();
