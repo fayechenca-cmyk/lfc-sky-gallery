@@ -2520,3 +2520,189 @@ window.addEventListener("DOMContentLoaded", () => {
   })();
 
 })();
+/* ===========================
+   LFC Thinking Quest - Chapter 1 (Level 1)
+   Minimal overlay + local storage Judgment Card
+   - does NOT touch Gemini/OpenAI logic
+   - does NOT change layout, only uses existing DOM
+   =========================== */
+(function(){
+  'use strict';
+
+  // --- tiny helpers
+  function $(s, r){ return (r||document).querySelector(s); }
+  function $all(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+  function now(){ return Date.now(); }
+
+  // --- Visitor ID (anonymous, local)
+  (function initVisitor(){
+    var KEY='lfc_visitor_id';
+    var id = localStorage.getItem(KEY);
+    if(!id){
+      id = 'v_' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem(KEY, id);
+      localStorage.setItem('lfc_first_seen', String(now()));
+    }
+    localStorage.setItem('lfc_last_seen', String(now()));
+    window.LFC_VISITOR = { id:id };
+  })();
+
+  var KEY_CARDS = 'lfc_cards_v1';
+
+  function readCards(){
+    try{ return JSON.parse(localStorage.getItem(KEY_CARDS) || '[]'); }catch(e){ return []; }
+  }
+  function writeCards(cards){
+    try{ localStorage.setItem(KEY_CARDS, JSON.stringify(cards)); }catch(e){}
+  }
+
+  // --- Try get current artwork info from existing UI (no dependency on your internals)
+  function getCurrentArtworkInfo(){
+    var title = ($('#ai-title') && $('#ai-title').textContent) ? $('#ai-title').textContent.trim() : 'Untitled';
+    var meta  = ($('#ai-meta') && $('#ai-meta').textContent) ? $('#ai-meta').textContent.trim() : '';
+    // If you already have a current artwork object somewhere, we will use it if present:
+    var aw = window.currentArtwork || window.__CURRENT_ARTWORK || window.__LFC_CURRENT_ARTWORK || null;
+    var id = (aw && (aw.id || aw.slug || aw.key)) ? String(aw.id || aw.slug || aw.key) : ('ui_' + title.toLowerCase().replace(/\s+/g,'_').slice(0,32));
+    return { id:id, title:title, meta:meta };
+  }
+
+  // --- Question bank (Level 1 only, grouped)
+  var BANK = {
+    teen: {
+      q: "Stay for 10 seconds. What do you notice first?",
+      choices: ["Color", "Shape", "Character/Scene", "Texture", "Feeling"]
+    },
+    early_adult: {
+      q: "What is the strongest visual signal here (before you explain it)?",
+      choices: ["Light/Shadow", "Composition", "Material", "Gesture/Movement", "Mood"]
+    },
+    adult: {
+      q: "What is the primary formal decision that controls your attention?",
+      choices: ["Scale", "Space", "Color System", "Material Language", "Rhythm/Pattern"]
+    },
+    pro: {
+      q: "Identify one deliberate constraint in the work (what the artist limits on purpose).",
+      choices: ["Palette Constraint", "Material Constraint", "Process Constraint", "Spatial Constraint", "Narrative Constraint"]
+    }
+  };
+
+  // --- Overlay elements
+  var overlay = $('#tq-overlay');
+  var btnOpen = $('#btn-thinking-quest');
+  if(!overlay || !btnOpen) return;
+
+  var closeX = $('#tq-close');
+  var backdrop = $('#tq-backdrop');
+  var artLine = $('#tq-art');
+  var qEl = $('#tq-q');
+  var choicesWrap = $('#tq-choices');
+  var textEl = $('#tq-text');
+  var saveBtn = $('#tq-save');
+  var toast = $('#tq-toast');
+  var groupHint = $('#tq-group-hint');
+
+  var state = { group:null, choice:null };
+
+  function setVisible(v){
+    overlay.style.display = v ? 'block' : 'none';
+    overlay.setAttribute('aria-hidden', v ? 'false' : 'true');
+    if(!v){
+      // reset light
+      state.group=null; state.choice=null;
+      textEl.value='';
+      toast.style.display='none';
+      groupHint.textContent='Pick one';
+      $all('[data-tq-group]').forEach(function(b){ b.classList.remove('selected'); });
+      choicesWrap.innerHTML='';
+      qEl.textContent='Question will appear here.';
+    }
+  }
+
+  function renderForGroup(g){
+    state.group = g;
+    state.choice = null;
+
+    var pack = BANK[g] || BANK.adult;
+    qEl.textContent = pack.q;
+
+    choicesWrap.innerHTML = '';
+    pack.choices.forEach(function(c){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'reg-btn';
+      b.style.padding = '10px 12px';
+      b.style.fontSize = '10px';
+      b.textContent = c;
+      b.addEventListener('click', function(){
+        state.choice = c;
+        $all('#tq-choices .reg-btn').forEach(function(x){ x.classList.remove('selected'); });
+        b.classList.add('selected');
+      });
+      choicesWrap.appendChild(b);
+    });
+
+    groupHint.textContent = 'Group: ' + g.replace('_',' ').toUpperCase();
+  }
+
+  // group buttons
+  $all('[data-tq-group]').forEach(function(b){
+    b.addEventListener('click', function(){
+      $all('[data-tq-group]').forEach(function(x){ x.classList.remove('selected'); });
+      b.classList.add('selected');
+      renderForGroup(b.getAttribute('data-tq-group'));
+    });
+  });
+
+  function openQuest(){
+    var aw = getCurrentArtworkInfo();
+    artLine.textContent = 'Artwork: ' + aw.title + (aw.meta ? (' · ' + aw.meta) : '');
+    setVisible(true);
+  }
+
+  function saveCard(){
+    if(!state.group){
+      toast.style.display='block';
+      toast.textContent='Pick a group first.';
+      return;
+    }
+    if(!state.choice && !(textEl.value||'').trim()){
+      toast.style.display='block';
+      toast.textContent='Choose one option or write one sentence.';
+      return;
+    }
+
+    var aw = getCurrentArtworkInfo();
+    var cards = readCards();
+
+    var card = {
+      id: 'card_' + now(),
+      visitorId: (window.LFC_VISITOR && window.LFC_VISITOR.id) ? window.LFC_VISITOR.id : 'unknown',
+      artworkId: aw.id,
+      artworkTitle: aw.title,
+      cardType: 'sight', // Chapter 1 Level 1
+      level: 1,
+      group: state.group,
+      responses: {
+        choice: state.choice || '',
+        text: (textEl.value||'').trim()
+      },
+      createdAt: now()
+    };
+
+    cards.push(card);
+    writeCards(cards);
+
+    toast.style.display='block';
+    toast.textContent = 'Saved. +' + 1 + ' card';
+
+    // subtle hook: briefly show then close
+    setTimeout(function(){ setVisible(false); }, 900);
+  }
+
+  // open / close wiring
+  btnOpen.addEventListener('click', function(e){ e.preventDefault(); openQuest(); });
+  if(closeX) closeX.addEventListener('click', function(){ setVisible(false); });
+  if(backdrop) backdrop.addEventListener('click', function(){ setVisible(false); });
+  if(saveBtn) saveBtn.addEventListener('click', function(){ saveCard(); });
+
+})();
