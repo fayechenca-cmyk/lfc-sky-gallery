@@ -2854,3 +2854,418 @@ window.addEventListener("DOMContentLoaded", () => {
   }, 800);
 
 })();
+/* ===========================
+   LFC Thinking Quest (Chapter 1 / Level 1) - Minimal UI + Save Card
+   - Adds a small "Thinking Quest" button in AI panel (artwork detail)
+   - Opens a clean overlay modal (no layout break)
+   - Saves a Judgment Card to localStorage: lfc_cards_v1
+   - Works with your existing My Journey renderer (bp-quest)
+   - Does NOT touch Gemini / AI logic
+   =========================== */
+(function(){
+  'use strict';
+
+  function $(s, r){ return (r||document).querySelector(s); }
+  function esc(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  var KEY_CARDS = 'lfc_cards_v1';
+  var KEY_GROUP = 'lfc_user_group_v1';
+
+  function readCards(){
+    try{ return JSON.parse(localStorage.getItem(KEY_CARDS) || '[]'); }catch(e){ return []; }
+  }
+  function writeCards(list){
+    try{ localStorage.setItem(KEY_CARDS, JSON.stringify(list||[])); }catch(e){}
+  }
+
+  function getArtworkSnapshot(){
+    // robust: read from existing UI, no dependency on your internal variables
+    var title = ($('#ai-title') && $('#ai-title').textContent) ? $('#ai-title').textContent.trim() : 'Untitled';
+    var meta  = ($('#ai-meta') && $('#ai-meta').textContent) ? $('#ai-meta').textContent.trim() : '';
+    var imgEl = $('#ai-img');
+    var img   = imgEl && imgEl.src ? imgEl.src : '';
+    return { title:title, meta:meta, img:img };
+  }
+
+  function toast(msg){
+    // reuse your teleport toast if exists, otherwise create a tiny one
+    var t = $('#teleport-toast');
+    if(!t){
+      t = document.createElement('div');
+      t.id = 'teleport-toast';
+      t.style.position = 'fixed';
+      t.style.top = '18px';
+      t.style.left = '50%';
+      t.style.transform = 'translateX(-50%) translateY(-18px)';
+      t.style.background = 'rgba(30, 58, 138, 0.92)';
+      t.style.color = '#fff';
+      t.style.padding = '10px 18px';
+      t.style.borderRadius = '50px';
+      t.style.fontSize = '11px';
+      t.style.fontWeight = '800';
+      t.style.letterSpacing = '1px';
+      t.style.textTransform = 'uppercase';
+      t.style.opacity = '0';
+      t.style.pointerEvents = 'none';
+      t.style.zIndex = '9100';
+      t.style.boxShadow = '0 10px 30px rgba(30,58,138,0.35)';
+      t.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('visible');
+    clearTimeout(window.__LFC_TOAST_TIMER);
+    window.__LFC_TOAST_TIMER = setTimeout(function(){
+      t.classList.remove('visible');
+    }, 1400);
+  }
+
+  function ensureQuestButton(){
+    var panel = $('#ai-panel');
+    var header = panel ? panel.querySelector('.ai-header') : null;
+    if(!header) return;
+
+    if($('#btn-thinking-quest')) return;
+
+    // place near existing mode buttons (Docent/Curator). Minimal footprint.
+    var modeDocent = $('#mode-docent');
+    var mount = modeDocent ? modeDocent.parentElement : header;
+
+    var btn = document.createElement('button');
+    btn.id = 'btn-thinking-quest';
+    btn.className = 'reg-btn';
+    btn.type = 'button';
+    btn.textContent = 'Thinking Quest';
+    btn.style.padding = '8px 12px';
+    btn.style.fontSize = '9px';
+    btn.style.whiteSpace = 'nowrap';
+
+    // keep it visually consistent, not screaming for attention
+    btn.style.borderColor = 'rgba(30,58,138,0.35)';
+    btn.style.color = '#1e3a8a';
+
+    // add to the same row, without changing layout rules
+    if(mount && mount.appendChild){
+      mount.appendChild(btn);
+    }else{
+      header.appendChild(btn);
+    }
+
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      openQuest();
+    }, true);
+  }
+
+  function ensureModal(){
+    if($('#lfc-quest-overlay')) return;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'lfc-quest-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(15, 23, 42, 0.35)';
+    overlay.style.backdropFilter = 'blur(10px)';
+    overlay.style.zIndex = '9200';
+    overlay.style.display = 'none';
+    overlay.style.pointerEvents = 'none';
+
+    var card = document.createElement('div');
+    card.id = 'lfc-quest-card';
+    card.style.position = 'absolute';
+    card.style.top = '50%';
+    card.style.left = '50%';
+    card.style.transform = 'translate(-50%, -50%)';
+    card.style.width = '92%';
+    card.style.maxWidth = '720px';
+    card.style.background = 'rgba(255,255,255,0.94)';
+    card.style.border = '1px solid rgba(226,232,240,1)';
+    card.style.borderRadius = '20px';
+    card.style.boxShadow = '0 30px 60px rgba(0,0,0,0.18)';
+    card.style.padding = '18px';
+    card.style.fontFamily = 'Montserrat, sans-serif';
+    card.style.color = '#0f172a';
+
+    card.innerHTML = `
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+        <div>
+          <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#1e3a8a;">
+            LFC THINKING QUEST
+          </div>
+          <div style="margin-top:6px; font-size:14px; font-weight:900;">
+            Chapter 1 · Level 1 (Observation)
+          </div>
+          <div style="margin-top:6px; font-size:11px; font-weight:700; color:#64748b; line-height:1.6;" id="lfc-quest-artline"></div>
+        </div>
+        <div id="lfc-quest-close" style="font-size:22px; font-weight:900; color:#1e3a8a; cursor:pointer; padding:6px 10px;">×</div>
+      </div>
+
+      <div style="margin-top:14px; border-top:1px solid #e2e8f0; padding-top:14px;">
+        <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#64748b;">Choose your path</div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;" id="lfc-group-row"></div>
+      </div>
+
+      <div style="margin-top:14px; border-top:1px solid #e2e8f0; padding-top:14px;" id="lfc-q-area"></div>
+
+      <div style="margin-top:14px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+        <button class="reg-btn" id="lfc-quest-cancel" type="button" style="padding:10px 14px; font-size:10px;">Close</button>
+        <button class="reg-btn selected" id="lfc-quest-save" type="button" style="padding:10px 14px; font-size:10px;">Save Card</button>
+      </div>
+
+      <div id="lfc-quest-msg" style="display:none; margin-top:10px; padding:10px 12px; border-radius:12px; background:#f1f5f9; border:1px solid #e2e8f0; font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#334155;"></div>
+    `;
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    function close(){
+      overlay.style.display = 'none';
+      overlay.style.pointerEvents = 'none';
+    }
+
+    $('#lfc-quest-close').addEventListener('click', close, true);
+    $('#lfc-quest-cancel').addEventListener('click', close, true);
+
+    overlay.addEventListener('click', function(e){
+      if(e.target === overlay) close();
+    }, true);
+  }
+
+  function buildGroupButtons(selected){
+    var row = $('#lfc-group-row');
+    if(!row) return;
+
+    var groups = [
+      { k:'teen',  label:'Teen (12–18)' },
+      { k:'early', label:'Early Adult (19–25)' },
+      { k:'adult', label:'Adult (26+)' },
+      { k:'pro',   label:'Professional' }
+    ];
+
+    row.innerHTML = '';
+    groups.forEach(function(g){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'reg-btn';
+      b.textContent = g.label;
+      b.style.padding = '10px 12px';
+      b.style.fontSize = '10px';
+      if(selected === g.k) b.classList.add('selected');
+
+      b.addEventListener('click', function(){
+        try{ localStorage.setItem(KEY_GROUP, g.k); }catch(e){}
+        // refresh visuals
+        buildGroupButtons(g.k);
+        buildQuestions(g.k);
+      }, true);
+
+      row.appendChild(b);
+    });
+  }
+
+  function buildQuestions(groupKey){
+    var area = $('#lfc-q-area');
+    if(!area) return;
+
+    // Chapter 1 Level 1: Observation
+    // Keep it light: 2 choices + 1 optional text. Later you can swap these prompts per artwork or per group.
+    var q1 = {
+      id:'first_impression',
+      title:'1) First impression',
+      prompt:'What do you notice first?',
+      options: (groupKey === 'pro')
+        ? ['Material / technique', 'Composition / structure', 'Concept / intention', 'Context / reference']
+        : ['Color / light', 'Subject / figure', 'Mood / feeling', 'Details / patterns']
+    };
+
+    var q2 = {
+      id:'time_spent',
+      title:'2) Stay with it',
+      prompt:'If you stay 10 more seconds, what changes?',
+      options: (groupKey === 'teen')
+        ? ['I notice new details', 'My feeling changes', 'I start asking “why?”', 'Nothing changes yet']
+        : ['A new detail appears', 'The story shifts', 'The mood deepens', 'Still unclear (and that’s ok)']
+    };
+
+    var q3 = {
+      id:'one_sentence',
+      title:'3) Optional (one sentence)',
+      prompt:'In one sentence, what do you think this work is doing?',
+      placeholder:'Example: It turns an ordinary scene into something uneasy and poetic…'
+    };
+
+    function optHTML(q){
+      return q.options.map(function(o){
+        return `<button type="button" class="reg-btn lfc-opt" data-q="${esc(q.id)}" data-v="${esc(o)}" style="padding:10px 12px; font-size:10px;">${esc(o)}</button>`;
+      }).join('');
+    }
+
+    area.innerHTML = `
+      <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#1e3a8a;">Level 1</div>
+
+      <div style="margin-top:10px; padding:12px 12px; border:1px solid #e2e8f0; border-radius:16px; background:#fff;">
+        <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#64748b;">${esc(q1.title)}</div>
+        <div style="margin-top:6px; font-size:13px; font-weight:800; color:#0f172a;">${esc(q1.prompt)}</div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">${optHTML(q1)}</div>
+      </div>
+
+      <div style="margin-top:10px; padding:12px 12px; border:1px solid #e2e8f0; border-radius:16px; background:#fff;">
+        <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#64748b;">${esc(q2.title)}</div>
+        <div style="margin-top:6px; font-size:13px; font-weight:800; color:#0f172a;">${esc(q2.prompt)}</div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">${optHTML(q2)}</div>
+      </div>
+
+      <div style="margin-top:10px; padding:12px 12px; border:1px solid #e2e8f0; border-radius:16px; background:#fff;">
+        <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#64748b;">${esc(q3.title)}</div>
+        <div style="margin-top:6px; font-size:13px; font-weight:800; color:#0f172a;">${esc(q3.prompt)}</div>
+        <textarea id="lfc-q-text" class="lab-input" rows="3" placeholder="${esc(q3.placeholder)}" style="margin-top:10px;"></textarea>
+      </div>
+    `;
+
+    // selection logic: single select per question
+    area.querySelectorAll('.lfc-opt').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var qid = btn.getAttribute('data-q');
+        // clear siblings for same q
+        area.querySelectorAll('.lfc-opt[data-q="'+qid+'"]').forEach(function(b){ b.classList.remove('selected'); });
+        btn.classList.add('selected');
+      }, true);
+    });
+  }
+
+  function collectResponses(){
+    var area = $('#lfc-q-area');
+    if(!area) return null;
+
+    function selectedVal(qid){
+      var b = area.querySelector('.lfc-opt.selected[data-q="'+qid+'"]');
+      return b ? b.getAttribute('data-v') : '';
+    }
+    var textEl = $('#lfc-q-text');
+    return {
+      first_impression: selectedVal('first_impression'),
+      time_spent: selectedVal('time_spent'),
+      one_sentence: textEl ? (textEl.value||'').trim() : ''
+    };
+  }
+
+  function showMsg(m){
+    var box = $('#lfc-quest-msg');
+    if(!box) return;
+    box.textContent = m;
+    box.style.display = 'block';
+  }
+  function hideMsg(){
+    var box = $('#lfc-quest-msg');
+    if(box) box.style.display = 'none';
+  }
+
+  function openQuest(){
+    ensureModal();
+
+    var overlay = $('#lfc-quest-overlay');
+    if(!overlay) return;
+
+    hideMsg();
+
+    var art = getArtworkSnapshot();
+    var line = esc(art.title) + (art.meta ? (' · ' + esc(art.meta)) : '');
+    var artLineEl = $('#lfc-quest-artline');
+    if(artLineEl) artLineEl.textContent = line;
+
+    var savedGroup = '';
+    try{ savedGroup = localStorage.getItem(KEY_GROUP) || ''; }catch(e){}
+    if(!savedGroup) savedGroup = 'adult';
+
+    buildGroupButtons(savedGroup);
+    buildQuestions(savedGroup);
+
+    // show
+    overlay.style.display = 'block';
+    overlay.style.pointerEvents = 'auto';
+
+    // wire save
+    var saveBtn = $('#lfc-quest-save');
+    if(saveBtn && !saveBtn.__bound){
+      saveBtn.__bound = true;
+      saveBtn.addEventListener('click', function(){
+        hideMsg();
+
+        var group = 'adult';
+        try{ group = localStorage.getItem(KEY_GROUP) || 'adult'; }catch(e){}
+
+        var resp = collectResponses();
+        if(!resp) return;
+
+        // ultra-light validation: require at least Q1 selected
+        if(!resp.first_impression){
+          showMsg('Pick one option for Question 1.');
+          return;
+        }
+
+        var art2 = getArtworkSnapshot();
+        var card = {
+          id: 'c_' + Math.random().toString(36).slice(2) + Date.now().toString(36),
+          createdAt: Date.now(),
+          group: group,
+          chapter: 1,
+          level: 1,
+          artworkTitle: art2.title,
+          artworkMeta: art2.meta,
+          artworkImg: art2.img,
+          responses: resp
+        };
+
+        var list = readCards();
+        list.push(card);
+        writeCards(list);
+
+        toast('Judgment Card saved');
+
+        // close
+        var ov = $('#lfc-quest-overlay');
+        if(ov){
+          ov.style.display = 'none';
+          ov.style.pointerEvents = 'none';
+        }
+
+        // If blueprint is open, refresh it (works with your earlier renderer)
+        try{
+          var bp = $('#blueprint');
+          if(bp && bp.classList.contains('active')){
+            // your bp renderer runs on interval, but we nudge it
+            if(typeof window.startBlueprint === 'function') window.startBlueprint();
+          }
+        }catch(e){}
+      }, true);
+    }
+  }
+
+  // --- English-only cleanup (micro-patch)
+  // Replace Chinese onboarding tip text if it exists in any earlier patch leftovers.
+  function enforceEnglish(){
+    var tip = $('#onboarding-tip');
+    if(tip && /[\u4e00-\u9fff]/.test(tip.textContent||'')){
+      tip.textContent = 'Rotate: drag · Move: WASD/Arrows · Elevator: right · Click artwork to chat · Return to Walk';
+    }
+    var err = $('#lab-email-error');
+    if(err && /[\u4e00-\u9fff]/.test(err.textContent||'')){
+      err.textContent = 'Email is required so we can contact you.';
+    }
+  }
+
+  // ensure button exists whenever panel becomes active
+  setInterval(function(){
+    try{
+      var p = $('#ai-panel');
+      if(p && p.classList.contains('active')){
+        ensureQuestButton();
+      }
+      enforceEnglish();
+    }catch(e){}
+  }, 400);
+
+  // also expose for debugging if you ever want to call it manually
+  window.openThinkingQuest = openQuest;
+
+})();
