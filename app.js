@@ -2706,3 +2706,151 @@ window.addEventListener("DOMContentLoaded", () => {
   if(saveBtn) saveBtn.addEventListener('click', function(){ saveCard(); });
 
 })();
+/* ===========================
+   LFC My Journey Patch (Judgment Cards)
+   - Renders saved cards into Blueprint (My Journey)
+   - Adds Milestone naming + next target hook
+   - Does NOT change layout or AI logic
+   =========================== */
+(function(){
+  'use strict';
+
+  function $(s, r){ return (r||document).querySelector(s); }
+  function esc(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  var KEY_CARDS = 'lfc_cards_v1';
+
+  function readCards(){
+    try{ return JSON.parse(localStorage.getItem(KEY_CARDS) || '[]'); }catch(e){ return []; }
+  }
+
+  // --- Milestone system (simple now, expandable later)
+  // You can edit names/thresholds later without breaking storage.
+  var MILESTONES = [
+    { n: 1,  title: 'Curiosity Spark',        need: 0 },
+    { n: 2,  title: 'Observation Starter',    need: 3 },
+    { n: 3,  title: 'Pattern Finder',         need: 7 },
+    { n: 4,  title: 'Meaning Seeker',         need: 12 },
+    { n: 5,  title: 'Context Builder',        need: 20 },
+    { n: 6,  title: 'Critical Apprentice',    need: 30 },
+    { n: 7,  title: 'Independent Critic',     need: 45 },
+    { n: 8,  title: 'Senior Critic (Path)',   need: 65 }
+  ];
+
+  function getMilestone(total){
+    var cur = MILESTONES[0];
+    for(var i=0;i<MILESTONES.length;i++){
+      if(total >= MILESTONES[i].need) cur = MILESTONES[i];
+    }
+    var next = null;
+    for(var j=0;j<MILESTONES.length;j++){
+      if(MILESTONES[j].need > cur.need){ next = MILESTONES[j]; break; }
+    }
+    return { current: cur, next: next };
+  }
+
+  function formatTime(ts){
+    try{
+      var d = new Date(ts);
+      var y = d.getFullYear();
+      var m = String(d.getMonth()+1).padStart(2,'0');
+      var day = String(d.getDate()).padStart(2,'0');
+      return y + '-' + m + '-' + day;
+    }catch(e){ return ''; }
+  }
+
+  // --- Render into Blueprint
+  function renderQuestSummary(){
+    var host = $('#bp-quest');
+    if(!host) return;
+
+    var cards = readCards().slice().sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
+    var total = cards.length;
+
+    var ms = getMilestone(total);
+    var cur = ms.current;
+    var next = ms.next;
+
+    var toNext = next ? Math.max(0, next.need - total) : 0;
+
+    // recent cards (max 3)
+    var recent = cards.slice(0,3).map(function(c){
+      var title = esc(c.artworkTitle || 'Untitled');
+      var group = esc((c.group||'').replace('_',' '));
+      var choice = esc((c.responses && c.responses.choice) ? c.responses.choice : '');
+      var text = esc((c.responses && c.responses.text) ? c.responses.text : '');
+      var line = choice || text || '—';
+      return (
+        '<div style="padding:12px 12px; border:1px solid #e2e8f0; border-radius:14px; background:#fff; margin-top:10px;">' +
+          '<div style="font-size:10px; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#1e3a8a;">Judgment Card · ' + formatTime(c.createdAt) + '</div>' +
+          '<div style="margin-top:6px; font-size:13px; font-weight:800; color:#0f172a;">' + title + '</div>' +
+          '<div style="margin-top:6px; font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#64748b;">Group: ' + group + '</div>' +
+          '<div style="margin-top:8px; font-size:13px; line-height:1.7; color:#334155; font-weight:600;">' + line + '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    var hint = next
+      ? ('Next title: <span style="color:#0f172a;">' + esc(next.title) + '</span> · ' + toNext + ' card(s) to go')
+      : ('You’ve reached the current top milestone. New tiers can be added anytime.');
+
+    // “Hook”: a gentle next action, not exam-like
+    var hook = (total === 0)
+      ? 'Try 1 card today. One minute. No pressure.'
+      : (total < 3)
+        ? 'Small streaks work. Save one more card next time you visit.'
+        : 'Next time: pick a different artwork form (photo / sculpture / installation) to widen your lens.';
+
+    host.innerHTML =
+      '<div style="margin-top:6px; padding:14px 14px; border-radius:18px; border:1px solid #e2e8f0; background:rgba(255,255,255,0.92); box-shadow:0 12px 35px rgba(0,0,0,0.05);">' +
+        '<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">' +
+          '<div>' +
+            '<div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#1e3a8a;">LFC Thinking Quest</div>' +
+            '<div style="margin-top:6px; font-size:14px; font-weight:900; color:#0f172a;">' + esc(cur.title) + '</div>' +
+            '<div style="margin-top:6px; font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#64748b;">Cards saved: ' + total + '</div>' +
+          '</div>' +
+          '<div style="min-width:240px; flex:1;">' +
+            '<div style="font-size:10px; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#64748b;">Progress</div>' +
+            '<div style="margin-top:8px; height:8px; border-radius:999px; background:rgba(15,23,42,0.10); overflow:hidden;">' +
+              '<div style="height:100%; width:' + (next ? Math.min(100, Math.round((total / next.need) * 100)) : 100) + '%; background:#22c55e;"></div>' +
+            '</div>' +
+            '<div style="margin-top:8px; font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#64748b;">' + hint + '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div style="margin-top:12px; font-size:12px; font-weight:700; color:#334155; line-height:1.7; border-top:1px solid #e2e8f0; padding-top:12px;">' +
+          '<span style="font-weight:900; color:#1e3a8a; letter-spacing:1px; text-transform:uppercase; font-size:10px;">Hook</span><br>' +
+          esc(hook) +
+        '</div>' +
+
+        (recent
+          ? ('<div style="margin-top:14px;">' +
+              '<div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#64748b;">Recent Cards</div>' +
+              recent +
+             '</div>')
+          : '') +
+      '</div>';
+  }
+
+  // --- Ensure it refreshes when Blueprint opens
+  // We won’t rewrite your startBlueprint(), just wrap it if exists.
+  (function(){
+    if(typeof window.startBlueprint === 'function' && !window.__LFC_BP_WRAPPED){
+      var orig = window.startBlueprint;
+      window.startBlueprint = function(){
+        var r = orig.apply(this, arguments);
+        try{ renderQuestSummary(); }catch(e){}
+        return r;
+      };
+      window.__LFC_BP_WRAPPED = true;
+    }
+  })();
+
+  // Also refresh if user saved a card and then opens later
+  // (safe periodic refresh, cheap)
+  setInterval(function(){
+    var bp = $('#blueprint');
+    if(bp && bp.classList.contains('active')) renderQuestSummary();
+  }, 800);
+
+})();
