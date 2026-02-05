@@ -550,5 +550,55 @@
   </div>
 
   <script src="app.js"></script>
+  <!-- ✅ LFC Thinking Quest (Chapter 1) - minimal overlay -->
+<div id="tq-overlay" aria-hidden="true" style="position:fixed; inset:0; z-index:9200; display:none;">
+  <div id="tq-backdrop" style="position:absolute; inset:0; background:rgba(15,23,42,0.35); backdrop-filter:blur(10px);"></div>
+
+  <div id="tq-card" style="
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:92%; max-width:760px;
+    background:rgba(255,255,255,0.94);
+    border:1px solid rgba(255,255,255,0.85);
+    border-radius:20px;
+    box-shadow:0 30px 70px rgba(0,0,0,0.18);
+    padding:18px 18px 16px 18px;
+    font-family:Montserrat,sans-serif; color:#0f172a;
+  ">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+      <div>
+        <div style="font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#1e3a8a;">LFC Thinking Quest</div>
+        <div id="tq-subtitle" style="margin-top:6px; font-size:12px; font-weight:800; color:#334155;">Chapter 1 · Level 1: Observe & Stay</div>
+        <div id="tq-art" style="margin-top:6px; font-size:11px; font-weight:700; color:#64748b; letter-spacing:1px; text-transform:uppercase;">Artwork: (auto)</div>
+      </div>
+      <div id="tq-close" style="cursor:pointer; font-size:22px; font-weight:900; color:#1e3a8a; padding:6px 10px;">×</div>
+    </div>
+
+    <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <div style="font-size:10px; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#64748b;">I am:</div>
+      <button class="reg-btn" style="padding:8px 10px; font-size:9px;" data-tq-group="teen" type="button">Teen</button>
+      <button class="reg-btn" style="padding:8px 10px; font-size:9px;" data-tq-group="early_adult" type="button">Early Adult</button>
+      <button class="reg-btn" style="padding:8px 10px; font-size:9px;" data-tq-group="adult" type="button">Adult</button>
+      <button class="reg-btn" style="padding:8px 10px; font-size:9px;" data-tq-group="pro" type="button">Pro</button>
+
+      <div id="tq-group-hint" style="margin-left:auto; font-size:10px; font-weight:800; color:#64748b; letter-spacing:1px; text-transform:uppercase;">Pick one</div>
+    </div>
+
+    <div style="margin-top:14px; border-top:1px solid rgba(226,232,240,1); padding-top:14px;">
+      <div id="tq-q" style="font-size:13px; font-weight:800; color:#0f172a; line-height:1.6;">Question will appear here.</div>
+
+      <div id="tq-choices" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+
+      <textarea id="tq-text" class="lab-input" rows="3" placeholder="Optional: add one sentence of your own observation..."
+        style="margin-top:12px; font-size:13px;"></textarea>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-top:12px;">
+        <button id="tq-save" class="reg-btn" style="padding:10px 14px; font-size:10px; font-weight:900;" type="button">Save Judgment Card</button>
+        <div id="tq-toast" style="font-size:10px; font-weight:800; color:#64748b; letter-spacing:1px; text-transform:uppercase; display:none;">Saved.</div>
+        <div style="margin-left:auto; font-size:10px; font-weight:900; color:#1e3a8a; letter-spacing:1px; text-transform:uppercase;">No exams. Just thinking.</div>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
