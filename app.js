@@ -3705,3 +3705,72 @@ window.addEventListener("DOMContentLoaded", () => {
   }, 350);
 
 })();
+/* ===========================
+   LFC My Journey - Chapter 1 Milestones
+   - Reads lfc_cards_v1
+   - Computes Chapter 1 status
+   - Injects human-readable progress into Blueprint
+   =========================== */
+(function(){
+  'use strict';
+  var KEY = 'lfc_cards_v1';
+
+  function read(){
+    try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(e){ return []; }
+  }
+
+  function computeChapter1(cards){
+    var c1 = cards.filter(c => c.chapter === 1);
+    var byArtwork = {};
+    c1.forEach(c => {
+      byArtwork[c.artworkTitle] = byArtwork[c.artworkTitle] || {};
+      byArtwork[c.artworkTitle][c.level] = true;
+    });
+
+    var l1Count = c1.filter(c => c.level === 1).length;
+    var l2Count = c1.filter(c => c.level === 2).length;
+
+    var completedArtworks = Object.values(byArtwork)
+      .filter(v => v[1] && v[2]).length;
+
+    var status = 'Observer I';
+    if (l1Count >= 1 && l2Count >= 1) status = 'Decision Maker I';
+    if (completedArtworks >= 3) status = 'Critical Viewer (Chapter 1)';
+
+    return {
+      status,
+      l1Count,
+      l2Count,
+      completedArtworks
+    };
+  }
+
+  function inject(){
+    var bp = document.getElementById('bp-desc');
+    if(!bp) return;
+
+    var cards = read();
+    if(!cards.length){
+      bp.textContent = 'Your journey will appear here once you begin exploring artworks.';
+      return;
+    }
+
+    var c1 = computeChapter1(cards);
+
+    bp.innerHTML = `
+      <strong>Current Focus</strong><br>
+      ${c1.status}<br><br>
+      You have practiced:<br>
+      • Observation: ${c1.l1Count} time(s)<br>
+      • Making choices: ${c1.l2Count} time(s)
+    `;
+  }
+
+  var _startBlueprint = window.startBlueprint;
+  if(typeof _startBlueprint === 'function'){
+    window.startBlueprint = function(){
+      _startBlueprint.apply(this, arguments);
+      setTimeout(inject, 50);
+    };
+  }
+})();
