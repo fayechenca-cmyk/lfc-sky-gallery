@@ -3774,3 +3774,54 @@ window.addEventListener("DOMContentLoaded", () => {
     };
   }
 })();
+/* ===========================
+   Judgment Card Naming System
+   - Adds title + summary to each card
+   =========================== */
+(function(){
+  'use strict';
+
+  function generateTitle(card, history){
+    if(card.level === 1){
+      var sameArtworkCount = history.filter(c =>
+        c.level === 1 && c.artworkTitle === card.artworkTitle
+      ).length;
+
+      if(sameArtworkCount === 0) return 'First Pause';
+      if(sameArtworkCount === 1) return 'Returning Gaze';
+      return 'Learning to Stay';
+    }
+
+    if(card.level === 2){
+      if(card.answers && card.answers.reason){
+        return 'Reasoned Choice';
+      }
+      return 'Making a Stand';
+    }
+
+    return 'Judgment Recorded';
+  }
+
+  function generateSummary(card){
+    if(card.level === 1){
+      return 'You paused and stayed with an artwork instead of rushing past it.';
+    }
+    if(card.level === 2){
+      return 'You made a conscious choice and reflected on why it mattered to you.';
+    }
+    return 'You reflected on an artwork.';
+  }
+
+  window.enrichJudgmentCard = function(card){
+    var history;
+    try{
+      history = JSON.parse(localStorage.getItem('lfc_cards_v1') || '[]');
+    }catch(e){
+      history = [];
+    }
+
+    card.title = generateTitle(card, history);
+    card.summary = generateSummary(card);
+    return card;
+  };
+})();
