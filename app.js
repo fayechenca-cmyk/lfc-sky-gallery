@@ -3825,3 +3825,137 @@ window.addEventListener("DOMContentLoaded", () => {
     return card;
   };
 })();
+/* ===========================
+   My Journey: Render Judgment Cards (Read-only)
+   - Adds a clean list into Blueprint panel
+   =========================== */
+(function(){
+  'use strict';
+
+  function loadCards(){
+    try { return JSON.parse(localStorage.getItem('lfc_cards_v1') || '[]'); }
+    catch(e){ return []; }
+  }
+
+  function fmtTime(ts){
+    if(!ts) return '';
+    try{
+      var d = new Date(ts);
+      return d.toLocaleString();
+    }catch(e){ return ''; }
+  }
+
+  function ensureSection(){
+    var bpSteps = document.getElementById('bp-steps');
+    if(!bpSteps) return null;
+
+    var existing = document.getElementById('bp-judgment-cards');
+    if(existing) return existing;
+
+    var wrap = document.createElement('div');
+    wrap.id = 'bp-judgment-cards';
+    wrap.style.marginTop = '18px';
+
+    // Title row
+    var title = document.createElement('div');
+    title.textContent = 'Judgment Cards';
+    title.style.fontWeight = '900';
+    title.style.letterSpacing = '2px';
+    title.style.textTransform = 'uppercase';
+    title.style.fontSize = '11px';
+    title.style.color = '#1e3a8a';
+    title.style.marginBottom = '10px';
+
+    // Container
+    var list = document.createElement('div');
+    list.id = 'bp-judgment-list';
+    list.style.display = 'flex';
+    list.style.flexDirection = 'column';
+    list.style.gap = '10px';
+
+    wrap.appendChild(title);
+    wrap.appendChild(list);
+
+    bpSteps.appendChild(wrap);
+    return wrap;
+  }
+
+  function render(){
+    var sec = ensureSection();
+    if(!sec) return;
+
+    var list = document.getElementById('bp-judgment-list');
+    if(!list) return;
+
+    var cards = loadCards();
+    list.innerHTML = '';
+
+    if(!cards.length){
+      var empty = document.createElement('div');
+      empty.textContent = 'No Judgment Cards yet. Start from any artwork: Thinking Quest.';
+      empty.style.fontSize = '12px';
+      empty.style.color = '#64748b';
+      empty.style.fontWeight = '700';
+      empty.style.lineHeight = '1.7';
+      list.appendChild(empty);
+      return;
+    }
+
+    // newest first
+    cards.slice().reverse().forEach(function(card){
+      var item = document.createElement('div');
+      item.style.background = 'rgba(255,255,255,0.9)';
+      item.style.border = '1px solid #e2e8f0';
+      item.style.borderRadius = '14px';
+      item.style.padding = '12px 14px';
+      item.style.boxShadow = '0 12px 35px rgba(0,0,0,0.05)';
+      item.style.backdropFilter = 'blur(10px)';
+
+      var t = document.createElement('div');
+      t.textContent = (card.title || 'Judgment Recorded');
+      t.style.fontWeight = '900';
+      t.style.fontSize = '12px';
+      t.style.letterSpacing = '1px';
+      t.style.textTransform = 'uppercase';
+      t.style.color = '#1e3a8a';
+
+      var s = document.createElement('div');
+      s.textContent = (card.summary || '');
+      s.style.marginTop = '6px';
+      s.style.fontSize = '13px';
+      s.style.lineHeight = '1.75';
+      s.style.color = '#64748b';
+      s.style.fontWeight = '600';
+
+      var meta = document.createElement('div');
+      var art = card.artworkTitle ? card.artworkTitle : 'Artwork';
+      var time = fmtTime(card.timestamp);
+      meta.textContent = (art + (time ? (' • ' + time) : ''));
+      meta.style.marginTop = '8px';
+      meta.style.fontSize = '10px';
+      meta.style.fontWeight = '800';
+      meta.style.letterSpacing = '1px';
+      meta.style.textTransform = 'uppercase';
+      meta.style.color = '#94a3b8';
+
+      item.appendChild(t);
+      if(card.summary) item.appendChild(s);
+      item.appendChild(meta);
+
+      list.appendChild(item);
+    });
+  }
+
+  // Expose a safe refresh hook
+  window.refreshJourneyCards = render;
+
+  // Auto-refresh while Blueprint is open
+  setInterval(function(){
+    try{
+      var bp = document.getElementById('blueprint');
+      if(bp && bp.classList.contains('active')){
+        render();
+      }
+    }catch(e){}
+  }, 500);
+})();
