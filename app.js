@@ -2699,7 +2699,26 @@ window.addEventListener("DOMContentLoaded", () => {
 
     cards.push(card);
     writeCards(cards);
+try {
+  const { error } = await supabase
+    .from("judgment_cards")
+    .insert([{
+      user_id: card.visitorId,
+      artwork_id: card.artworkId,
+      level: card.level,
+      first_choice: card.firstChoice,
+      second_choice: card.secondChoice,
+      sentence: card.sentence
+    }]);
 
+  if (error) {
+    console.error("Supabase insert error:", error);
+  } else {
+    console.log("Saved to Supabase");
+  }
+} catch (err) {
+  console.error("Connection error:", err);
+}
     toast.style.display='block';
     toast.textContent = 'Saved. +' + 1 + ' card';
 
