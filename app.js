@@ -2667,7 +2667,7 @@ window.addEventListener("DOMContentLoaded", () => {
     setVisible(true);
   }
 
-  function saveCard(){
+  async function saveCard(){
     if(!state.group){
       toast.style.display='block';
       toast.textContent='Pick a group first.';
