@@ -2706,9 +2706,10 @@ try {
       user_id: card.visitorId,
       artwork_id: card.artworkId,
       level: card.level,
-      first_choice: card.firstChoice,
-      second_choice: card.secondChoice,
-      sentence: card.sentence
+      first_choice: card.responses.choice,
+      second_choice: null,
+      sentence: card.responses.text,
+      created_at: new Date().toISOString()
     }]);
 
   if (error) {
