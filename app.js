@@ -3696,7 +3696,18 @@ try {
         var list = readCards();
         list.push(card);
         writeCards(list);
-
+        // Save to Supabase
+        try {
+          supabaseClient.from('judgment_cards').insert([{
+            user_id: (window.LFC_VISITOR && window.LFC_VISITOR.id) ? window.LFC_VISITOR.id : 'unknown',
+            artwork_id: art2.title,
+            level: 2,
+            first_choice: card.responses.change_one || '',
+            second_choice: card.responses.impact || '',
+            sentence: card.responses.why || '',
+            created_at: new Date().toISOString()
+          }]);
+        } catch(err) { console.warn('[LFC] Supabase save failed:', err); }
         toast('Judgment Card saved');
 
         ov.style.display = 'none';
