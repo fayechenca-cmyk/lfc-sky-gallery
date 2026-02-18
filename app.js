@@ -2700,7 +2700,7 @@ window.addEventListener("DOMContentLoaded", () => {
     cards.push(card);
     writeCards(cards);
 try {
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from("judgment_cards")
     .insert([{
       user_id: card.visitorId,
