@@ -1,391 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>LFC SKY ARTSPACE</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
-
-  <style>
-    /* ========================================== */
-    /* 1. CORE VARIABLES & BASE                   */
-    /* ========================================== */
-    :root{ --blue:#1e3a8a; --ink:#0f172a; --glass: rgba(255,255,255,0.1); --ok:#22c55e; --gray:#64748b; }
-
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #e0f2fe; font-family: 'Montserrat', sans-serif !important; touch-action: none; user-select: none; }
-    #chat-stream, #elevator, #reg-panel, .bp-container, .lab-content { touch-action: pan-y; }
-
-    /* ========================================== */
-    /* 2. ENTRANCE DOORS (GLASS DESIGN RESTORED)  */
-    /* ========================================== */
-    #entrance-layer { position: absolute; inset: 0; z-index: 3000; display: flex; pointer-events: auto; }
-
-    .door-panel {
-        flex: 1; height: 100%;
-        background: rgba(240, 249, 255, 0.65);
-        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255,255,255,0.4);
-        transition: transform 2.0s cubic-bezier(0.19, 1, 0.22, 1);
-        position: relative;
-    }
-    .door-panel.left { border-right: 1px solid rgba(255,255,255,0.6); }
-    .door-panel.right { border-left: 1px solid rgba(255,255,255,0.6); }
-
-    #entrance-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 3005; transition: opacity 0.8s ease; color: var(--blue); max-width: 720px; width: 90%; }
-    .poster-title { font-weight: 800; font-size: 2.2rem; letter-spacing: -1px; margin-bottom: 0.5rem; text-transform: uppercase; color: var(--blue); }
-    .poster-tagline { font-weight: 400; font-size: 1.1rem; letter-spacing: 2px; color: var(--blue); margin-bottom: 2rem; opacity: 0.8; text-transform: uppercase; }
-    .poster-desc { font-size: 13px; line-height: 1.9; color: var(--gray); margin-bottom: 2.5rem; font-weight: 500; text-align: justify; text-align-last: center; }
-
-    .begin-btn { padding: 1rem 3rem; border: 2px solid var(--blue); color: var(--blue); background: transparent; border-radius: 50px; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; font-family: 'Montserrat', sans-serif; }
-    .begin-btn:hover { background: var(--blue); color: #fff; box-shadow: 0 15px 40px rgba(30,58,138,0.2); transform: translateY(-2px); }
-
-    /* ========================================== */
-    /* 3. REGISTRATION PANEL (GLASS DESIGN RESTORED) */
-    /* ========================================== */
-    #reg-panel {
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
-        background: rgba(255,255,255,0.90);
-        backdrop-filter: blur(30px);
-        padding: 3rem; border-radius: 20px;
-        box-shadow: 0 30px 60px rgba(0,0,0,0.15);
-        z-index: 3010; text-align: center;
-        opacity: 0; pointer-events: none;
-        transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-        max-width: 850px; width: 95%; max-height: 90vh; overflow-y: auto;
-        border: 1px solid rgba(255,255,255,0.8);
-    }
-    #reg-panel.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
-
-    .section-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); margin: 25px 0 12px 0; display: block; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-    .reg-options { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 1rem; }
-
-    .keyword-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
-
-    .reg-btn { padding: 10px 15px; border: 1px solid #cbd5e1; color: #64748b; background: #fff; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 10px; transition: all 0.2s; font-family: 'Montserrat', sans-serif; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .reg-btn:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-1px); }
-    .reg-btn.selected { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: 0 5px 15px rgba(30,58,138,0.25); }
-
-    .final-enter-btn { background: var(--blue); color: #fff; border: none; padding: 1.2rem 4rem; border-radius: 50px; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; opacity: 0.5; pointer-events: none; transition: 0.3s; margin-top: 2rem; font-family: 'Montserrat', sans-serif; }
-    .final-enter-btn.ready { opacity: 1; pointer-events: auto; box-shadow: 0 10px 30px rgba(30,58,138,0.3); }
-
-    .skip-link { background: none; border: none; color: var(--gray); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; opacity: 0.7; padding: 10px; transition: opacity 0.2s; font-family: 'Montserrat', sans-serif; margin-top: 5px; }
-    .skip-link:hover { opacity: 1; text-decoration: underline; color: var(--blue); }
-
-    body.doors-open .door-panel.left { transform: translateX(-100%); }
-    body.doors-open .door-panel.right { transform: translateX(100%); }
-    body.doors-open #entrance-content, body.doors-open #reg-panel { opacity: 0; pointer-events: none; }
-
-    /* ========================================== */
-    /* 4. HUD & NAVIGATION                        */
-    /* ========================================== */
-    #ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
-    #canvas-container { position:absolute; inset:0; z-index: 0; }
-
-    #hud { position: absolute; top: 2rem; left: 2rem; pointer-events: auto; z-index: 20; }
-    h1 { font-weight: 800; font-size: 1.8rem; margin: 0; color: var(--blue); letter-spacing: -1px; text-transform: uppercase; }
-    .subtitle { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: var(--blue); margin-top: 6px; display: flex; align-items: center; gap: 8px; }
-    .live-dot { width: 6px; height: 6px; background: var(--ok); border-radius: 50%; box-shadow: 0 0 10px var(--ok); }
-
-    #journey-wrapper { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; pointer-events: auto; }
-    #journey-btn { background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; padding: 1rem 1.2rem; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 12px 35px rgba(0,0,0,0.05); backdrop-filter: blur(12px); transition: transform 0.2s; color: var(--blue); font-family: 'Montserrat'; }
-    .discovery-bar-bg { width: 100%; height: 4px; background: rgba(0,0,0,0.1); border-radius: 2px; overflow: hidden; position: relative; }
-    .discovery-bar-fill { height: 100%; width: 0%; background: var(--ok); transition: width 0.5s ease; }
-    .discovery-text { font-size: 9px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
-
-    #onboarding-tip { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(30, 58, 138, 0.9); color: #fff; padding: 1rem 2rem; border-radius: 50px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 1000; box-shadow: 0 10px 30px rgba(30,58,138,0.4); }
-    #onboarding-tip.visible { opacity: 1; animation: pulseTip 2s infinite; }
-    @keyframes pulseTip { 0% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.05); } 100% { transform: translate(-50%, -50%) scale(1); } }
-
-    #elevator { position: absolute; top: 50%; right: 2rem; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; pointer-events: auto; max-height: 70vh; overflow-y: auto; padding: 10px 0; z-index: 200; }
-    .floor-item { display: flex; align-items: center; justify-content: flex-end; gap: 10px; cursor: pointer; opacity: 0.82; transition: all 0.2s; }
-    .floor-item:hover, .floor-item.active { opacity: 1; transform: translateX(-5px); }
-    .floor-label { background: rgba(255,255,255,0.9); padding: 8px 14px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--blue); backdrop-filter: blur(14px); }
-    .floor-num { width: 32px; height: 32px; background: #fff; color: var(--blue); border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; border-radius: 999px; }
-    .floor-item.active .floor-num { background: var(--blue); color: #fff; }
-
-    /* ========================================== */
-    /* 5. AI CHAT PANEL & BLUEPRINT (2-COLUMN)    */
-    /* ========================================== */
-    #ai-panel { 
-        position: absolute; top: 5%; bottom: 5%; left: 5%; right: 5%; 
-        max-width: 1400px; margin: auto;
-        background: rgba(255,255,255,0.95); 
-        backdrop-filter: blur(25px); 
-        border-radius: 20px; 
-        transform: translateY(120%); 
-        transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); 
-        pointer-events: auto; 
-        display: flex; flex-direction: row; 
-        z-index: 500; 
-        box-shadow: 0 30px 60px rgba(0,0,0,0.20); 
-        overflow: hidden;
-    }
-    #ai-panel.active { transform: translateY(0); }
-    
-    .ai-left {
-        flex: 1.5; /* Makes the image side wider on desktop */
-        background: #f8fafc;
-        display: flex; align-items: center; justify-content: center;
-        padding: 2rem;
-        border-right: 1px solid rgba(0,0,0,0.06);
-    }
-    .ai-img-preview { 
-        max-width: 100%; max-height: 100%; 
-        object-fit: contain; border-radius: 12px; 
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-        cursor: zoom-in; transition: transform 0.3s;
-    }
-    .ai-img-preview:hover { transform: scale(1.02); }
-
-    .ai-right {
-        flex: 1; min-width: 350px; max-width: 450px;
-        display: flex; flex-direction: column;
-        background: #ffffff;
-        position: relative;
-    }
-    
-    .panel-close { 
-        position: absolute; top: 1rem; right: 1rem; 
-        font-size: 2rem; cursor: pointer; color: var(--blue); 
-        font-weight: 800; z-index: 600; padding: 10px; line-height: 1;
-        background: rgba(255,255,255,0.8); border-radius: 50%;
-        width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-    }
-    .ai-header { padding: 1.6rem; border-bottom: 1px solid rgba(0,0,0,0.06); position: relative; }
-    .pin-btn { background: var(--ok); color: #fff; border: none; padding: 8px 16px; border-radius: 50px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing:1px; cursor: pointer; float: right; margin-top: 5px; margin-right: 40px; box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3); }
-    .pin-btn:hover { background: #16a34a; transform:translateY(-1px); }
-
-    .msg { padding: 14px 16px; border-radius: 14px; font-size: 14px; line-height: 1.55; max-width: 88%; animation: fadeUp 0.3s ease; white-space: pre-wrap; font-family: 'Montserrat', sans-serif; margin-bottom: 10px; }
-    .msg-ai { background: #f1f5f9; color: #334155; align-self: flex-start; border-left: 3px solid var(--blue); }
-    .msg-user { background: var(--blue); color: #fff; align-self: flex-end; }
-    
-    #chat-stream { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 8px; }
-    
-    .chat-input-area { padding: 1rem; border-top: 1px solid rgba(0,0,0,0.06); background: #fff; display: flex; gap: 10px; }
-    #user-input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Montserrat'; outline: none; }
-    #send-btn { background: var(--blue); color: #fff; border: none; padding: 12px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 11px; }
-
-    /* Lightbox Styles */
-    #lightbox-modal {
-        position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999;
-        display: flex; justify-content: center; align-items: center;
-        opacity: 0; pointer-events: none; transition: opacity 0.3s;
-    }
-    #lightbox-modal.active { opacity: 1; pointer-events: auto; }
-    #lightbox-img { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
-    .lightbox-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 3rem; cursor: pointer; font-weight: bold; }
-
-    /* Responsive Mobile Stack */
-    @media (max-width: 768px) { 
-        #ai-panel { top: 0; left: 0; right: 0; bottom: 0; border-radius: 0; flex-direction: column; max-width: 100%; } 
-        .ai-left { flex: 0 0 40vh; padding: 1rem; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.06); }
-        .ai-right { width: 100%; max-width: 100%; flex: 1; overflow: hidden; }
-        .panel-close { top: 10px; right: 10px; }
-    }
-
-    /* ========================================== */
-    /* 6. FEI CREATOR LAB OVERLAY & THEMES        */
-    /* ========================================== */
-    #lab-trigger {
-        position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9000;
-        padding: 12px 20px; border-radius: 50px; cursor: pointer;
-        font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.3s ease;
-        display: none;
-        align-items: center; gap: 8px;
-    }
-    #lab-trigger:hover { transform: translateX(-50%) scale(1.05); }
-
-    #creator-lab-overlay {
-        position: fixed; top: 0; right: 0; bottom: 0; width: 400px; max-width: 100%;
-        z-index: 9002;
-        box-shadow: -20px 0 50px rgba(0,0,0,0.2);
-        transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-        display: flex; flex-direction: column;
-    }
-    #creator-lab-overlay.lab-visible { transform: translateX(0); }
-
-    .lab-content { padding: 20px; overflow-y: auto; flex: 1; }
-    .lab-section { margin-bottom: 30px; }
-    .lab-section h3 { margin-bottom: 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.7; }
-    .lab-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); font-family: inherit; margin-bottom: 10px; box-sizing: border-box;}
-    .lab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .lab-pin-card { background: rgba(0,0,0,0.05); padding: 8px; border-radius: 6px; display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 700; }
-    .lab-pin-img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
-    .lab-milestone-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
-    .lab-footer { padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1); display: flex; gap: 10px; }
-    .lab-primary-btn, .lab-secondary-btn { flex: 1; padding: 15px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 11px; border-radius: 8px; }
-    .lab-action-btn { background: transparent; border: 1px dashed #ccc; padding: 8px; width: 100%; cursor: pointer; border-radius: 6px; }
-
-    .theme-pro #lab-trigger { background: #0f172a; color: white; border: 1px solid #1e293b; }
-    .theme-pro #creator-lab-overlay { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-left: 1px solid #e2e8f0; }
-    .theme-pro .lab-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .theme-pro h2 { color: #0f172a; font-weight: 800; font-size: 1.2rem; margin: 0; }
-    .theme-pro .lab-primary-btn { background: #0f172a; color: white; }
-    .theme-pro .lab-secondary-btn { background: #f1f5f9; color: #0f172a; }
-
-    .theme-explorer #lab-trigger { background: #ff9f43; color: white; border: 4px solid #feca57; box-shadow: 0 5px 0 #e67e22; top: 25px; }
-    .theme-explorer #creator-lab-overlay { background: #fffbe6; border-left: 5px solid #ff9f43; }
-    .theme-explorer .lab-header { background: #ff9f43; padding: 20px; color: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid #feca57; }
-    .theme-explorer h2 { font-weight: 900; font-size: 1.5rem; text-shadow: 2px 2px 0px rgba(0,0,0,0.1); margin: 0; letter-spacing: 1px; }
-    .theme-explorer .lab-input { border: 2px solid #ff9f43; background: #fff; font-size: 14px; }
-    .theme-explorer .lab-primary-btn { background: #2ecc71; color: white; border-bottom: 4px solid #27ae60; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4); border-radius: 12px; }
-    .theme-explorer .lab-secondary-btn { background: #54a0ff; color: white; border-bottom: 4px solid #2e86de; border-radius: 12px; }
-    .theme-explorer .lab-section h3 { color: #e67e22; font-weight: 900; }
-
-    /* ========================================== */
-    /* 7. CONTROLS                                */
-    /* ========================================== */
-    #nav-pad { position: fixed; left: 20px; bottom: 20px; z-index: 85; pointer-events: auto; }
-    .pad { display: grid; grid-template-columns: 44px 44px 44px; gap: 8px; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 10px; border-radius: 16px; border: 1px solid #cbd5e1; }
-    .pad button { width: 100%; height: 44px; border: 1px solid #cbd5e1; background: #fff; color: var(--blue); border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 16px; }
-
-    #back-btn { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--blue); color: #fff; padding: 1rem 2rem; border-radius: 50px; font-weight: 700; cursor: pointer; pointer-events: auto; opacity: 0; transition: all 0.4s; z-index: 600; text-transform: uppercase; letter-spacing: 2px; font-size: 11px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-family: 'Montserrat', sans-serif; }
-    #back-btn.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    @media (max-width: 768px) {
-      .bp-container { max-width: 100%; }
-      #ai-panel { width: 100%; height: 60vh; top: auto; bottom: 0; transform: translateY(100%); border-radius: 20px 20px 0 0; }
-      #ai-panel.active { transform: translateY(0); }
-      #nav-pad { bottom: 20px; left: 20px; transform: none; }
-      #back-btn { bottom: 20px; left: auto; right: 20px; transform: translateY(100px); width: auto; padding: 1rem 1.5rem; }
-      #back-btn.visible { transform: translateY(0); }
-      body.ai-open #nav-pad { display: none; }
-      h1 { font-size: 1.4rem; }
-    }
-
-    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-    /* ========================================================= */
-    /* ✅ PATCH v1 (MINIMAL, NO REDESIGN / NO RENAME / NO REFACTOR) */
-    /* ========================================================= */
-
-    /* Detail zoom viewport (keeps exact size & styling) */
-    #ai-img-viewport.ai-img-preview { position: relative; overflow: hidden; }
-    #ai-img-viewport #ai-img.ai-img-preview { width: 100%; height: 100%; margin-bottom: 0; background: transparent; transform: translate3d(0px,0px,0px) scale(1); transform-origin: 0 0; cursor: grab; }
-    #ai-img-viewport #ai-img:active { cursor: grabbing; }
-
-    /* Teleport toast */
-    #teleport-toast {
-      position: fixed; top: 18px; left: 50%;
-      transform: translateX(-50%) translateY(-18px);
-      background: rgba(30, 58, 138, 0.92);
-      color: #fff;
-      padding: 10px 18px;
-      border-radius: 50px;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 9100;
-      box-shadow: 0 10px 30px rgba(30,58,138,0.35);
-      transition: opacity 0.25s ease, transform 0.25s ease;
-    }
-    #teleport-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    /* Onboarding card (glass, consistent language) */
-    #onboarding-card {
-      position: fixed; top: 50%; left: 50%;
-      transform: translate(-50%, -50%) scale(0.98);
-      width: 92%; max-width: 720px;
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(25px);
-      border: 1px solid rgba(255,255,255,0.8);
-      border-radius: 20px;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.15);
-      z-index: 9050;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.35s cubic-bezier(0.19, 1, 0.22, 1);
-      padding: 22px;
-      color: var(--ink);
-    }
-    #onboarding-card.visible { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
-    #onboarding-card h3 { margin: 0 0 10px 0; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); }
-    #onboarding-card p { margin: 0; font-size: 13px; line-height: 1.8; color: var(--gray); font-weight: 500; }
-    #onboarding-card .close-x {
-      position: absolute; top: 10px; right: 12px;
-      font-size: 22px; font-weight: 900; color: var(--blue);
-      cursor: pointer; padding: 10px;
-    }
-    #onboarding-card .mini-row { margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    #onboarding-card .mini-btn { padding: 10px 14px; font-size: 10px; }
-
-    /* Home button (safe exit) */
-    #home-btn {
-      position: absolute;
-      bottom: 3rem;
-      left: 2rem;
-      pointer-events: auto;
-      z-index: 600;
-      background: rgba(255,255,255,0.9);
-      border: 1px solid #e2e8f0;
-      color: var(--blue);
-      padding: 1rem 1.2rem;
-      border-radius: 50px;
-      font-weight: 800;
-      cursor: pointer;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      font-size: 11px;
-      box-shadow: 0 12px 35px rgba(0,0,0,0.05);
-      backdrop-filter: blur(12px);
-      transition: transform 0.2s;
-      font-family: 'Montserrat', sans-serif;
-    }
-    #home-btn:hover { transform: translateY(-1px); }
-
-    /* Nav preview tooltip */
-    #nav-preview {
-      position: fixed;
-      min-width: 220px;
-      max-width: 280px;
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(226,232,240,1);
-      border-radius: 14px;
-      box-shadow: 0 20px 55px rgba(0,0,0,0.12);
-      z-index: 9055;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.18s ease, transform 0.18s ease;
-      transform: translateY(8px);
-      overflow: hidden;
-      color: var(--ink);
-    }
-    #nav-preview.visible { opacity: 1; transform: translateY(0); }
-    #nav-preview .thumb { width: 100%; height: 120px; background: #f1f5f9; object-fit: cover; display:block; }
-    #nav-preview .body { padding: 12px; }
-    #nav-preview .title { font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; }
-    #nav-preview .meta { font-size: 10px; color: var(--gray); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; line-height: 1.6; }
-
-    /* Lab message (error/success, no harsh red) */
-    #lab-inline-message {
-      display: none;
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      background: #f1f5f9;
-      color: #334155;
-      border: 1px solid #e2e8f0;
-    }
-  </style>
+  
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="canvas-container"></div>
 
   <div id="onboarding-tip">Click Artwork to Chat</div>
 
-  <!-- ✅ PATCH: onboarding help card (hidden by default) -->
   <div id="onboarding-card" aria-hidden="true">
     <div class="close-x" id="onboarding-close">×</div>
     <h3>Quick Guide</h3>
@@ -400,10 +33,8 @@
     </div>
   </div>
 
-  <!-- ✅ PATCH: teleport toast -->
   <div id="teleport-toast">Teleporting...</div>
 
-  <!-- ✅ PATCH: nav preview tooltip -->
   <div id="nav-preview" role="tooltip" aria-hidden="true">
     <img class="thumb" id="nav-preview-thumb" src="" alt="" />
     <div class="body">
@@ -526,7 +157,6 @@
     <div id="hud">
       <h1>LFC SYSTEM</h1>
 
-      <!-- ✅ PATCH: where-am-I badge added inline (no layout height change) -->
       <div class="subtitle">
         <div class="live-dot"></div> SKY ARTSPACE
         <span id="whereami-text" class="floor-label" style="padding:4px 10px; font-size:9px;">Atrium</span>
@@ -545,11 +175,11 @@
 
     <div id="elevator"></div>
 
-    <!-- ✅ PATCH: Home/Atrium safe exit -->
     <div id="home-btn" onclick="goHome()">⌂ Atrium</div>
 
     <div id="back-btn" onclick="exitFocus()">← Return to Walk</div>
-     <div id="ai-panel">
+    
+    <div id="ai-panel">
       <span class="panel-close" onclick="exitFocus()">×</span>
       
       <div class="ai-left">
@@ -585,11 +215,6 @@
       </div>
     </div>
 
-    <div id="lightbox-modal" onclick="closeLightbox()">
-       <img id="lightbox-img" src="" />
-       <div class="lightbox-close">×</div>
-    </div>
-
     <div id="blueprint">
       <div class="panel-close" onclick="closeBlueprint()" style="top:2rem; right:2rem; font-size: 2rem;">×</div>
       <div class="bp-container">
@@ -598,12 +223,16 @@
           <p style="color: #64748b; line-height: 1.6;" id="bp-desc"></p>
           <div id="bp-steps" style="margin-top:2rem;"></div>
           
-          <!-- ✅ LFC Patch: My Journey - Judgment Cards summary -->
           <div id="bp-quest" style="margin-top:18px;"></div>
         </div>
         <div id="bp-products"></div>
       </div>
     </div>
+  </div>
+
+  <div id="lightbox-modal" onclick="closeLightbox()">
+     <img id="lightbox-img" src="" />
+     <div class="lightbox-close">×</div>
   </div>
 
   <div id="nav-pad">
@@ -617,8 +246,8 @@
   </div>
 
   <script src="app.js"></script>
-  <!-- ✅ LFC Thinking Quest (Chapter 1) - minimal overlay -->
-<div id="tq-overlay" aria-hidden="true" style="position:fixed; inset:0; z-index:9200; display:none;">
+
+  <div id="tq-overlay" aria-hidden="true" style="position:fixed; inset:0; z-index:9200; display:none;">
   <div id="tq-backdrop" style="position:absolute; inset:0; background:rgba(15,23,42,0.35); backdrop-filter:blur(10px);"></div>
 
   <div id="tq-card" style="
