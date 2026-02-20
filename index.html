@@ -549,34 +549,45 @@
     <div id="home-btn" onclick="goHome()">⌂ Atrium</div>
 
     <div id="back-btn" onclick="exitFocus()">← Return to Walk</div>
-
-    <div id="ai-panel">
-      <div class="ai-header">
-        <span class="panel-close" onclick="exitFocus()">×</span>
-        <button class="pin-btn" onclick="pinCurrentArt()">📌 Start LFC Project</button>
-
-        <!-- ✅ PATCH: image viewport wrapper (same size, enables zoom/pan/reset) -->
-        <div id="ai-img-viewport" class="ai-img-preview" tabindex="0" aria-label="Artwork image viewer">
-          <img id="ai-img" class="ai-img-preview" src="" />
-          <button id="ai-zoom-reset" class="reg-btn" style="position:absolute; right:10px; top:10px; padding:8px 10px; font-size:9px; display:none;">Reset</button>
-          <div id="ai-zoom-hint" style="position:absolute; left:12px; bottom:10px; font-size:9px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:rgba(100,116,139,0.85); background:rgba(255,255,255,0.8); padding:4px 8px; border-radius:999px; border:1px solid rgba(226,232,240,1); display:none;">Scroll to Zoom • Drag</div>
+     <div id="ai-panel">
+      <span class="panel-close" onclick="exitFocus()">×</span>
+      
+      <div class="ai-left">
+        <div id="ai-img-viewport" class="ai-img-preview" tabindex="0" aria-label="Artwork image viewer" style="position:relative; width:100%; height:100%; max-height: 60vh; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+          <img id="ai-img" class="ai-img-preview" src="" onclick="openLightbox(this.src)" title="Click to enlarge" style="max-height:100%; max-width:100%; object-fit:contain; cursor:zoom-in;" />
+          <button id="ai-zoom-reset" class="reg-btn" style="position:absolute; right:10px; top:10px; padding:8px 10px; font-size:9px;">Reset Zoom</button>
+          <div id="ai-zoom-hint" style="position:absolute; left:12px; bottom:10px; font-size:9px; font-weight:800; letter-spacing:1px; color:var(--blue);"></div>
         </div>
-
-        <h2 style="font-weight:800; margin:0; color:var(--blue); font-size:1.4rem;" id="ai-title">Untitled</h2>
-        <div style="font-size:11px; text-transform:uppercase; color:var(--gray); margin-top:5px; font-weight:600;" id="ai-meta">Artist • Year</div>
-
-        <!-- ✅ NEW (minimal): Docent vs Curator toggle -->
-        <div style="display:flex; gap:8px; margin-top:12px; align-items:center; flex-wrap:wrap;">
-          <button id="mode-docent" class="reg-btn" style="padding:8px 12px; font-size:9px;" onclick="setAIPersona('docent')">Docent</button>
-          <button id="mode-curator" class="reg-btn" style="padding:8px 12px; font-size:9px;" onclick="setAIPersona('curator')">Curator (Premium)</button>
+        
+        <div style="margin-top: 20px; text-align: center;">
+          <h2 style="font-weight:800; margin:0; color:var(--blue); font-size:1.6rem;" id="ai-title">Untitled</h2>
+          <div style="font-size:12px; text-transform:uppercase; color:var(--gray); margin-top:8px; font-weight:600;" id="ai-meta">Artist • Year • Medium</div>
         </div>
-        <button id="btn-thinking-quest" class="reg-btn" style="padding:8px 12px; font-size:9px; margin-top:10px;" type="button">Thinking Quest</button>
       </div>
-      <div id="chat-stream"></div>
-      <div class="chat-input-area">
-        <input type="text" id="user-input" placeholder="Ask about this piece..." />
-        <button id="send-btn">Send</button>
+
+      <div class="ai-right">
+        <div class="ai-header" style="padding-bottom:10px;">
+          <button class="pin-btn" onclick="pinCurrentArt()">📌 Start LFC Project</button>
+          
+          <div style="display:flex; gap:8px; margin-top:12px; align-items:center; flex-wrap:wrap; clear:both;">
+            <button id="mode-docent" class="reg-btn" style="padding:8px 12px; font-size:9px;" onclick="setAIPersona('docent')">Docent</button>
+            <button id="mode-curator" class="reg-btn" style="padding:8px 12px; font-size:9px;" onclick="setAIPersona('curator')">Curator</button>
+          </div>
+          <button id="btn-thinking-quest" class="reg-btn" style="padding:8px 12px; font-size:9px; margin-top:10px;" type="button">Thinking Quest</button>
+        </div>
+        
+        <div id="chat-stream"></div>
+        
+        <div class="chat-input-area">
+          <input type="text" id="user-input" placeholder="Ask about this piece..." />
+          <button id="send-btn">Send</button>
+        </div>
       </div>
+    </div>
+
+    <div id="lightbox-modal" onclick="closeLightbox()">
+       <img id="lightbox-img" src="" />
+       <div class="lightbox-close">×</div>
     </div>
 
     <div id="blueprint">
