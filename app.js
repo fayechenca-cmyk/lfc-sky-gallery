@@ -605,8 +605,6 @@ function enterGallery() {
 // ==========================================
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
-      window.scene = scene;
-      window.camera = camera;
 const skyColor = new THREE.Color(0xf0f9ff);
 scene.background = skyColor;
 scene.fog = new THREE.Fog(skyColor, 15, 140);
