@@ -354,3 +354,86 @@ window.moveStop = () => {
   moveLeft = false;
   moveRight = false;
 };
+
+
+// ==========================================
+// 7. INTERACTION & CAMERA MOVEMENT
+// ==========================================
+
+window.goToFloor = function(id) {
+  if (window.closeBlueprint) window.closeBlueprint();
+  exitFocus();
+  isInputLocked = true;
+  TWEEN.removeAll();
+
+  new TWEEN.Tween(camera.position)
+    .to({ y: id * floorHeight + 5 }, 2000)
+    .easing(TWEEN.Easing.Quadratic.InOut)
+    .onComplete(() => {
+      isInputLocked = false;
+      console.log("Arrived at Floor " + id);
+    })
+    .start();
+};
+
+function focusArt(userData) {
+  if (userData.data.isExternal && userData.data.link) {
+    window.open(userData.data.link, "_blank");
+    return;
+  }
+
+  currentOpenArt = userData.data;
+
+  // Record visit for My Journey
+  recordVisit(currentOpenArt);
+  logJourney({
+    ts: Date.now(),
+    type: "visit",
+    title: currentOpenArt.title,
+    artist: currentOpenArt.artist,
+    floor: currentOpenArt.floor ?? currentOpenArt.floor === 0 ? 0 : (currentOpenArt.floor ?? "Gallery")
+  });
+
+  isInputLocked = true;
+  document.body.classList.add("ai-open");
+  camera.userData.returnPos = camera.position.clone();
+  camera.userData.returnQuat = camera.quaternion.clone();
+  const t = userData.viewPos;
+
+  new TWEEN.Tween(camera.position)
+    .to({ x: t.x, y: t.y, z: t.z }, 1800)
+    .easing(TWEEN.Easing.Cubic.Out)
+    .onComplete(() => {
+      openAI(userData.data);
+      document.getElementById("back-btn").classList.add("visible");
+    })
+    .start();
+
+  const dum = new THREE.Object3D();
+  dum.position.copy(t);
+  dum.lookAt(userData.data.x || t.x, t.y, userData.data.z || t.z);
+  new TWEEN.Tween(camera.quaternion)
+    .to({ x: dum.quaternion.x, y: dum.quaternion.y, z: dum.quaternion.z, w: dum.quaternion.w }, 1500)
+    .easing(TWEEN.Easing.Cubic.Out)
+    .start();
+}
+
+function exitFocus() {
+  document.body.classList.remove("ai-open");
+  document.getElementById("ai-panel").classList.remove("active");
+  document.getElementById("back-btn").classList.remove("visible");
+  currentOpenArt = null;
+
+  if (camera.userData.returnPos) {
+    new TWEEN.Tween(camera.position)
+      .to(camera.userData.returnPos, 1200)
+      .easing(TWEEN.Easing.Quadratic.Out)
+      .onComplete(() => {
+        isInputLocked = false;
+      })
+      .start();
+    new TWEEN.Tween(camera.quaternion).to(camera.userData.returnQuat, 1200).easing(TWEEN.Easing.Quadratic.Out).start();
+  } else {
+    isInputLocked = false;
+  }
+}
