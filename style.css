@@ -270,16 +270,65 @@ h1 { font-weight: 800; font-size: 1.8rem; margin: 0; color: var(--blue); letter-
 
 @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-/* Responsive Mobile Stack */
+/* ========================================== */
+/* 10. MOBILE UX / UI OVERHAUL (iPHONE FIXES) */
+/* ========================================== */
 @media (max-width: 768px) { 
-    .bp-container { max-width: 100%; }
-    #ai-panel { top: 0; left: 0; right: 0; bottom: 0; border-radius: 0; flex-direction: column; max-width: 100%; } 
-    .ai-left { flex: 0 0 40vh; padding: 1rem; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.06); }
-    .ai-right { width: 100%; max-width: 100%; flex: 1; overflow: hidden; }
-    .panel-close { top: 10px; right: 10px; }
-    #nav-pad { bottom: 20px; left: 20px; transform: none; }
-    #back-btn { bottom: 20px; left: auto; right: 20px; transform: translateY(100px); width: auto; padding: 1rem 1.5rem; }
-    #back-btn.visible { transform: translateY(0); }
-    body.ai-open #nav-pad { display: none; }
-    h1 { font-size: 1.4rem; }
+    /* --- 1. DECLUTTER THE SCREEN --- */
+    h1 { font-size: 1.2rem; }
+    .subtitle { font-size: 8px; }
+    #hud { top: 15px; left: 15px; }
+    #journey-btn { padding: 8px 10px; font-size: 9px; }
+    
+    /* Compact Elevator: Hides the text, keeps the numbers in a neat glass pill */
+    #elevator { right: 10px; transform: translateY(-50%) scale(0.85); background: rgba(255,255,255,0.4); border-radius: 30px; padding: 8px 5px; backdrop-filter: blur(10px); }
+    .floor-label { display: none !important; } /* Hide the bulky text */
+    .floor-item { justify-content: center; margin-bottom: 6px; }
+    
+    /* Shrink the giant onboarding bubble */
+    #onboarding-tip { font-size: 10px; padding: 10px 15px; width: 85%; text-align: center; line-height: 1.5; }
+
+    /* --- 2. SLEEK CIRCULAR JOYSTICK --- */
+    #nav-pad { bottom: 20px; left: 50%; transform: translateX(-50%); }
+    .pad { 
+        grid-template-columns: 45px 45px 45px; 
+        gap: 5px; 
+        background: rgba(255,255,255,0.25); 
+        backdrop-filter: blur(15px);
+        padding: 10px; 
+        border-radius: 50%; /* Makes the whole container a circle */
+        border: 1px solid rgba(255,255,255,0.5);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .pad button { 
+        height: 45px; width: 45px; 
+        border-radius: 50%; /* Circle buttons */
+        background: rgba(255,255,255,0.85); 
+        border: none; 
+        font-size: 14px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .pad div { background: transparent; } /* Hides empty grid spots */
+
+    /* --- 3. FIX THE "STUCK" AI PANEL SCROLLING --- */
+    #ai-panel { 
+        top: 0; left: 0; right: 0; bottom: 0; border-radius: 0;
+        flex-direction: column; max-width: 100%;
+        height: 100dvh; /* Uses exact iPhone screen height */
+        overflow-y: auto !important; /* Forces scroll */
+        -webkit-overflow-scrolling: touch; /* Required for smooth iOS scrolling */
+        padding-bottom: 120px; /* Leaves space for the return button */
+    } 
+    .ai-left { flex: none; height: auto; min-height: 40vh; padding: 15px; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .ai-right { flex: none; height: auto; overflow: visible; width: 100%; max-width: 100%; }
+    #chat-stream { flex: none; height: auto; overflow: visible; padding-bottom: 20px; }
+    
+    /* Fix overlapping buttons in the panel */
+    .ai-header { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+    .pin-btn { float: none; margin: 0; width: 100%; text-align: center; justify-content: center;}
+    
+    /* Center the Return button at the bottom */
+    #back-btn { bottom: 20px; left: 50%; right: auto; transform: translateX(-50%) translateY(150px); width: 85%; text-align: center; z-index: 9999; }
+    #back-btn.visible { transform: translateX(-50%) translateY(0); }
+    #home-btn { bottom: 20px; left: 15px; padding: 8px 12px; font-size: 9px; z-index: 80;} 
 }
